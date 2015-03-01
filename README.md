@@ -11,7 +11,7 @@ and happy development.
 
 This logger package
 
-1.  Is fast in production environment.
+*   Is fast in production environment.
 
     logxi encodes JSON 2X faster than logrus and log15 with primitive types.
     When diagnosing a problem in production, troubleshooting usually means
@@ -30,13 +30,13 @@ BenchmarkLogrusComplex   30000     51598 ns/op   10832 B/op    256 allocs/op
 BenchmarkLog15Complex    20000     74030 ns/op   12072 B/op    278 allocs/op
 ```
 
-2.  Logs machine parsable output in production environments.
+*   Logs machine parsable output in production environments.
     The recommended formatter for production is `JSONFormatter`.
 
     `TextFormatter` may also be used if you don't care about
     JSON and want the fastest logs with key, value pairs.
 
-3.  Is developer friendly in development environments. The default
+*   Is developer friendly in development environments. The default
     formatter in terminals is colorful, prints file and line numbers
     when warnings and errors occur.
 
@@ -44,7 +44,7 @@ BenchmarkLog15Complex    20000     74030 ns/op   12072 B/op    278 allocs/op
     not concerned with performance and should never be used
     in prouction environments.
 
-4.  Has level guards to avoid the cost of parameters. These should
+*   Has level guards to avoid the cost of parameters. These should
     always be used in production mode if tracing may be enabled.
 
     ```go
@@ -63,7 +63,7 @@ if log.IsWarn() {
 // Error and Fatal do not have guards, they MUST always log.
 ```
 
-5.  Conforms to a logging interface so it can be replaced.
+*   Conforms to a logging interface so it can be replaced.
 
     ```go
 type Logger interface {
@@ -83,7 +83,7 @@ type Logger interface {
 }
 ```
 
-6.  Standardizes on key, value pairs for machine parsing instead
+*   Standardizes on key, value pairs for machine parsing instead
     of `map` and `fmt.Printf`.
 
     ```go
@@ -92,7 +92,7 @@ log.Debug("inside Fn()", "key1", value1, "key2", value2)
 
     logxi logs `IMBALANCED_PAIRS=>` if key/value pairs are imbalanced
 
-7.  Loggers can be enabled/disabled via environment variables.
+*   Loggers can be enabled/disabled via environment variable.
 
     `LOGXI` acccepts a list space separated names with colons to indicate the
     log level. See `LevelAtoi` in `logger.go` for values.
@@ -106,7 +106,12 @@ log.Debug("inside Fn()", "key1", value1, "key2", value2)
 LOGXI="*:ERR models:DBG *controller:ERR trace:OFF" yourapp
 ```
 
-    The format may also be selected via `LOGXI_FORMAT` environment
+    The default value for `LOGXI` is `"*:DBG"` for terminals
+    and `"*:INF"` for production.
+
+*   Formatter may be selected by environment variable.
+
+    The format may also be set via `LOGXI_FORMAT` environment
     variable. Valid values are `"text"` and `"JSON"`.
 
     ```sh
@@ -116,12 +121,11 @@ LOGXI_FORMAT=JSON yourapp
 ### Extending
 
 What about hooks? Implement your own `io.Writer` to write to external
-services and use `JSONFormatter` for your writer to parse the
-stream.
+services and use `JSONFormatter`.
 
 What about other writers? 12 factor apps only concern themselves with
-STDOUT. Use shell redirection operators to write to file or use an
-`io.Writer`.
+STDOUT. Use shell redirection operators to write to file or create
+a custom `io.Writer`.
 
 What about formatting? Key/value pairs only.
 
