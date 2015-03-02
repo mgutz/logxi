@@ -111,39 +111,43 @@ log.Debug("inside Fn()", "key1", value1, "key2", value2)
 ```
 
     logxi logs `IMBALANCED_PAIRS=>` if key/value pairs are imbalanced
+    
+## Configuration
 
-*   Loggers can be enabled/disabled via environment variable.
+### Enabling/Disabling Loggers
 
-    By default logxi only logs warning statements and above in a terminal.
-    For non-TTY, only errors and above are logged.
+By default logxi logs entries whose level is `LevelWarn` or above when 
+using a terminal. For non-terminals, entries with level `LevelError` and 
+above are logged.
 
-    To quickly see all statements using quick form
+To quickly see all entries use short form
 
-        # enable all, disable log named foo
-        LOGXI=*,-foo yourapp
+    # enable all, disable log named foo
+    LOGXI=*,-foo yourapp
 
-    To better control logs in production, use long form which allows
-    for granular control of levels
+To better control logs in production, use long form which allows
+for granular control of levels
 
-        # the above statement is equivalent to this
-        LOGXI=*=DBG,foo=OFF yourapp
+    # the above statement is equivalent to this
+    LOGXI=*=DBG,foo=OFF yourapp
+    
+`DBG` should obviously not be used in production unless for 
+troubleshooting. See `LevelAtoi` in `logger.go` for values.
+For example, there is a problem in the data access layer
+in production.
 
-    See `LevelAtoi` in `logger.go` for values.
+    # Set all to Error and set data related packages to Debug
+    LOGXI=*=ERR,models=DBG,dat*=DBG,api=DBG yourapp
 
-    Fore example, there is a problem in the models package in production
+### Format
 
-        # set all to Error and set data related packages to Debug
+The format may be set via `LOGXI_FORMAT` environment
+variable. Valid values are `"text"` and `"JSON"`.
 
-        LOGXI=*=ERR,models=DBG,dat*=DBG,api=DBG yourapp
+    # Use JSON in production
+    LOGXI_FORMAT=JSON yourapp
 
-*   The format may be selected by environment variable
-
-    The format may also be set via `LOGXI_FORMAT` environment
-    variable. Valid values are `"text"` and `"JSON"`.
-
-        LOGXI_FORMAT=JSON yourapp
-
-### Extending
+## Extending
 
 What about hooks? Implement your own `io.Writer` to write to external
 services and use `JSONFormatter`.
@@ -154,6 +158,6 @@ a custom `io.Writer`.
 
 What about formatting? Key-value pairs only.
 
-### License
+## License
 
 MIT License
