@@ -18,7 +18,7 @@ var testObject = M{
 	"bah": M{
 		"int":      1,
 		"float":    -100.23,
-		"date":     "testObject006-01-0testObjectT15:04:05-0700",
+		"date":     "06-01-01T15:04:05-0700",
 		"bool":     true,
 		"nullable": nil,
 	},
@@ -47,10 +47,10 @@ func BenchmarkLogxi(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		l.Debug("debug", simpleArgs...)
-		l.Info("info", simpleArgs...)
-		l.Warn("warn", simpleArgs...)
-		l.Error("error", simpleArgs...)
+		l.Debug("debug", "key", 1, "key2", "string", "key3", false)
+		l.Info("info", "key", 1, "key2", "string", "key3", false)
+		l.Warn("warn", "key", 1, "key2", "string", "key3", false)
+		l.Error("error", "key", 1, "key2", "string", "key3", false)
 	}
 	b.StopTimer()
 	log.DisableColors(false)
@@ -63,10 +63,10 @@ func BenchmarkLogxiComplex(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		l.Debug("debug", complexArgs...)
-		l.Info("info", complexArgs...)
-		l.Warn("warn", complexArgs...)
-		l.Error("error", complexArgs...)
+		l.Debug("debug", "key", 1, "obj", testObject)
+		l.Info("info", "key", 1, "obj", testObject)
+		l.Warn("warn", "key", 1, "obj", testObject)
+		l.Error("error", "key", 1, "obj", testObject)
 	}
 	b.StopTimer()
 
@@ -106,10 +106,10 @@ func BenchmarkLog15(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		l.Debug("debug", simpleArgs...)
-		l.Info("info", simpleArgs...)
-		l.Warn("warn", simpleArgs...)
-		l.Error("error", simpleArgs...)
+		l.Debug("debug", "key", 1, "key2", "string", "key3", false)
+		l.Info("info", "key", 1, "key2", "string", "key3", false)
+		l.Warn("warn", "key", 1, "key2", "string", "key3", false)
+		l.Error("error", "key", 1, "key2", "string", "key3", false)
 	}
 	b.StopTimer()
 
@@ -121,13 +121,12 @@ func BenchmarkLog15Complex(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		l.Debug("debug", complexArgs...)
-		l.Info("info", complexArgs...)
-		l.Warn("warn", complexArgs...)
-		l.Error("error", complexArgs...)
+		l.Debug("debug", "key", 1, "obj", testObject)
+		l.Info("info", "key", 1, "obj", testObject)
+		l.Warn("warn", "key", 1, "obj", testObject)
+		l.Error("error", "key", 1, "obj", testObject)
 	}
 	b.StopTimer()
-
 }
 
 func causeError() error {

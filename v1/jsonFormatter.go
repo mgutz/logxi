@@ -53,7 +53,8 @@ func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
 	default:
 		b, err := json.Marshal(value.Interface())
 		if err != nil {
-			panic(err)
+			buf.WriteString("Could not json encode value:")
+			buf.WriteString(err.Error())
 		}
 		buf.Write(b)
 	}

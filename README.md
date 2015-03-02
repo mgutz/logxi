@@ -74,14 +74,14 @@ This logger package
 
     ```
 # primitive types
-BenchmarkLogxi          100000     14962 ns/op    2784 B/op     44 allocs/op
-BenchmarkLogrus          50000     36554 ns/op    7656 B/op    174 allocs/op
-BenchmarkLog15           30000     47822 ns/op    8024 B/op    192 allocs/op
+BenchmarkLogxi          100000     19541 ns/op    3459 B/op     72 allocs/op
+BenchmarkLogrus          30000     42759 ns/op    7704 B/op    174 allocs/op
+BenchmarkLog15           30000     57469 ns/op    8781 B/op    220 allocs/op
 
 # nested object
-BenchmarkLogxiComplex    30000     43831 ns/op    8739 B/op    184 allocs/op
-BenchmarkLogrusComplex   30000     51598 ns/op   10832 B/op    256 allocs/op
-BenchmarkLog15Complex    20000     74030 ns/op   12072 B/op    278 allocs/op
+BenchmarkLogxiComplex    30000     51298 ns/op    8908 B/op    200 allocs/op
+BenchmarkLogrusComplex   20000     61665 ns/op   10893 B/op    257 allocs/op
+BenchmarkLog15Complex    20000     85454 ns/op   12268 B/op    294 allocs/op
 ```
 
 *   Logs machine parsable output in production environments.
