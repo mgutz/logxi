@@ -17,7 +17,9 @@ var logger log.Logger
 
 func main() {
     // use default logger
-    log.Info("Hello", "name", "mario")
+    if log.IsInfo() {
+        log.Info("Hello", "name", "mario")
+    }
 
     // create a logger for your package, assigning a unique
     // name which can be enabled from environment variables
@@ -28,8 +30,17 @@ func main() {
         // use key-value pairs after message
         logger.Error("Could not open database", "err", err)
     }
+    
+    if log.IsDebug() {
+        logger.Debug("OK")
+    }
 }
 ```
+
+Run your application with Debug enabled while developing 
+(otherwise only errors are logged)
+
+    LOGXI=* go run main.go
 
 ## Higlights
 
