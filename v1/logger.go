@@ -4,6 +4,8 @@ const (
 	// LevelEnv chooses level from LOGXI environment variable or defaults
 	// to LevelInfo
 	LevelEnv = iota
+	// LevelAll is all levels
+	LevelAll
 	// LevelDebug is debug level
 	LevelDebug
 	// LevelInfo is info level
@@ -39,12 +41,14 @@ var LevelMap = map[int]string{
 
 // LevelMap maps int enums to string level.
 var LevelAtoi = map[string]int{
+	"ALL":   LevelAll,
 	"DBG":   LevelDebug,
 	"INF":   LevelInfo,
 	"WRN":   LevelWarn,
 	"ERR":   LevelError,
 	"FTL":   LevelFatal,
 	"OFF":   LevelOff,
+	"all":   LevelAll,
 	"debug": LevelDebug,
 	"info":  LevelInfo,
 	"wrn":   LevelWarn,

@@ -12,10 +12,10 @@ func TestEnvLOGXI(t *testing.T) {
 
 	os.Setenv("LOGXI", "")
 	processEnv()
-	assert.Equal(LevelDebug, logxiEnabledMap["*"], "Unset LOGXI defaults to *:DBG with TTY")
+	assert.Equal(LevelWarn, logxiEnabledMap["*"], "Unset LOGXI defaults to *:DBG with TTY")
 
 	// default all to ERR
-	os.Setenv("LOGXI", "*:ERR")
+	os.Setenv("LOGXI", "*=ERR")
 	processEnv()
 	level, err := getLogLevel("mylog")
 	assert.NoError(err)
@@ -25,13 +25,13 @@ func TestEnvLOGXI(t *testing.T) {
 	assert.Equal(LevelError, level)
 
 	// unrecognized defaults to LevelDebug on TTY
-	os.Setenv("LOGXI", "mylog:badlevel")
+	os.Setenv("LOGXI", "mylog=badlevel")
 	processEnv()
 	level, err = getLogLevel("mylog")
-	assert.Equal(LevelDebug, level)
+	assert.Equal(LevelWarn, level)
 
 	// wildcard should not override exact match
-	os.Setenv("LOGXI", "*:WRN mylog:ERR other:OFF")
+	os.Setenv("LOGXI", "*=WRN,mylog=ERR,other=OFF")
 	processEnv()
 	level, err = getLogLevel("mylog")
 	assert.Equal(LevelError, level)
@@ -39,15 +39,23 @@ func TestEnvLOGXI(t *testing.T) {
 	assert.Error(err, "OFF should return error")
 
 	// wildcard pattern should match
-	os.Setenv("LOGXI", "*log:ERR")
+	os.Setenv("LOGXI", "*log=ERR")
 	processEnv()
 	level, err = getLogLevel("mylog")
 	assert.Equal(LevelError, level, "wildcat prefix should match")
 
-	os.Setenv("LOGXI", "myx*:ERR")
+	os.Setenv("LOGXI", "myx*=ERR")
 	processEnv()
 	level, err = getLogLevel("mylog")
 	assert.Error(err, "no match should return error")
+
+	os.Setenv("LOGXI", "myl*,-foo")
+	processEnv()
+	level, err = getLogLevel("mylog")
+	assert.NoError(err)
+	assert.Equal(LevelDebug, level)
+	level, err = getLogLevel("foo")
+	assert.Error(err)
 }
 
 func TestEnvLOGXI_FORMAT(t *testing.T) {

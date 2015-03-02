@@ -5,13 +5,37 @@ and happy development.
 
 ### Installation
 
-    go get -a github.com/mgutz/logxi/v1
+    go get -u github.com/mgutz/logxi/v1
+
+### Getting Started
+
+```go
+import "github.com/mgutz/logxi/v1"
+
+// create package variable for logger interface
+var logger log.Logger
+
+func main() {
+    // use default logger
+    log.Info("Hello", "name", "mario")
+
+    // create a logger for your package, assigning a unique
+    // name which can be enabled from environment variables
+    logger = log.New(os.Stdout, "yourpkg")
+
+    db, err := sql.Open("postgres", "dbname=testdb")
+    if err != nil {
+        // use key-value pairs after message
+        logger.Error("Could not open database", "err", err)
+    }
+}
+```
 
 ## Higlights
 
 This logger package
 
-*   Is fast in production environment.
+*   Is fast in production environment
 
     logxi encodes JSON 2X faster than logrus and log15 with primitive types.
     When diagnosing a problem in production, troubleshooting usually means
@@ -42,46 +66,42 @@ BenchmarkLog15Complex    20000     74030 ns/op   12072 B/op    278 allocs/op
 
     The default formatter in TTY mode is `HappyDevFormatter`. It  is
     not concerned with performance and should never be used
-    in prouction environments.
+    in production environments.
 
-*   Has level guards to avoid the cost of parameters. These should
-    always be used in production mode if tracing may be enabled.
+*   Has level guards to avoid the cost of arguments. These _SHOULD_
+    always be used.
 
-    ```go
-if log.IsDebug() {
-    log.Debug("some ")
-}
+        if log.IsDebug() {
+            log.Debug("some ")
+        }
 
-if log.IsInfo() {
-    log.Info("some ")
-}
+        if log.IsInfo() {
+            log.Info("some ")
+        }
 
-if log.IsWarn() {
-    log.Warn("some ")
-}
+        if log.IsWarn() {
+            log.Warn("some ")
+        }
 
-// Error and Fatal do not have guards, they MUST always log.
-```
+    Error and Fatal do not have guards, they MUST always log.
 
 *   Conforms to a logging interface so it can be replaced.
 
-    ```go
-type Logger interface {
-    Debug(string, ...interface{})
-    Info(string, ...interface{})
-    Warn(string, ...interface{})
-    Error(string, ...interface{})
-    Fatal(string, ...interface{})
+        type Logger interface {
+            Debug(string, ...interface{})
+            Info(string, ...interface{})
+            Warn(string, ...interface{})
+            Error(string, ...interface{})
+            Fatal(string, ...interface{})
 
-    SetLevel(int)
-    SetFormatter(Formatter)
+            SetLevel(int)
+            SetFormatter(Formatter)
 
-    IsDebug() bool
-    IsInfo() bool
-    IsWarn() bool
-    // Error, Fatal not needed, those SHOULD always be logged
-}
-```
+            IsDebug() bool
+            IsInfo() bool
+            IsWarn() bool
+            // Error, Fatal have no guards, they SHOULD always log
+        }
 
 *   Standardizes on key, value pairs for machine parsing instead
     of `map` and `fmt.Printf`.
@@ -94,29 +114,34 @@ log.Debug("inside Fn()", "key1", value1, "key2", value2)
 
 *   Loggers can be enabled/disabled via environment variable.
 
-    `LOGXI` acccepts a list space separated names with colons to indicate the
-    log level. See `LevelAtoi` in `logger.go` for values.
+    By default logxi only logs warning statements and above in a terminal.
+    For non-TTY, only errors and above are logged.
 
-    The following defaults all loggers to `LevelError`. The log named
-    `"models"` is set to `LevelDebug`. Any log having suffix `"controller"` is
-    set to `LevelError`. The log named `"trace"` is disabled and will use
-    `NullLog`.
+    To quickly see all statements using quick form
 
-    ```sh
-LOGXI="*:ERR models:DBG *controller:ERR trace:OFF" yourapp
-```
+        # enable all, disable log named foo
+        LOGXI=*,-foo yourapp
 
-    The default value for `LOGXI` is `"*:DBG"` for terminals
-    and `"*:INF"` for production.
+    To better control logs in production, use long form which allows
+    for granular control of levels
 
-*   Formatter may be selected by environment variable.
+        # the above statement is equivalent to this
+        LOGXI=*=DBG,foo=OFF yourapp
+
+    See `LevelAtoi` in `logger.go` for values.
+
+    Fore example, there is a problem in the models package in production
+
+        # set all to Error and set data related packages to Debug
+
+        LOGXI=*=ERR,models=DBG,dat*=DBG,api=DBG yourapp
+
+*   The format may be selected by environment variable
 
     The format may also be set via `LOGXI_FORMAT` environment
     variable. Valid values are `"text"` and `"JSON"`.
 
-    ```sh
-LOGXI_FORMAT=JSON yourapp
-```
+        LOGXI_FORMAT=JSON yourapp
 
 ### Extending
 
@@ -127,7 +152,7 @@ What about other writers? 12 factor apps only concern themselves with
 STDOUT. Use shell redirection operators to write to file or create
 a custom `io.Writer`.
 
-What about formatting? Key/value pairs only.
+What about formatting? Key-value pairs only.
 
 ### License
 

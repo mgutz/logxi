@@ -39,25 +39,40 @@ func processEnv() {
 	logxiEnable := os.Getenv("LOGXI")
 	if logxiEnable == "" {
 		if isTTY {
-			logxiEnable = "*:DBG"
+			logxiEnable = "*=WRN"
 		} else {
-			logxiEnable = "*:INF"
+			logxiEnable = "*=ERR"
 		}
 	}
 
 	logxiEnable = str.Clean(logxiEnable)
 	logxiEnabledMap = map[string]int{}
-	pairs := strings.Split(logxiEnable, " ")
+	pairs := strings.Split(logxiEnable, ",")
 	for _, pair := range pairs {
-		kv := strings.Split(pair, ":")
-		if len(kv) == 2 {
+		kv := strings.Split(pair, "=")
+		// * => defaults to DBG because if someone took the time to
+		// enable it ad-hoc, it probably means they are debugging
+		if len(kv) == 1 {
 			key := kv[0]
-			level := LevelAtoi[kv[1]]
-			if level == 0 {
-				if isTTY {
-					level = LevelDebug
-				} else {
-					level = LevelInfo
+			if strings.HasPrefix(key, "-") {
+				logxiEnabledMap[key[1:]] = LevelOff
+			} else {
+				logxiEnabledMap[key] = LevelDebug
+			}
+		} else if len(kv) == 2 {
+			key := kv[0]
+			level := 0
+			if strings.HasPrefix(key, "-") {
+				key = key[1:]
+				level = LevelOff
+			} else {
+				level = LevelAtoi[kv[1]]
+				if level == 0 {
+					if isTTY {
+						level = LevelWarn
+					} else {
+						level = LevelError
+					}
 				}
 			}
 			logxiEnabledMap[key] = level
@@ -92,7 +107,7 @@ func getLogLevel(name string) (int, error) {
 	}
 
 	if result == LevelOff {
-		return 0, fmt.Errorf("is not enabled")
+		return LevelOff, fmt.Errorf("is not enabled")
 	}
 
 	if result > 0 {
@@ -103,7 +118,7 @@ func getLogLevel(name string) (int, error) {
 		return wildcardLevel, nil
 	}
 
-	return 0, fmt.Errorf("is not enabled")
+	return LevelOff, fmt.Errorf("is not enabled")
 }
 
 var isTTY bool
