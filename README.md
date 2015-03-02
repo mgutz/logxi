@@ -1,7 +1,7 @@
 # logxi
 
 Log eleven is a [12 factor app](http://12factor.net/logs)-compliant logger
-built for performance and happy development.
+built for performance and happy development. 
 
 ### Installation
 
@@ -122,6 +122,17 @@ log.Debug("inside Fn()", "key1", value1, "key2", value2)
 ```
 
     logxi logs `IMBALANCED_PAIRS=>` if key/value pairs are imbalanced
+    
+*   Works on Windows
+
+    If you want to support pretty colors on Windows and others, then create a 
+    logger like this
+    
+        logger := log.NewColorable("mylog")
+
+    Or
+    
+        logger := log.New(log.GetColorableStdout(), "mylog")
 
 ## Configuration
 
