@@ -1,7 +1,21 @@
 # logxi
 
-Log eleven is a [12 factor app](http://12factor.net/logs)-compliant logger
-built for performance and happy development. 
+Log Eleven (XI) is a [12 factor app](http://12factor.net/logs)-compliant
+logger built for performance and happy development.
+
+TL;DR
+
+*   Faster and less memory allocations than logrus and log15.
+*   Enforces key-value pairs logging instead of `Printf` or maps.
+*   Logs and their level are configurable via environment variables.
+*   JSON formatter or very efficient key-value text formatter for production.
+*   Happy, colorful, developer friendly logger in terminal. Warnings
+    and errors are emphasized with their call stack.
+*   Defines a simple interface for logging, so it can be replaced easily.
+*   Colored logging works on Windows
+*   Leveled logging.
+*   Named loggers.
+*   Has level guards to minimize argument costs.
 
 ### Installation
 
@@ -12,7 +26,7 @@ built for performance and happy development.
 ```go
 import "github.com/mgutz/logxi/v1"
 
-// create package variable for logger interface
+// create package variable for Logger interface
 var logger log.Logger
 
 func main() {
@@ -31,8 +45,10 @@ func main() {
         logger.Error("Could not open database", "err", err)
     }
 
+    a := "apple"
+    o := "orange"
     if log.IsDebug() {
-        logger.Debug("OK")
+        logger.Debug("OK", "a", a, "o", o)
     }
 }
 ```
@@ -122,16 +138,16 @@ log.Debug("inside Fn()", "key1", value1, "key2", value2)
 ```
 
     logxi logs `IMBALANCED_PAIRS=>` if key/value pairs are imbalanced
-    
+
 *   Works on Windows
 
-    If you want to support pretty colors on Windows and others, then create a 
+    If you want to support pretty colors on Windows and others, then create a
     logger like this
-    
+
         logger := log.NewColorable("mylog")
 
     Or
-    
+
         logger := log.New(log.GetColorableStdout(), "mylog")
 
 ## Configuration
@@ -179,6 +195,22 @@ STDOUT. Use shell redirection operators to write to file or create
 a custom `io.Writer`.
 
 What about formatting? Key-value pairs only.
+
+## Testing
+
+```
+# install godo task runner
+go get -u gopkg.in/godo.v1/cmd/godo
+
+# install dependencies
+godo install
+
+# run test
+godo test
+
+# run bench with allocs (requires manual cleanup)
+godo allocs
+```
 
 ## License
 

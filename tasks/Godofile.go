@@ -20,12 +20,17 @@ func tasks(p *Project) {
 	})
 
 	p.Task("install", func() {
+		Run("go get github.com/mattn/go-colorable")
+		Run("go get github.com/mattn/go-isatty")
+		Run("go get github.com/mgutz/ansi")
+
+		// needed for benchmarks
 		Run("go get github.com/Sirupsen/logrus")
 		Run("go get gopkg.in/inconshreveable/log15.v2")
 	})
 
 	p.Task("app", func() {
-		Run("go run main.go", M{"$in": "v1/app"})
+		Run("LOGXI=* go run main.go", M{"$in": "v1/app"})
 	})
 }
 

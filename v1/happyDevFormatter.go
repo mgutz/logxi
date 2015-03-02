@@ -43,8 +43,9 @@ func DisableColors(val bool) {
 	disableColors = val
 }
 
-// GetColorableStdout() gets a writer that can be colored on Windows.
-// On other OS, os.Stdout is returned.
+// GetColorableStdout gets a writer that can output colors
+// on Windows and non-Widows OS. If colors are disabled,
+// os.Stdout is returned.
 func GetColorableStdout() io.Writer {
 	if isTTY && !disableColors {
 		return colorable.NewColorableStdout()
@@ -164,6 +165,8 @@ func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 
 	var lenArgs = len(args)
 	if lenArgs > 0 {
+		fmt.Printf("lenArgs %#v\n", args)
+
 		if lenArgs%2 == 0 {
 			for i := 0; i < lenArgs; i += 2 {
 				if key, ok := args[i].(string); ok {

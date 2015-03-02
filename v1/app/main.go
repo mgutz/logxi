@@ -5,6 +5,7 @@ import (
 )
 
 func main() {
+	log.Info("This is a test app")
 	l := log.NewColorable("bench")
 	l.SetLevel(log.LevelDebug)
 	l.SetFormatter(log.NewHappyDevFormatter("bench"))

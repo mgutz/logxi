@@ -2,17 +2,17 @@ package log
 
 // Debug records a debug statement.
 func Debug(msg string, args ...interface{}) {
-	DefaultLog.Debug(msg, args)
+	DefaultLog.Debug(msg, args...)
 }
 
 // Info records an info statement.
 func Info(msg string, args ...interface{}) {
-	DefaultLog.Info(msg, args)
+	DefaultLog.Info(msg, args...)
 }
 
 // Warn records a warning statement.
 func Warn(msg string, args ...interface{}) {
-	DefaultLog.Warn(msg, args)
+	DefaultLog.Warn(msg, args...)
 }
 
 // Error records an error statement.
@@ -22,7 +22,7 @@ func Error(msg string, args ...interface{}) {
 
 // Fatal records a fatal statement.
 func Fatal(msg string, args ...interface{}) {
-	DefaultLog.Fatal(msg, args)
+	DefaultLog.Fatal(msg, args...)
 }
 
 // IsDebug determines if this logger logs a debug statement.
