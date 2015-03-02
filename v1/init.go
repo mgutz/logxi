@@ -40,27 +40,6 @@ func init() {
 	disableColors = !isTTY
 
 	processEnv()
-	DefaultLog = NewColorable("~")
-	internalLog = NewColorable("logxi")
+	DefaultLog = New("~")
+	internalLog = New("logxi")
 }
-
-func defaultFormatterFactory(name string, kind string) (Formatter, error) {
-	if kind == FormatEnv {
-		kind = logxiFormat
-	}
-
-	if kind == FormatJSON {
-		return NewJSONFormatter(name), nil
-	}
-
-	if disableColors {
-		return NewTextFormatter(name), nil
-	}
-
-	return NewHappyDevFormatter(name), nil
-}
-
-// CreaetFormatter creates formatters and can be overriden. It accepts
-// a kind in {"text", "JSON"} which correspond to TextFormatter and
-// JSONFormatter, and the name of the logger.
-var CreateFormatter = defaultFormatterFactory

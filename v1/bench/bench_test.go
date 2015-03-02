@@ -41,7 +41,7 @@ func BenchmarkBuiltinLog(b *testing.B) {
 
 func BenchmarkLogxi(b *testing.B) {
 	log.DisableColors(true)
-	l := log.New(os.Stdout, "bench")
+	l := log.NewLogger(os.Stdout, "bench")
 	l.SetLevel(log.LevelDebug)
 	l.SetFormatter(log.NewJSONFormatter("bench"))
 
@@ -57,7 +57,7 @@ func BenchmarkLogxi(b *testing.B) {
 }
 
 func BenchmarkLogxiComplex(b *testing.B) {
-	l := log.New(os.Stdout, "bench")
+	l := log.NewLogger(os.Stdout, "bench")
 	l.SetLevel(log.LevelDebug)
 	l.SetFormatter(log.NewJSONFormatter("bench"))
 

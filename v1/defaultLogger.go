@@ -14,7 +14,7 @@ type DefaultLogger struct {
 }
 
 // New creates a new default logger.
-func New(writer io.Writer, name string) Logger {
+func NewLogger(writer io.Writer, name string) Logger {
 
 	// if err is returned, then it means the log is disabled
 	level, err := getLogLevel(name)
@@ -22,7 +22,7 @@ func New(writer io.Writer, name string) Logger {
 		return NullLog
 	}
 
-	formatter, err := CreateFormatter(name, logxiFormat)
+	formatter, err := createFormatter(name, logxiFormat)
 	if err != nil {
 		panic("Could not create formatter")
 	}
@@ -41,8 +41,8 @@ func New(writer io.Writer, name string) Logger {
 }
 
 // NewColorable returns a colorable default logger.
-func NewColorable(name string) Logger {
-	return New(GetColorableStdout(), name)
+func New(name string) Logger {
+	return NewLogger(GetColorableStdout(), name)
 }
 
 // Debug logs a debug entry.

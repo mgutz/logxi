@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-errors/errors"
@@ -14,28 +15,70 @@ import (
 	"gopkg.in/stack.v1"
 )
 
-var markerColor func(string) string
-var keyColor func(string) string
-var errorColor func(string) string
-var infoCode string
-var warnCode string
-var errorCode string
-var keyCode string
-var resetCode string
-var plain = ""
+// Theme defines a color theme for HappyDevFormatter
+type colorScheme struct {
+	Key   string
+	Value string
 
-func init() {
+	Debug string
+	Info  string
+	Warn  string
+	Error string
+	Reset string
+}
 
-	ansi.DisableColors(disableColors)
-	markerColor = ansi.ColorFunc("magenta")
-	keyColor = ansi.ColorFunc("cyan")
-	errorColor = ansi.ColorFunc("red")
-	infoCode = ansi.ColorCode("green")
-	warnCode = ansi.ColorCode("yellow")
-	errorCode = ansi.ColorCode("red")
-	keyCode = ansi.ColorCode("cyan")
-	resetCode = ansi.ColorCode("reset")
-	DisableColors(disableColors)
+var theme *colorScheme
+
+func processThemeEnv() {
+	colors := os.Getenv("LOGXI_COLORS")
+	if colors == "" {
+		colors = DarkScheme
+	}
+	theme = parseTheme(colors)
+}
+
+// DarkScheme is a colors scheme for dark backgrounds
+var DarkScheme = "key=cyan+h,value,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
+
+// LightScheme is a color scheme for light backgrounds
+var LightScheme = "key=cyan+b,value,DBG,WRN=yellow+b,INF=green+b,ERR=red+b"
+
+func parseKVList(s, separator string) map[string]string {
+	pairs := strings.Split(s, separator)
+	if len(pairs) == 0 {
+		return nil
+	}
+	m := map[string]string{}
+	for _, pair := range pairs {
+		if pair == "" {
+			continue
+		}
+		parts := strings.Split(pair, "=")
+		lenParts := len(parts)
+		if lenParts == 1 {
+			m[parts[0]] = ""
+		} else if lenParts == 2 {
+			m[parts[0]] = parts[1]
+		}
+	}
+	return m
+}
+
+func parseTheme(theme string) *colorScheme {
+	m := parseKVList(theme, ",")
+	return &colorScheme{
+		Key:   ansi.ColorCode(m["key"]),
+		Value: ansi.ColorCode(m["value"]),
+		Debug: ansi.ColorCode(m["DBG"]),
+		Warn:  ansi.ColorCode(m["WRN"]),
+		Info:  ansi.ColorCode(m["INF"]),
+		Error: ansi.ColorCode(m["ERR"]),
+		Reset: ansi.ColorCode("reset"),
+	}
+}
+
+func keyColor(s string) string {
+	return theme.Key + s + theme.Reset
 }
 
 // DisableColors disables coloring of log entries.
@@ -65,7 +108,32 @@ type HappyDevFormatter struct {
 // and stack.
 func NewHappyDevFormatter(name string) *HappyDevFormatter {
 	var buildKV = func(level string) string {
-		return Separator + keyColor("n=") + name + Separator + keyColor("l=") + level + Separator + keyColor("m=")
+		var buf bytes.Buffer
+
+		buf.WriteString(Separator)
+		buf.WriteString(theme.Key)
+		buf.WriteString("n=")
+		buf.WriteString(theme.Reset)
+		buf.WriteString(name)
+
+		buf.WriteString(Separator)
+		buf.WriteString(theme.Key)
+		buf.WriteString("l=")
+		buf.WriteString(theme.Reset)
+		buf.WriteString(level)
+
+		buf.WriteString(Separator)
+		buf.WriteString(theme.Key)
+		buf.WriteString("n=")
+		buf.WriteString(theme.Reset)
+		buf.WriteString(level)
+
+		buf.WriteString(Separator)
+		buf.WriteString(theme.Key)
+		buf.WriteString("m=")
+		buf.WriteString(theme.Reset)
+
+		return buf.String()
 	}
 	itoaLevelMap := map[int]string{
 		LevelDebug: buildKV(LevelMap[LevelDebug]),
@@ -80,18 +148,18 @@ func NewHappyDevFormatter(name string) *HappyDevFormatter {
 func (tf *HappyDevFormatter) writeKey(buf *bytes.Buffer, key string) {
 	// assumes this is not the first key
 	buf.WriteString(Separator)
-	buf.WriteString(keyCode)
+	buf.WriteString(theme.Key)
 	buf.WriteString(key)
 	buf.WriteRune('=')
-	buf.WriteString(resetCode)
+	buf.WriteString(theme.Reset)
 }
 
 func (tf *HappyDevFormatter) writeError(buf *bytes.Buffer, err *errors.Error) {
-	buf.WriteString(errorCode)
+	buf.WriteString(theme.Error)
 	buf.WriteString(err.Error())
 	buf.WriteRune('\n')
 	buf.Write(err.Stack())
-	buf.WriteString(resetCode)
+	buf.WriteString(theme.Reset)
 }
 
 func (tf *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{}, colorCode string) {
@@ -108,7 +176,7 @@ func (tf *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{
 		fmt.Fprintf(buf, "%v", value)
 	}
 	if colorCode != "" {
-		buf.WriteString(resetCode)
+		buf.WriteString(theme.Reset)
 	}
 }
 
@@ -117,20 +185,20 @@ func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 	buf.WriteString(keyColor("t="))
 	buf.WriteString(time.Now().Format("2006-01-02T15:04:05.000000"))
 
-	tf.set(buf, "n", tf.name, plain)
+	tf.set(buf, "n", tf.name, theme.Value)
 
 	var colorCode string
 	var context string
 
 	switch level {
 	case LevelDebug:
-		colorCode = plain
+		colorCode = theme.Debug
 	case LevelInfo:
-		colorCode = infoCode
+		colorCode = theme.Info
 	case LevelWarn:
 		c := stack.Caller(2)
 		context = fmt.Sprintf("%+v", c)
-		colorCode = warnCode
+		colorCode = theme.Warn
 	default:
 		trace := stack.Trace().TrimRuntime()
 
@@ -155,7 +223,7 @@ func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		}
 
 		context = errbuf.String()
-		colorCode = errorCode
+		colorCode = theme.Error
 	}
 	tf.set(buf, "l", LevelMap[level], colorCode)
 	tf.set(buf, "m", msg, colorCode)
@@ -165,24 +233,22 @@ func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 
 	var lenArgs = len(args)
 	if lenArgs > 0 {
-		fmt.Printf("lenArgs %#v\n", args)
-
 		if lenArgs%2 == 0 {
 			for i := 0; i < lenArgs; i += 2 {
 				if key, ok := args[i].(string); ok {
-					tf.set(buf, key, args[i+1], plain)
+					tf.set(buf, key, args[i+1], theme.Value)
 				} else {
-					tf.set(buf, "BADKEY_NAME_"+strconv.Itoa(i+1), args[i], errorCode)
-					tf.set(buf, "BADKEY_VALUE_"+strconv.Itoa(i+1), args[i+1], errorCode)
+					tf.set(buf, "BADKEY_NAME_"+strconv.Itoa(i+1), args[i], theme.Error)
+					tf.set(buf, "BADKEY_VALUE_"+strconv.Itoa(i+1), args[i+1], theme.Error)
 				}
 			}
 		} else {
-			buf.WriteString(errorCode)
+			buf.WriteString(theme.Error)
 			buf.WriteString(Separator)
 			buf.WriteString("IMBALANCED_PAIRS=>")
-			buf.WriteString(warnCode)
+			buf.WriteString(theme.Warn)
 			fmt.Fprint(buf, args...)
-			buf.WriteString(resetCode)
+			buf.WriteString(theme.Reset)
 		}
 	}
 	buf.WriteRune('\n')

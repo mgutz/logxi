@@ -75,9 +75,8 @@ func TestEnvLOGXI_FORMAT(t *testing.T) {
 }
 
 func TestColors(t *testing.T) {
-	l := NewColorable("bench")
+	l := New("bench")
 	l.SetLevel(LevelDebug)
-	l.SetFormatter(NewHappyDevFormatter("bench"))
 	l.Debug("just another day", "key")
 	l.Debug("and another one", "key")
 	l.Info("something you should know")

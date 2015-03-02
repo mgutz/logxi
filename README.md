@@ -37,7 +37,10 @@ func main() {
 
     // create a logger for your package, assigning a unique
     // name which can be enabled from environment variables
-    logger = log.New(os.Stdout, "yourpkg")
+    logger = log.New("pkg")
+
+    // specify a writer
+    modelLogger = log.NewLogger(os.Stdout, "models")
 
     db, err := sql.Open("postgres", "dbname=testdb")
     if err != nil {
@@ -65,9 +68,9 @@ This logger package
 *   Is fast in production environment
 
     logxi encodes JSON 2X faster than logrus and log15 with primitive types.
-    When diagnosing a problem in production, troubleshooting usually means
-    enabling small trace data in `Debug` and `Info` statements for an
-    extended period of time.
+    When diagnosing a problem in production, troubleshooting often means
+    enabling small trace data in `Debug` and `Info` statements for some
+    period of time.
 
     ```
 # primitive types
@@ -139,16 +142,14 @@ log.Debug("inside Fn()", "key1", value1, "key2", value2)
 
     logxi logs `IMBALANCED_PAIRS=>` if key/value pairs are imbalanced
 
-*   Works on Windows
+*   Supports Color Schemes
 
-    If you want to support pretty colors on Windows and others, then create a
-    logger like this
+    `New` creates a logger that supports colors
 
-        logger := log.NewColorable("mylog")
+        logger := log.New("mylog")
 
-    Or
 
-        logger := log.New(log.GetColorableStdout(), "mylog")
+        LOGXI_COLORS="DBG=magenta" yourapp
 
 ## Configuration
 
@@ -184,6 +185,18 @@ variable. Valid values are `"text"` and `"JSON"`.
 
     # Use JSON in production
     LOGXI_FORMAT=JSON yourapp
+
+### Color Schemes
+
+The color scheme may be set with `LOGXI_COLORS` environment variable. For
+example, the default dark scheme is emulated like this
+
+    export LOGXI_COLORS=key=cyan+h,value,DBG,WRN=yellow+h,INF=green+h,ERR=red+h
+    yourapp
+
+See [ansi](http://github.com/mgutz/ansi) package for styling. An empty
+value, like "value" and "DBG" above means use default foreground and
+background on terminal.
 
 ## Extending
 
