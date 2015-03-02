@@ -94,14 +94,14 @@ func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args [
 			for i := 0; i < lenArgs; i += 2 {
 				if key, ok := args[i].(string); ok {
 					if key == "" {
-						// key is not a string, let the user know and adjust
+						// key is invalid. Let the user know and adjust
 						// for the first argument being the message
 						jf.set(buf, "BADKEY"+strconv.Itoa(i+1), args[i+1])
 					} else {
 						jf.set(buf, key, args[i+1])
 					}
 				} else {
-					// key is not a string, let the user know and adjust
+					// key is invalid. Let the user know and adjust
 					// for the first argument being the message
 					jf.set(buf, "BADKEY"+strconv.Itoa(i+1), args[i+1])
 				}

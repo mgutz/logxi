@@ -188,10 +188,10 @@ variable. Valid values are `"text"` and `"JSON"`.
 
 ### Color Schemes
 
-The color scheme may be set with `LOGXI_COLORS` environment variable. For
+The color scheme and time format may be set with `LOGXI_COLORS` environment variable. For
 example, the default dark scheme is emulated like this
 
-    export LOGXI_COLORS=key=cyan+h,value,DBG,WRN=yellow+h,INF=green+h,ERR=red+h
+    export LOGXI_COLORS=t=15:04:05.000000,key=cyan+h,value,misc=blue+h,DBG,WRN=yellow+h,INF=green+h,ERR=red+h
     yourapp
 
 See [ansi](http://github.com/mgutz/ansi) package for styling. An empty

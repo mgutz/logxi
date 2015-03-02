@@ -1,7 +1,6 @@
 package bench
 
 import (
-	"fmt"
 	L "log"
 	"os"
 	"testing"
@@ -127,12 +126,4 @@ func BenchmarkLog15Complex(b *testing.B) {
 		l.Error("error", "key", 1, "obj", testObject)
 	}
 	b.StopTimer()
-}
-
-func causeError() error {
-	return fmt.Errorf("here is an error")
-}
-
-func nestedError() error {
-	return causeError()
 }

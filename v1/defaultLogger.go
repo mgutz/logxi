@@ -2,7 +2,6 @@ package log
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 )
 
@@ -16,12 +15,9 @@ type DefaultLogger struct {
 
 // NewLogger creates a new default logger.
 func NewLogger(writer io.Writer, name string) Logger {
-
 	// if err is returned, then it means the log is disabled
 	level, err := getLogLevel(name)
 	if err != nil {
-		fmt.Printf("name %#v\n", name)
-
 		return NullLog
 	}
 

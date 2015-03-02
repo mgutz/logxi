@@ -89,7 +89,7 @@ func TestColors(t *testing.T) {
 
 func testResetEnv() {
 	os.Setenv("LOGXI", "")
-	os.Setenv("LOGXI_COLORS", "")
+	//os.Setenv("LOGXI_COLORS", "")
 	os.Setenv("LOGXI_FORMAT", "")
 	processEnv()
 }
@@ -136,4 +136,21 @@ func TestJSONNoArgs(t *testing.T) {
 	err := json.Unmarshal(buf.Bytes(), &obj)
 	assert.NoError(t, err)
 	assert.Equal(t, "hello", obj["m"].(string))
+}
+
+func TestJSONNested(t *testing.T) {
+	testResetEnv()
+	var buf bytes.Buffer
+	l := NewLogger(&buf, "bench")
+	l.SetLevel(LevelDebug)
+	l.SetFormatter(NewJSONFormatter("bench"))
+	l.Error("hello", "obj", map[string]string{"fruit": "apple"})
+
+	var obj map[string]interface{}
+	err := json.Unmarshal(buf.Bytes(), &obj)
+	assert.NoError(t, err)
+	assert.Equal(t, "hello", obj["m"].(string))
+	o := obj["obj"]
+	assert.Equal(t, "apple", o.(map[string]interface{})["fruit"].(string))
+
 }

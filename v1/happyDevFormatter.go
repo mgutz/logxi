@@ -17,8 +17,10 @@ import (
 
 // Theme defines a color theme for HappyDevFormatter
 type colorScheme struct {
-	Key   string
-	Value string
+	TimeFormat string
+	Key        string
+	Value      string
+	Misc       string
 
 	Debug string
 	Info  string
@@ -38,10 +40,7 @@ func processThemeEnv() {
 }
 
 // DarkScheme is a colors scheme for dark backgrounds
-var DarkScheme = "key=cyan+h,value,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
-
-// LightScheme is a color scheme for light backgrounds
-var LightScheme = "key=cyan+b,value,DBG,WRN=yellow+b,INF=green+b,ERR=red+b"
+var DarkScheme = "t=15:04:05.000000,key=cyan+h,value,misc=blue+h,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
 
 func parseKVList(s, separator string) map[string]string {
 	pairs := strings.Split(s, separator)
@@ -66,14 +65,27 @@ func parseKVList(s, separator string) map[string]string {
 
 func parseTheme(theme string) *colorScheme {
 	m := parseKVList(theme, ",")
+	var color = func(key string) string {
+		c := ansi.ColorCode(m[key])
+		if c == "" {
+			c = ansi.ColorCode("reset")
+		}
+		return c
+	}
+	timeFormat := m["t"]
+	if timeFormat == "" {
+		timeFormat = "15:04:05.000000"
+	}
 	return &colorScheme{
-		Key:   ansi.ColorCode(m["key"]),
-		Value: ansi.ColorCode(m["value"]),
-		Debug: ansi.ColorCode(m["DBG"]),
-		Warn:  ansi.ColorCode(m["WRN"]),
-		Info:  ansi.ColorCode(m["INF"]),
-		Error: ansi.ColorCode(m["ERR"]),
-		Reset: ansi.ColorCode("reset"),
+		TimeFormat: timeFormat,
+		Key:        color("key"),
+		Value:      color("value"),
+		Misc:       color("misc"),
+		Debug:      color("DBG"),
+		Warn:       color("WRN"),
+		Info:       color("INF"),
+		Error:      color("ERR"),
+		Reset:      color("reset"),
 	}
 }
 
@@ -96,58 +108,26 @@ func GetColorableStdout() io.Writer {
 	return os.Stdout
 }
 
-// HappyDevFormatter is the default recorder used if one is unspecified when
-// creating a new Logger.
+// HappyDevFormatter is the formatter used for terminals. It is
+// colorful, dev friendly and provides meaningful logs when
+// warnings and errors occur. DO NOT use in production
 type HappyDevFormatter struct {
-	name         string
-	itoaLevelMap map[int]string
+	name string
 }
 
 // NewHappyDevFormatter returns a new instance of HappyDevFormatter.
 // Performance isn't priority. It's more important developers see errors
 // and stack.
 func NewHappyDevFormatter(name string) *HappyDevFormatter {
-	var buildKV = func(level string) string {
-		var buf bytes.Buffer
-
-		buf.WriteString(Separator)
-		buf.WriteString(theme.Key)
-		buf.WriteString("n=")
-		buf.WriteString(theme.Reset)
-		buf.WriteString(name)
-
-		buf.WriteString(Separator)
-		buf.WriteString(theme.Key)
-		buf.WriteString("l=")
-		buf.WriteString(theme.Reset)
-		buf.WriteString(level)
-
-		buf.WriteString(Separator)
-		buf.WriteString(theme.Key)
-		buf.WriteString("n=")
-		buf.WriteString(theme.Reset)
-		buf.WriteString(level)
-
-		buf.WriteString(Separator)
-		buf.WriteString(theme.Key)
-		buf.WriteString("m=")
-		buf.WriteString(theme.Reset)
-
-		return buf.String()
-	}
-	itoaLevelMap := map[int]string{
-		LevelDebug: buildKV(LevelMap[LevelDebug]),
-		LevelWarn:  buildKV(LevelMap[LevelWarn]),
-		LevelInfo:  buildKV(LevelMap[LevelInfo]),
-		LevelError: buildKV(LevelMap[LevelError]),
-		LevelFatal: buildKV(LevelMap[LevelFatal]),
-	}
-	return &HappyDevFormatter{itoaLevelMap: itoaLevelMap, name: name}
+	return &HappyDevFormatter{name: name}
 }
 
 func (tf *HappyDevFormatter) writeKey(buf *bytes.Buffer, key string) {
 	// assumes this is not the first key
 	buf.WriteString(Separator)
+	if key == "" {
+		return
+	}
 	buf.WriteString(theme.Key)
 	buf.WriteString(key)
 	buf.WriteRune('=')
@@ -182,10 +162,11 @@ func (tf *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{
 
 // Format records a log entry.
 func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
-	buf.WriteString(keyColor("t="))
-	buf.WriteString(time.Now().Format("2006-01-02T15:04:05.000000"))
-
-	tf.set(buf, "n", tf.name, theme.Value)
+	//buf.WriteString(keyColor("t="))
+	//buf.WriteString(time.Now().Format("2006-01-02T15:04:05.000000"))
+	buf.WriteString(theme.Misc)
+	buf.WriteString(time.Now().Format(theme.TimeFormat))
+	buf.WriteString(theme.Reset)
 
 	var colorCode string
 	var context string
@@ -225,8 +206,12 @@ func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		context = errbuf.String()
 		colorCode = theme.Error
 	}
-	tf.set(buf, "l", LevelMap[level], colorCode)
-	tf.set(buf, "m", msg, colorCode)
+	// tf.set(buf, "l", LevelMap[level], colorCode)
+	// tf.set(buf, "n", tf.name, theme.Value)
+	// tf.set(buf, "m", msg, colorCode)
+	tf.set(buf, "", LevelMap[level], colorCode)
+	tf.set(buf, "", tf.name, theme.Misc)
+	tf.set(buf, "", msg, colorCode)
 	if context != "" {
 		tf.set(buf, "c", context, colorCode)
 	}
@@ -243,13 +228,14 @@ func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 				}
 			}
 		} else {
-			buf.WriteString(theme.Error)
+			buf.WriteString(theme.Key)
 			buf.WriteString(Separator)
-			buf.WriteString("IMBALANCED_PAIRS=>")
-			buf.WriteString(theme.Warn)
+			buf.WriteString("IMBALANCED_KEYS => ")
+			buf.WriteString(theme.Value)
 			fmt.Fprint(buf, args...)
 			buf.WriteString(theme.Reset)
 		}
 	}
 	buf.WriteRune('\n')
+	buf.WriteString(theme.Reset)
 }
