@@ -2,8 +2,9 @@ package log
 
 import (
 	"os"
-	"runtime"
 	"sync"
+
+	"github.com/mattn/go-isatty"
 )
 
 // DefaultLogLog is the default log for this package.
@@ -35,12 +36,12 @@ var logxiFormat string
 var isTTY bool
 
 func init() {
-	stat, _ := os.Stdin.Stat()
-	isTTY = (stat.Mode() & os.ModeCharDevice) != 0
-	disableColors = !isTTY || runtime.GOOS == "windows"
+	isTTY = isatty.IsTerminal(os.Stdout.Fd())
+	disableColors = !isTTY
+
 	processEnv()
-	DefaultLog = New(os.Stdout, "~")
-	internalLog = New(os.Stdout, "logxi")
+	DefaultLog = NewColorable("~")
+	internalLog = NewColorable("logxi")
 }
 
 func defaultFormatterFactory(name string, kind string) (Formatter, error) {

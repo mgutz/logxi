@@ -73,3 +73,14 @@ func TestEnvLOGXI_FORMAT(t *testing.T) {
 	processEnv()
 	assert.Equal(FormatText, logxiFormat, "Mismatches defaults to FormatText")
 }
+
+func TestColors(t *testing.T) {
+	l := NewColorable("bench")
+	l.SetLevel(LevelDebug)
+	l.SetFormatter(NewHappyDevFormatter("bench"))
+	l.Debug("just another day", "key")
+	l.Debug("and another one", "key")
+	l.Info("something you should know")
+	l.Warn("hmm didn't expect that")
+	l.Error("oh oh, you're in trouble", "key", 1)
+}

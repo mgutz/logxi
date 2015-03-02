@@ -130,17 +130,6 @@ func BenchmarkLog15Complex(b *testing.B) {
 
 }
 
-func TestColors(t *testing.T) {
-	l := log.New(os.Stdout, "bench")
-	l.SetLevel(log.LevelDebug)
-	l.SetFormatter(log.NewHappyDevFormatter("bench"))
-	l.Debug("just another day", "key", 1, "other", testObject)
-	l.Debug("and another one", "key")
-	l.Info("something you should know", "key", 1, "other", testObject)
-	l.Warn("hmm didn't expect that", "key", 1, "other", testObject)
-	l.Error("oh oh, you're in trouble", "key", 1, "other", testObject, "err", nestedError())
-}
-
 func causeError() error {
 	return fmt.Errorf("here is an error")
 }

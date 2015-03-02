@@ -3,31 +3,53 @@ package log
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/go-errors/errors"
+	"github.com/mattn/go-colorable"
 	"github.com/mgutz/ansi"
 	"gopkg.in/stack.v1"
 )
 
-var markerColor = ansi.ColorFunc("magenta")
-var keyColor = ansi.ColorFunc("cyan")
-var errorColor = ansi.ColorFunc("red")
-var infoCode = ansi.ColorCode("green")
-var warnCode = ansi.ColorCode("yellow")
-var errorCode = ansi.ColorCode("red")
-var keyCode = ansi.ColorCode("cyan")
-var resetCode = ansi.ColorCode("reset")
+var markerColor func(string) string
+var keyColor func(string) string
+var errorColor func(string) string
+var infoCode string
+var warnCode string
+var errorCode string
+var keyCode string
+var resetCode string
 var plain = ""
 
 func init() {
+
+	ansi.DisableColors(disableColors)
+	markerColor = ansi.ColorFunc("magenta")
+	keyColor = ansi.ColorFunc("cyan")
+	errorColor = ansi.ColorFunc("red")
+	infoCode = ansi.ColorCode("green")
+	warnCode = ansi.ColorCode("yellow")
+	errorCode = ansi.ColorCode("red")
+	keyCode = ansi.ColorCode("cyan")
+	resetCode = ansi.ColorCode("reset")
 	DisableColors(disableColors)
 }
 
 // DisableColors disables coloring of log entries.
 func DisableColors(val bool) {
 	disableColors = val
+}
+
+// GetColorableStdout() gets a writer that can be colored on Windows.
+// On other OS, os.Stdout is returned.
+func GetColorableStdout() io.Writer {
+	if isTTY && !disableColors {
+		return colorable.NewColorableStdout()
+	}
+	return os.Stdout
 }
 
 // HappyDevFormatter is the default recorder used if one is unspecified when

@@ -40,6 +40,11 @@ func New(writer io.Writer, name string) Logger {
 	return log
 }
 
+// NewColorable returns a colorable default logger.
+func NewColorable(name string) Logger {
+	return New(GetColorableStdout(), name)
+}
+
 // Debug logs a debug entry.
 func (l *DefaultLogger) Debug(msg string, args ...interface{}) {
 	if l.level <= LevelDebug {
