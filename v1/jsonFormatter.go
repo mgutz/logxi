@@ -50,6 +50,9 @@ func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
 	case reflect.Float64:
 		buf.WriteString(strconv.FormatFloat(value.Float(), 'g', -1, 64))
 
+	case reflect.String:
+		buf.WriteString(strconv.Quote(value.String()))
+
 	default:
 		b, err := json.Marshal(value.Interface())
 		if err != nil {
