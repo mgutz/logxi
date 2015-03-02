@@ -2,6 +2,7 @@ package log
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 )
 
@@ -13,12 +14,14 @@ type DefaultLogger struct {
 	formatter Formatter
 }
 
-// New creates a new default logger.
+// NewLogger creates a new default logger.
 func NewLogger(writer io.Writer, name string) Logger {
 
 	// if err is returned, then it means the log is disabled
 	level, err := getLogLevel(name)
 	if err != nil {
+		fmt.Printf("name %#v\n", name)
+
 		return NullLog
 	}
 
@@ -40,7 +43,7 @@ func NewLogger(writer io.Writer, name string) Logger {
 	return log
 }
 
-// NewColorable returns a colorable default logger.
+// New creates a colorable default logger.
 func New(name string) Logger {
 	return NewLogger(GetColorableStdout(), name)
 }

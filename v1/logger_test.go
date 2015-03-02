@@ -1,6 +1,8 @@
 package log
 
 import (
+	"bytes"
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -75,6 +77,7 @@ func TestEnvLOGXI_FORMAT(t *testing.T) {
 }
 
 func TestColors(t *testing.T) {
+	testResetEnv()
 	l := New("bench")
 	l.SetLevel(LevelDebug)
 	l.Debug("just another day", "key")
@@ -82,4 +85,55 @@ func TestColors(t *testing.T) {
 	l.Info("something you should know")
 	l.Warn("hmm didn't expect that")
 	l.Error("oh oh, you're in trouble", "key", 1)
+}
+
+func testResetEnv() {
+	os.Setenv("LOGXI", "")
+	os.Setenv("LOGXI_COLORS", "")
+	os.Setenv("LOGXI_FORMAT", "")
+	processEnv()
+}
+
+func TestJSON(t *testing.T) {
+	testResetEnv()
+	var buf bytes.Buffer
+	l := NewLogger(&buf, "bench")
+	l.SetLevel(LevelDebug)
+	l.SetFormatter(NewJSONFormatter("bench"))
+	l.Error("hello", "foo", "bar")
+
+	var obj map[string]interface{}
+	err := json.Unmarshal(buf.Bytes(), &obj)
+	assert.NoError(t, err)
+	assert.Equal(t, "bar", obj["foo"].(string))
+	assert.Equal(t, "hello", obj["m"].(string))
+}
+
+func TestJSONImbalanced(t *testing.T) {
+	testResetEnv()
+	var buf bytes.Buffer
+	l := NewLogger(&buf, "bench")
+	l.SetLevel(LevelDebug)
+	l.SetFormatter(NewJSONFormatter("bench"))
+	l.Error("hello", "foo")
+
+	var obj map[string]interface{}
+	err := json.Unmarshal(buf.Bytes(), &obj)
+	assert.NoError(t, err)
+	assert.Exactly(t, []interface{}{"foo"}, obj["IMBALANCED_PAIRS"])
+	assert.Equal(t, "hello", obj["m"].(string))
+}
+
+func TestJSONNoArgs(t *testing.T) {
+	testResetEnv()
+	var buf bytes.Buffer
+	l := NewLogger(&buf, "bench")
+	l.SetLevel(LevelDebug)
+	l.SetFormatter(NewJSONFormatter("bench"))
+	l.Error("hello")
+
+	var obj map[string]interface{}
+	err := json.Unmarshal(buf.Bytes(), &obj)
+	assert.NoError(t, err)
+	assert.Equal(t, "hello", obj["m"].(string))
 }
