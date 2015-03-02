@@ -1,7 +1,7 @@
 # logxi
 
-A [12 factor app](http://12factor.net/logs) logger built for performance
-and happy development.
+Log eleven is a [12 factor app](http://12factor.net/logs)-compliant logger
+built for performance and happy development.
 
 ### Installation
 
@@ -30,14 +30,14 @@ func main() {
         // use key-value pairs after message
         logger.Error("Could not open database", "err", err)
     }
-    
+
     if log.IsDebug() {
         logger.Debug("OK")
     }
 }
 ```
 
-Run your application with Debug enabled while developing 
+Run your application with Debug enabled while developing
 (otherwise only errors are logged)
 
     LOGXI=* go run main.go
@@ -122,13 +122,13 @@ log.Debug("inside Fn()", "key1", value1, "key2", value2)
 ```
 
     logxi logs `IMBALANCED_PAIRS=>` if key/value pairs are imbalanced
-    
+
 ## Configuration
 
 ### Enabling/Disabling Loggers
 
-By default logxi logs entries whose level is `LevelWarn` or above when 
-using a terminal. For non-terminals, entries with level `LevelError` and 
+By default logxi logs entries whose level is `LevelWarn` or above when
+using a terminal. For non-terminals, entries with level `LevelError` and
 above are logged.
 
 To quickly see all entries use short form
@@ -141,8 +141,8 @@ for granular control of levels
 
     # the above statement is equivalent to this
     LOGXI=*=DBG,foo=OFF yourapp
-    
-`DBG` should obviously not be used in production unless for 
+
+`DBG` should obviously not be used in production unless for
 troubleshooting. See `LevelAtoi` in `logger.go` for values.
 For example, there is a problem in the data access layer
 in production.

@@ -12,7 +12,7 @@ func TestEnvLOGXI(t *testing.T) {
 
 	os.Setenv("LOGXI", "")
 	processEnv()
-	assert.Equal(LevelWarn, logxiEnabledMap["*"], "Unset LOGXI defaults to *:DBG with TTY")
+	assert.Equal(LevelWarn, logxiNameLevelMap["*"], "Unset LOGXI defaults to *:WRN with TTY")
 
 	// default all to ERR
 	os.Setenv("LOGXI", "*=ERR")
