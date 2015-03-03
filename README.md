@@ -136,18 +136,18 @@ BenchmarkLog15Complex   20000     85782 ns/op   12277 B/op    294 allocs/op
     ```go
 log.Debug("inside Fn()", "key1", value1, "key2", value2)
 
-# as opposed to gobbledy gook
+// instead of carpal tunnel syndrome logging
 log.WithFields({logrus.Fields{"m":"mypkg", "key1": value1, "key2": value2}}).Debug("inside Fn()")
 ```
     logxi logs `FIX_IMBALANCED_PAIRS =>` if key-value pairs are imbalanced
 
 *   Supports Color Schemes
 
-`log.New` creates a logger that supports color schemes
+    `log.New` creates a logger that supports color schemes
 
         logger := log.New("mylog")
 
-To customize scheme
+    To customize scheme
 
         # emphasize errors with white text on red background
         LOGXI_COLORS="ERR=white:red" yourapp
