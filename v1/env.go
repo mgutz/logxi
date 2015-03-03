@@ -5,9 +5,26 @@ import (
 	"strings"
 )
 
-// ProcessEnv (re)processes environment. In the future this will
-// be used when getting updates from etcd or polling configuration file.
-func ProcessEnv() {
+// Configuration comes from environment or external services like
+// consul, etcd.
+type Configuration struct {
+	Format string `json:"format"`
+	Colors string `json:"colors"`
+	Levels string `json:"levels"`
+}
+
+func readFromEnviron() *Configuration {
+	conf := &Configuration{}
+	conf.Levels = os.Getenv("LOGXI")
+	conf.Format = os.Getenv("LOGXI_FORMAT")
+	conf.Colors = os.Getenv("LOGXI_COLORS")
+	return conf
+}
+
+// ProcessEnv (re)processes environment.
+func ProcessEnv(env *Configuration) {
+	// TODO: allow reading from etcd
+
 	if isTerminal {
 		defaultLogxiEnv = "*=WRN"
 		defaultFormat = FormatHappy
@@ -21,14 +38,14 @@ func ProcessEnv() {
 		disableColors = true
 	}
 
-	processLogEnv()
-	processThemeEnv()
-	processFormatEnv()
+	processLogEnv(env)
+	processThemeEnv(env)
+	processFormatEnv(env)
 }
 
 // processFormatEnv parses LOGXI_FORMAT
-func processFormatEnv() {
-	logxiFormat = os.Getenv("LOGXI_FORMAT")
+func processFormatEnv(env *Configuration) {
+	logxiFormat = env.Format
 	m := parseKVList(logxiFormat, ",")
 	formatterFormat := ""
 	tFormat := ""
@@ -40,8 +57,7 @@ func processFormatEnv() {
 			tFormat = value
 		}
 	}
-	allowed := "JSON text"
-	if formatterFormat == "" || !strings.Contains(allowed, logxiFormat) {
+	if formatterFormat == "" || formatterCreators[formatterFormat] == nil {
 		formatterFormat = defaultFormat
 	}
 	logxiFormat = formatterFormat
@@ -52,8 +68,8 @@ func processFormatEnv() {
 }
 
 // processLogEnv parses LOGXI variable
-func processLogEnv() {
-	logxiEnable := os.Getenv("LOGXI")
+func processLogEnv(env *Configuration) {
+	logxiEnable := env.Levels
 	if logxiEnable == "" {
 		logxiEnable = defaultLogxiEnv
 	}
@@ -115,4 +131,12 @@ func getLogLevel(name string) int {
 	}
 
 	return LevelOff
+}
+
+func processThemeEnv(env *Configuration) {
+	colors := env.Colors
+	if colors == "" {
+		colors = DefaultScheme
+	}
+	theme = parseTheme(colors)
 }

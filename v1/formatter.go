@@ -2,12 +2,6 @@ package log
 
 var formatterCreators = map[string]CreateFormatterFunc{}
 
-func init() {
-	RegisterFormatFactory(FormatHappy, formatFactory)
-	RegisterFormatFactory(FormatText, formatFactory)
-	RegisterFormatFactory(FormatJSON, formatFactory)
-}
-
 // CreateFormatterFunc is a function which creates a new instance
 // of a Formatter.
 type CreateFormatterFunc func(name, kind string) (Formatter, error)
@@ -57,6 +51,9 @@ func formatFactory(name string, kind string) (Formatter, error) {
 
 // RegisterFormatFactory registers a format factory function.
 func RegisterFormatFactory(kind string, fn CreateFormatterFunc) {
+	if kind == "" {
+		panic("kind is empty string")
+	}
 	if fn == nil {
 		panic("creator is nil")
 	}

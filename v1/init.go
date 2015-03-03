@@ -51,8 +51,10 @@ func init() {
 	internalLog = NewLogger(os.Stdout, "logxi")
 	internalLog.SetLevel(LevelError)
 	internalLog.SetFormatter(NewTextFormatter("logxi"))
-
 	isTerminal = isatty.IsTerminal(os.Stdout.Fd())
-	ProcessEnv()
+	RegisterFormatFactory(FormatHappy, formatFactory)
+	RegisterFormatFactory(FormatText, formatFactory)
+	RegisterFormatFactory(FormatJSON, formatFactory)
+	ProcessEnv(readFromEnviron())
 	DefaultLog = New("~")
 }

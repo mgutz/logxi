@@ -3,6 +3,7 @@ package log
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"reflect"
 	"strconv"
 	"time"
@@ -18,6 +19,8 @@ type JSONFormatter struct {
 func NewJSONFormatter(name string) *JSONFormatter {
 	return &JSONFormatter{name: name}
 }
+
+var errorType = reflect.TypeOf(errors.New(""))
 
 func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
 	if val == nil {
@@ -54,9 +57,14 @@ func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
 		buf.WriteString(strconv.Quote(value.String()))
 
 	default:
+		if err, ok := val.(error); ok {
+			buf.WriteString(strconv.Quote(err.Error()))
+			return
+		}
+
 		b, err := json.Marshal(value.Interface())
 		if err != nil {
-			buf.WriteString("Could not json encode value:")
+			buf.WriteString("Could not json.Marshal value: ")
 			buf.WriteString(err.Error())
 		}
 		buf.Write(b)

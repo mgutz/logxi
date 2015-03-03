@@ -30,14 +30,6 @@ type colorScheme struct {
 
 var theme *colorScheme
 
-func processThemeEnv() {
-	colors := os.Getenv("LOGXI_COLORS")
-	if colors == "" {
-		colors = DefaultScheme
-	}
-	theme = parseTheme(colors)
-}
-
 // DefaultScheme is a color scheme optimized for dark background
 // but works well with light backgrounds
 var DefaultScheme = "t=15:04:05.000000,key=cyan+h,value,misc=blue+h,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"

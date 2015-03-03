@@ -185,11 +185,13 @@ The format may be set via `LOGXI_FORMAT` environment
 variable. Valid values are `"happy", "text", "JSON"`
 
     # Use JSON in production with custom time
-	export LOGXI_FORMAT=JSON,t=2006-01-02T15:04:05.000000-0700
+	LOGXI_FORMAT=JSON,t=2006-01-02T15:04:05.000000-0700 yourapp
+    # Use fast text formatter
+    LOGXI_FORMAT=text yourapp
 
 ### Color Schemes
 
-The color scheme and time format may be set with `LOGXI_COLORS` environment variable. For
+The color scheme may be set with `LOGXI_COLORS` environment variable. For
 example, the default dark scheme is emulated like this
 
     export LOGXI_COLORS=key=cyan+h,value,misc=blue+h,DBG,WRN=yellow+h,INF=green+h,ERR=red+h

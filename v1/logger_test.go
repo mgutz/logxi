@@ -9,16 +9,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func processEnv() {
+	ProcessEnv(readFromEnviron())
+}
+
 func TestEnvLOGXI(t *testing.T) {
 	assert := assert.New(t)
 
 	os.Setenv("LOGXI", "")
-	ProcessEnv()
+	processEnv()
 	assert.Equal(LevelWarn, logxiNameLevelMap["*"], "Unset LOGXI defaults to *:WRN with TTY")
 
 	// default all to ERR
 	os.Setenv("LOGXI", "*=ERR")
-	ProcessEnv()
+	processEnv()
 	level := getLogLevel("mylog")
 	assert.Equal(LevelError, level)
 	level = getLogLevel("mylog2")
@@ -26,13 +30,13 @@ func TestEnvLOGXI(t *testing.T) {
 
 	// unrecognized defaults to LevelDebug on TTY
 	os.Setenv("LOGXI", "mylog=badlevel")
-	ProcessEnv()
+	processEnv()
 	level = getLogLevel("mylog")
 	assert.Equal(LevelWarn, level)
 
 	// wildcard should not override exact match
 	os.Setenv("LOGXI", "*=WRN,mylog=ERR,other=OFF")
-	ProcessEnv()
+	processEnv()
 	level = getLogLevel("mylog")
 	assert.Equal(LevelError, level)
 	level = getLogLevel("other")
@@ -40,17 +44,17 @@ func TestEnvLOGXI(t *testing.T) {
 
 	// wildcard pattern should match
 	os.Setenv("LOGXI", "*log=ERR")
-	ProcessEnv()
+	processEnv()
 	level = getLogLevel("mylog")
 	assert.Equal(LevelError, level, "wildcat prefix should match")
 
 	os.Setenv("LOGXI", "myx*=ERR")
-	ProcessEnv()
+	processEnv()
 	level = getLogLevel("mylog")
 	assert.Equal(LevelOff, level, "no match should return off")
 
 	os.Setenv("LOGXI", "myl*,-foo")
-	ProcessEnv()
+	processEnv()
 	level = getLogLevel("mylog")
 	assert.Equal(LevelDebug, level)
 	level = getLogLevel("foo")
@@ -63,22 +67,22 @@ func TestEnvLOGXI_FORMAT(t *testing.T) {
 
 	os.Setenv("LOGXI_FORMAT", "")
 	isTerminal = true
-	ProcessEnv()
+	processEnv()
 	assert.Equal(FormatHappy, logxiFormat, "terminal defaults to FormatHappy")
 	isTerminal = false
-	ProcessEnv()
+	processEnv()
 	assert.Equal(FormatText, logxiFormat, "non terminal defaults to FormatText")
 
 	os.Setenv("LOGXI_FORMAT", "JSON")
-	ProcessEnv()
+	processEnv()
 	assert.Equal(FormatJSON, logxiFormat)
 
 	os.Setenv("LOGXI_FORMAT", "json")
 	isTerminal = true
-	ProcessEnv()
+	processEnv()
 	assert.Equal(FormatHappy, logxiFormat, "Mismatches defaults to FormatHappy")
 	isTerminal = false
-	ProcessEnv()
+	processEnv()
 	assert.Equal(FormatText, logxiFormat, "Mismatches defaults to FormatText non terminal")
 
 	isTerminal = oldIsTerminal
@@ -99,7 +103,7 @@ func testResetEnv() {
 	os.Setenv("LOGXI", "")
 	//os.Setenv("LOGXI_COLORS", "")
 	os.Setenv("LOGXI_FORMAT", "")
-	ProcessEnv()
+	processEnv()
 }
 
 func TestJSON(t *testing.T) {
@@ -165,5 +169,5 @@ func TestJSONNested(t *testing.T) {
 func TestParseLogEnvError(t *testing.T) {
 	testResetEnv()
 	os.Setenv("LOGXI", "ERR=red")
-	processLogEnv()
+	processLogEnv(readFromEnviron())
 }

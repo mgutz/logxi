@@ -24,7 +24,7 @@ type TextFormatter struct {
 
 var maxTextFormatterArgs = 10
 var textFormatterKVFormat map[int]string
-var textFormatterFormat = Separator + "%s%s=%v"
+var textFormatterFormat = Separator + "%s=%v"
 
 func init() {
 	// caches the format string for key value pairs
