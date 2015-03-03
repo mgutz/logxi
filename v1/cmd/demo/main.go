@@ -9,7 +9,7 @@ import (
 var logger log.Logger
 
 func main() {
-	logger = log.New("logxi")
+	logger = log.New("mylogger")
 	logger.Debug("I'm debugging", "fruit", "apple", "balance", 42.0)
 	logger.Info("Psst. Can you keep a secret?")
 	logger.Warn("Hmm ...", "balance", 0.0)

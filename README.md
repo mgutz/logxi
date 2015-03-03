@@ -194,7 +194,12 @@ variable. Valid values are `"happy", "text", "JSON"`
 The color scheme may be set with `LOGXI_COLORS` environment variable. For
 example, the default dark scheme is emulated like this
 
+    # on non-Windows
     export LOGXI_COLORS=key=cyan+h,value,misc=blue+h,DBG,WRN=yellow+h,INF=green+h,ERR=red+h
+    yourapp
+
+    # on windows, stick to basic colors, styles liked bold, etc will not work
+    SET LOGXI_COLORS=key=cyan,value,misc=blue,DBG,WRN=yellow,INF=green,ERR=red
     yourapp
 
     # color only errors

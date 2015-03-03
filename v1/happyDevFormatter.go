@@ -3,14 +3,11 @@ package log
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-errors/errors"
-	"github.com/mattn/go-colorable"
 	"github.com/mgutz/ansi"
 	"gopkg.in/stack.v1"
 )
@@ -29,10 +26,6 @@ type colorScheme struct {
 }
 
 var theme *colorScheme
-
-// DefaultScheme is a color scheme optimized for dark background
-// but works well with light backgrounds
-var DefaultScheme = "t=15:04:05.000000,key=cyan+h,value,misc=blue+h,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
 
 func parseKVList(s, separator string) map[string]string {
 	pairs := strings.Split(s, separator)
@@ -58,13 +51,15 @@ func parseKVList(s, separator string) map[string]string {
 func parseTheme(theme string) *colorScheme {
 	m := parseKVList(theme, ",")
 	var color = func(key string) string {
-		c := ansi.ColorCode(m[key])
+		style := m[key]
+		c := ansi.ColorCode(style)
 		if c == "" {
 			c = ansi.ColorCode("reset")
 		}
+		//fmt.Printf("[%s] %s=%q\n", key, style, c)
 		return c
 	}
-	return &colorScheme{
+	result := &colorScheme{
 		Key:   color("key"),
 		Value: color("value"),
 		Misc:  color("misc"),
@@ -74,6 +69,7 @@ func parseTheme(theme string) *colorScheme {
 		Error: color("ERR"),
 		Reset: color("reset"),
 	}
+	return result
 }
 
 func keyColor(s string) string {
@@ -88,12 +84,14 @@ func DisableColors(val bool) {
 // GetColorableStdout gets a writer that can output colors
 // on Windows and non-Widows OS. If colors are disabled,
 // os.Stdout is returned.
-func GetColorableStdout() io.Writer {
-	if isTerminal && !disableColors {
-		return colorable.NewColorableStdout()
-	}
-	return os.Stdout
-}
+// func GetColorableStdout() io.Writer {
+// 	if isTerminal && !disableColors {
+// 		fmt.Println("returning Newcolorable")
+// 		return colorable.NewColorableStdout()
+// 	}
+// 	fmt.Println("returning stdout")
+// 	return os.Stdout
+// }
 
 // HappyDevFormatter is the formatter used for terminals. It is
 // colorful, dev friendly and provides meaningful logs when

@@ -25,19 +25,6 @@ func readFromEnviron() *Configuration {
 func ProcessEnv(env *Configuration) {
 	// TODO: allow reading from etcd
 
-	if isTerminal {
-		defaultLogxiEnv = "*=WRN"
-		defaultFormat = FormatHappy
-		defaultLevel = LevelWarn
-		defaultTimeFormat = "15:04:05.000000"
-	} else {
-		defaultLogxiEnv = "*=ERR"
-		defaultFormat = FormatText
-		defaultLevel = LevelError
-		defaultTimeFormat = "2006-01-02T15:04:05-0700"
-		disableColors = true
-	}
-
 	processLogEnv(env)
 	processThemeEnv(env)
 	processFormatEnv(env)
@@ -136,7 +123,7 @@ func getLogLevel(name string) int {
 func processThemeEnv(env *Configuration) {
 	colors := env.Colors
 	if colors == "" {
-		colors = DefaultScheme
+		colors = defaultScheme
 	}
 	theme = parseTheme(colors)
 }
