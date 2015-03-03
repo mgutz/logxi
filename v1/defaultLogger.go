@@ -16,8 +16,8 @@ type DefaultLogger struct {
 // NewLogger creates a new default logger.
 func NewLogger(writer io.Writer, name string) Logger {
 	// if err is returned, then it means the log is disabled
-	level, err := getLogLevel(name)
-	if err != nil {
+	level := getLogLevel(name)
+	if level == LevelOff {
 		return NullLog
 	}
 

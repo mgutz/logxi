@@ -74,7 +74,7 @@ func (jf *JSONFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
 // Format formats log entry as JSON.
 func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
 	buf.WriteString(`{"t":"`)
-	buf.WriteString(time.Now().Format("2006-01-02T15:04:05-0700"))
+	buf.WriteString(time.Now().Format(theme.TimeFormat))
 	buf.WriteRune('"')
 
 	buf.WriteString(`, "l":"`)
@@ -107,7 +107,7 @@ func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args [
 				}
 			}
 		} else {
-			jf.set(buf, "IMBALANCED_PAIRS", args)
+			jf.set(buf, warnImbalancedKey, args)
 		}
 	}
 	buf.WriteString("}\n")

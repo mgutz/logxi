@@ -24,16 +24,15 @@ type TextFormatter struct {
 
 var maxTextFormatterArgs = 10
 var textFormatterKVFormat map[int]string
+var textFormatterFormat = Separator + "%s%s=%v"
 
 func init() {
-	// builds the format string for key value pairs up to
-	// an arbitrary amount
-	formatCode := Separator + "%s=%v"
-	format := formatCode
+	// caches the format string for key value pairs
+	format := textFormatterFormat
 	textFormatterKVFormat = map[int]string{}
 	for i := 2; i < maxTextFormatterArgs; i += 2 {
 		textFormatterKVFormat[i] = format
-		format += formatCode
+		format += textFormatterFormat
 	}
 }
 
@@ -41,7 +40,19 @@ func init() {
 // must be called befored using it.
 func NewTextFormatter(name string) *TextFormatter {
 	var buildKV = func(level string) string {
-		return Separator + "n=" + name + Separator + "l=" + level + Separator + "m="
+		var buf bytes.Buffer
+		buf.WriteString(Separator)
+		buf.WriteString("n=")
+		buf.WriteString(name)
+
+		buf.WriteString(Separator)
+		buf.WriteString("l=")
+		buf.WriteString(level)
+
+		buf.WriteString(Separator)
+		buf.WriteString("m=")
+
+		return buf.String()
 	}
 	itoaLevelMap := map[int]string{
 		LevelDebug: buildKV(LevelMap[LevelDebug]),
@@ -55,21 +66,23 @@ func NewTextFormatter(name string) *TextFormatter {
 
 // Format records a log entry.
 func (tf *TextFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
-	buf.WriteString(time.Now().Format("t=2006-01-02T15:04:05-0700"))
+	buf.WriteString("t=")
+	buf.WriteString(time.Now().Format(theme.TimeFormat))
 	buf.WriteString(tf.itoaLevelMap[level])
 	buf.WriteString(msg)
 	var lenArgs = len(args)
 	if lenArgs > 0 {
 		if lenArgs%2 == 0 {
-			if lenArgs < maxTextFormatterArgs {
-				fmt.Fprintf(buf, textFormatterKVFormat[lenArgs], args...)
-			} else {
-				for i := 0; i < lenArgs; i += 2 {
-					fmt.Fprintf(buf, "%s%s=%v", Separator, args[i], args[i+1])
+			// prints up to maxTextFormattersArgs
+			fmt.Fprintf(buf, textFormatterKVFormat[lenArgs], args...)
+			// prints rest
+			if lenArgs >= maxTextFormatterArgs {
+				for i := maxTextFormatterArgs; i < lenArgs; i += 2 {
+					fmt.Fprintf(buf, textFormatterFormat, args[i], args[i+1])
 				}
 			}
 		} else {
-			buf.WriteString("IMBALANCED_PAIRS=>")
+			buf.WriteString("IMBALANCED_KV_ARGS =>")
 			fmt.Fprint(buf, args...)
 		}
 	}

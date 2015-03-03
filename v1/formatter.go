@@ -3,6 +3,7 @@ package log
 var formatterCreators = map[string]CreateFormatterFunc{}
 
 func init() {
+	RegisterFormatFactory(FormatHappy, formatFactory)
 	RegisterFormatFactory(FormatText, formatFactory)
 	RegisterFormatFactory(FormatJSON, formatFactory)
 }
@@ -43,11 +44,11 @@ func formatFactory(name string, kind string) (Formatter, error) {
 	var err error
 	switch kind {
 	default:
-		if disableColors {
-			formatter = NewTextFormatter(name)
-			break
-		}
+		formatter = NewTextFormatter(name)
+	case FormatHappy:
 		formatter = NewHappyDevFormatter(name)
+	case FormatText:
+		formatter = NewTextFormatter(name)
 	case FormatJSON:
 		formatter = NewJSONFormatter(name)
 	}

@@ -13,67 +13,75 @@ func TestEnvLOGXI(t *testing.T) {
 	assert := assert.New(t)
 
 	os.Setenv("LOGXI", "")
-	processEnv()
+	ProcessEnv()
 	assert.Equal(LevelWarn, logxiNameLevelMap["*"], "Unset LOGXI defaults to *:WRN with TTY")
 
 	// default all to ERR
 	os.Setenv("LOGXI", "*=ERR")
-	processEnv()
-	level, err := getLogLevel("mylog")
-	assert.NoError(err)
+	ProcessEnv()
+	level := getLogLevel("mylog")
 	assert.Equal(LevelError, level)
-	level, err = getLogLevel("mylog2")
-	assert.NoError(err)
+	level = getLogLevel("mylog2")
 	assert.Equal(LevelError, level)
 
 	// unrecognized defaults to LevelDebug on TTY
 	os.Setenv("LOGXI", "mylog=badlevel")
-	processEnv()
-	level, err = getLogLevel("mylog")
+	ProcessEnv()
+	level = getLogLevel("mylog")
 	assert.Equal(LevelWarn, level)
 
 	// wildcard should not override exact match
 	os.Setenv("LOGXI", "*=WRN,mylog=ERR,other=OFF")
-	processEnv()
-	level, err = getLogLevel("mylog")
+	ProcessEnv()
+	level = getLogLevel("mylog")
 	assert.Equal(LevelError, level)
-	level, err = getLogLevel("other")
-	assert.Error(err, "OFF should return error")
+	level = getLogLevel("other")
+	assert.Equal(LevelOff, level)
 
 	// wildcard pattern should match
 	os.Setenv("LOGXI", "*log=ERR")
-	processEnv()
-	level, err = getLogLevel("mylog")
+	ProcessEnv()
+	level = getLogLevel("mylog")
 	assert.Equal(LevelError, level, "wildcat prefix should match")
 
 	os.Setenv("LOGXI", "myx*=ERR")
-	processEnv()
-	level, err = getLogLevel("mylog")
-	assert.Error(err, "no match should return error")
+	ProcessEnv()
+	level = getLogLevel("mylog")
+	assert.Equal(LevelOff, level, "no match should return off")
 
 	os.Setenv("LOGXI", "myl*,-foo")
-	processEnv()
-	level, err = getLogLevel("mylog")
-	assert.NoError(err)
+	ProcessEnv()
+	level = getLogLevel("mylog")
 	assert.Equal(LevelDebug, level)
-	level, err = getLogLevel("foo")
-	assert.Error(err)
+	level = getLogLevel("foo")
+	assert.Equal(LevelOff, level)
 }
 
 func TestEnvLOGXI_FORMAT(t *testing.T) {
 	assert := assert.New(t)
+	oldIsTerminal := isTerminal
 
 	os.Setenv("LOGXI_FORMAT", "")
-	processEnv()
-	assert.Equal(FormatText, logxiFormat, "TTY defaults to FormatText")
+	isTerminal = true
+	ProcessEnv()
+	assert.Equal(FormatHappy, logxiFormat, "terminal defaults to FormatHappy")
+	isTerminal = false
+	ProcessEnv()
+	assert.Equal(FormatText, logxiFormat, "non terminal defaults to FormatText")
 
 	os.Setenv("LOGXI_FORMAT", "JSON")
-	processEnv()
+	ProcessEnv()
 	assert.Equal(FormatJSON, logxiFormat)
 
 	os.Setenv("LOGXI_FORMAT", "json")
-	processEnv()
-	assert.Equal(FormatText, logxiFormat, "Mismatches defaults to FormatText")
+	isTerminal = true
+	ProcessEnv()
+	assert.Equal(FormatHappy, logxiFormat, "Mismatches defaults to FormatHappy")
+	isTerminal = false
+	ProcessEnv()
+	assert.Equal(FormatText, logxiFormat, "Mismatches defaults to FormatText non terminal")
+
+	isTerminal = oldIsTerminal
 }
 
 func TestColors(t *testing.T) {
@@ -91,7 +99,7 @@ func testResetEnv() {
 	os.Setenv("LOGXI", "")
 	//os.Setenv("LOGXI_COLORS", "")
 	os.Setenv("LOGXI_FORMAT", "")
-	processEnv()
+	ProcessEnv()
 }
 
 func TestJSON(t *testing.T) {
@@ -120,7 +128,7 @@ func TestJSONImbalanced(t *testing.T) {
 	var obj map[string]interface{}
 	err := json.Unmarshal(buf.Bytes(), &obj)
 	assert.NoError(t, err)
-	assert.Exactly(t, []interface{}{"foo"}, obj["IMBALANCED_PAIRS"])
+	assert.Exactly(t, []interface{}{"foo"}, obj[warnImbalancedKey])
 	assert.Equal(t, "hello", obj["m"].(string))
 }
 
@@ -152,5 +160,10 @@ func TestJSONNested(t *testing.T) {
 	assert.Equal(t, "hello", obj["m"].(string))
 	o := obj["obj"]
 	assert.Equal(t, "apple", o.(map[string]interface{})["fruit"].(string))
+}
 
+func TestParseLogEnvError(t *testing.T) {
+	testResetEnv()
+	os.Setenv("LOGXI", "ERR=red")
+	processLogEnv()
 }

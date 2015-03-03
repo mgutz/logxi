@@ -29,8 +29,8 @@ func tasks(p *Project) {
 		Run("go get gopkg.in/inconshreveable/log15.v2")
 	})
 
-	p.Task("app", func() {
-		Run("LOGXI=* go run main.go", M{"$in": "v1/app"})
+	p.Task("demo", func() {
+		Run("LOGXI=* go run main.go", M{"$in": "v1/cmd/demo"})
 	})
 }
 

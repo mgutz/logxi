@@ -34,13 +34,14 @@ var theme *colorScheme
 func processThemeEnv() {
 	colors := os.Getenv("LOGXI_COLORS")
 	if colors == "" {
-		colors = DarkScheme
+		colors = DefaultScheme
 	}
 	theme = parseTheme(colors)
 }
 
-// DarkScheme is a colors scheme for dark backgrounds
-var DarkScheme = "t=15:04:05.000000,key=cyan+h,value,misc=blue+h,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
+// DefaultScheme is a color scheme optimized for dark background
+// but works well with light backgrounds
+var DefaultScheme = "t=15:04:05.000000,key=cyan+h,value,misc=blue+h,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
 
 func parseKVList(s, separator string) map[string]string {
 	pairs := strings.Split(s, separator)
@@ -53,10 +54,10 @@ func parseKVList(s, separator string) map[string]string {
 			continue
 		}
 		parts := strings.Split(pair, "=")
-		lenParts := len(parts)
-		if lenParts == 1 {
+		switch len(parts) {
+		case 1:
 			m[parts[0]] = ""
-		} else if lenParts == 2 {
+		case 2:
 			m[parts[0]] = parts[1]
 		}
 	}
@@ -74,7 +75,7 @@ func parseTheme(theme string) *colorScheme {
 	}
 	timeFormat := m["t"]
 	if timeFormat == "" {
-		timeFormat = "15:04:05.000000"
+		timeFormat = defaultTimeFormat
 	}
 	return &colorScheme{
 		TimeFormat: timeFormat,
@@ -102,7 +103,7 @@ func DisableColors(val bool) {
 // on Windows and non-Widows OS. If colors are disabled,
 // os.Stdout is returned.
 func GetColorableStdout() io.Writer {
-	if isTTY && !disableColors {
+	if isTerminal && !disableColors {
 		return colorable.NewColorableStdout()
 	}
 	return os.Stdout
@@ -162,8 +163,6 @@ func (tf *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{
 
 // Format records a log entry.
 func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
-	//buf.WriteString(keyColor("t="))
-	//buf.WriteString(time.Now().Format("2006-01-02T15:04:05.000000"))
 	buf.WriteString(theme.Misc)
 	buf.WriteString(time.Now().Format(theme.TimeFormat))
 	buf.WriteString(theme.Reset)
@@ -212,9 +211,6 @@ func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 	tf.set(buf, "", LevelMap[level], colorCode)
 	tf.set(buf, "", tf.name, theme.Misc)
 	tf.set(buf, "", msg, colorCode)
-	if context != "" {
-		tf.set(buf, "c", context, colorCode)
-	}
 
 	var lenArgs = len(args)
 	if lenArgs > 0 {
@@ -228,13 +224,16 @@ func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 				}
 			}
 		} else {
-			buf.WriteString(theme.Key)
 			buf.WriteString(Separator)
-			buf.WriteString("IMBALANCED_KEYS => ")
+			buf.WriteString(theme.Error)
+			buf.WriteString(warnImbalancedPairs)
 			buf.WriteString(theme.Value)
 			fmt.Fprint(buf, args...)
 			buf.WriteString(theme.Reset)
 		}
+	}
+	if context != "" {
+		tf.set(buf, "@", context, colorCode)
 	}
 	buf.WriteRune('\n')
 	buf.WriteString(theme.Reset)

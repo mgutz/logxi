@@ -1,21 +1,20 @@
 # logxi
 
-Log Eleven (XI) is a [12 factor app](http://12factor.net/logs)-compliant
+Log Eleven (XI) is a [12 factor app](http://12factor.net/logs)
 logger built for performance and happy development.
 
 TL;DR
 
-*   Faster and less memory allocations than logrus and log15.
-*   Enforces key-value pairs logging instead of `Printf` or maps.
-*   Logs and their level are configurable via environment variables.
-*   JSON formatter or very efficient key-value text formatter for production.
+*   Faster and less allocations than logrus and log15
+*   Enforces key-value pair logging
+*   Loggers and their level are configurable via environment variables
+*   JSON formatter or very efficient key-value text formatter for production
 *   Happy, colorful, developer friendly logger in terminal. Warnings
     and errors are emphasized with their call stack.
-*   Defines a simple interface for logging, so it can be replaced easily.
+*   Defines a simple interface for logging
 *   Colored logging works on Windows
-*   Leveled logging.
-*   Named loggers.
-*   Has level guards to minimize argument costs.
+*   Loggers are named
+*   Has level guards to avoid cost of passing arguments
 
 ### Installation
 
@@ -44,20 +43,19 @@ func main() {
 
     db, err := sql.Open("postgres", "dbname=testdb")
     if err != nil {
-        // use key-value pairs after message
-        logger.Error("Could not open database", "err", err)
+        modelLogger.Error("Could not open database", "err", err)
     }
 
     a := "apple"
     o := "orange"
     if log.IsDebug() {
+        // use key-value pairs after message
         logger.Debug("OK", "a", a, "o", o)
     }
 }
 ```
 
-Run your application with Debug enabled while developing
-(otherwise only errors are logged)
+logxi defaults to showing warnings and above. To view all logs
 
     LOGXI=* go run main.go
 
@@ -67,6 +65,7 @@ This logger package
 
 *   Is fast in production environment
 
+    A logger should be efficient and minimize performance tax.
     logxi encodes JSON 2X faster than logrus and log15 with primitive types.
     When diagnosing a problem in production, troubleshooting often means
     enabling small trace data in `Debug` and `Info` statements for some
@@ -84,21 +83,20 @@ BenchmarkLogrusComplex  20000     61914 ns/op   10889 B/op    257 allocs/op
 BenchmarkLog15Complex   20000     85782 ns/op   12277 B/op    294 allocs/op
 ```
 
-*   Logs machine parsable output in production environments.
-    The recommended formatter for production is `JSONFormatter`.
-
-    `TextFormatter` may also be used if you don't care about
-    JSON and want the fastest logs with key, value pairs.
-
 *   Is developer friendly in development environments. The default
     formatter in terminals is colorful, prints file and line numbers
     when warnings and errors occur.
 
-    The default formatter in TTY mode is `HappyDevFormatter`. It  is
-    not concerned with performance and should never be used
-    in production environments.
+    `HappyDevFormatter` is not too concerned with performance
+    and should never be used in production environments.
 
-*   Has level guards to avoid the cost of arguments. These _SHOULD_
+*   Logs machine parsable output in production environments.
+    The recommended formatter for production is `JSONFormatter`.
+
+    `TextFormatter` may also be used which is MUCH faster than
+    JSON but requires a unique separator.
+
+*   Has level guards to avoid the cost of passing arguments. These _SHOULD_
     always be used.
 
         if log.IsDebug() {
@@ -133,23 +131,26 @@ BenchmarkLog15Complex   20000     85782 ns/op   12277 B/op    294 allocs/op
             // Error, Fatal have no guards, they SHOULD always log
         }
 
-*   Standardizes on key, value pairs for machine parsing instead
-    of `map` and `fmt.Printf`.
+*   Standardizes on key-value pair argument sequence for machine parsing
 
     ```go
 log.Debug("inside Fn()", "key1", value1, "key2", value2)
-```
 
-    logxi logs `IMBALANCED_PAIRS=>` if key/value pairs are imbalanced
+# as opposed to gobbledy gook
+log.WithFields({logrus.Fields{"m":"mypkg", "key1": value1, "key2": value2}}).Debug("inside Fn()")
+```
+    logxi logs `FIX_IMBALANCED_PAIRS =>` if key-value pairs are imbalanced
 
 *   Supports Color Schemes
 
-    `New` creates a logger that supports colors
+`log.New` creates a logger that supports color schemes
 
         logger := log.New("mylog")
 
+To customize scheme
 
-        LOGXI_COLORS="DBG=magenta" yourapp
+        # emphasize errors with white text on red background
+        LOGXI_COLORS="ERR=white:red" yourapp
 
 ## Configuration
 
@@ -193,6 +194,9 @@ example, the default dark scheme is emulated like this
 
     export LOGXI_COLORS=t=15:04:05.000000,key=cyan+h,value,misc=blue+h,DBG,WRN=yellow+h,INF=green+h,ERR=red+h
     yourapp
+
+    # color only errors
+    LOGXI_COLORS=ERR=red yourapp
 
 See [ansi](http://github.com/mgutz/ansi) package for styling. An empty
 value, like "value" and "DBG" above means use default foreground and

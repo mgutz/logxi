@@ -1,12 +1,26 @@
 package log
 
 import (
-	"fmt"
 	"os"
 	"strings"
 )
 
-func processEnv() {
+// ProcessEnv (re)processes environment. In the future this will
+// be used when getting updates from etcd or polling configuration file.
+func ProcessEnv() {
+	if isTerminal {
+		defaultLogxiEnv = "*=WRN"
+		defaultFormat = FormatHappy
+		defaultLevel = LevelWarn
+		defaultTimeFormat = "15:04:05.000000"
+	} else {
+		defaultLogxiEnv = "*=ERR"
+		defaultFormat = FormatText
+		defaultLevel = LevelError
+		defaultTimeFormat = "2006-01-02T15:04:05-0700"
+		disableColors = true
+	}
+
 	processLogEnv()
 	processThemeEnv()
 	processFormatEnv()
@@ -17,11 +31,7 @@ func processFormatEnv() {
 	logxiFormat = os.Getenv("LOGXI_FORMAT")
 	allowed := "JSON text"
 	if logxiFormat == "" || !strings.Contains(allowed, logxiFormat) {
-		if isTTY {
-			logxiFormat = FormatText
-		} else {
-			logxiFormat = FormatJSON
-		}
+		logxiFormat = defaultFormat
 	}
 }
 
@@ -29,50 +39,38 @@ func processFormatEnv() {
 func processLogEnv() {
 	logxiEnable := os.Getenv("LOGXI")
 	if logxiEnable == "" {
-		if isTTY {
-			logxiEnable = "*=WRN"
-		} else {
-			logxiEnable = "*=ERR"
-		}
+		logxiEnable = defaultLogxiEnv
 	}
 
 	logxiNameLevelMap = map[string]int{}
-	pairs := strings.Split(logxiEnable, ",")
-	for _, pair := range pairs {
-		kv := strings.Split(pair, "=")
+	m := parseKVList(logxiEnable, ",")
+	if m == nil {
+		logxiNameLevelMap["*"] = defaultLevel
+	}
+	for key, value := range m {
 		// * => defaults to DBG because if someone took the time to
 		// enable it ad-hoc, it probably means they are debugging
-		if len(kv) == 1 {
-			key := kv[0]
-			if strings.HasPrefix(key, "-") {
-				logxiNameLevelMap[key[1:]] = LevelOff
-			} else {
-				logxiNameLevelMap[key] = LevelDebug
-			}
-		} else if len(kv) == 2 {
-			key := kv[0]
-			level := 0
-			if strings.HasPrefix(key, "-") {
-				key = key[1:]
-				level = LevelOff
-			} else {
-				level = LevelAtoi[kv[1]]
-				if level == 0 {
-					internalLog.Error("Unknown level in LOGXI environment variable", "level", kv[1])
-					if isTTY {
-						level = LevelWarn
-					} else {
-						level = LevelError
-					}
-				}
-			}
-			logxiNameLevelMap[key] = level
+		if strings.HasPrefix(key, "-") {
+			logxiNameLevelMap[key[1:]] = LevelOff
+			delete(logxiNameLevelMap, key)
+			key = key[1:]
+			continue
+		} else if value == "" {
+			logxiNameLevelMap[key] = LevelDebug
+			continue
 		}
+
+		level := LevelAtoi[value]
+		if level == 0 {
+			internalLog.Error("Unknown level in LOGXI environment variable", "key", key, "level", level)
+			level = defaultLevel
+		}
+		logxiNameLevelMap[key] = level
 	}
 
 }
 
-func getLogLevel(name string) (int, error) {
+func getLogLevel(name string) int {
 	var wildcardLevel int
 	var result int
 
@@ -89,16 +87,16 @@ func getLogLevel(name string) (int, error) {
 	}
 
 	if result == LevelOff {
-		return LevelOff, fmt.Errorf("is not enabled")
+		return LevelOff
 	}
 
 	if result > 0 {
-		return result, nil
+		return result
 	}
 
 	if wildcardLevel > 0 {
-		return wildcardLevel, nil
+		return wildcardLevel
 	}
 
-	return LevelOff, fmt.Errorf("is not enabled")
+	return LevelOff
 }

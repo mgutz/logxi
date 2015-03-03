@@ -21,6 +21,9 @@ const (
 	LevelOff
 )
 
+// FormatHappy uses HappyDevFormatter
+const FormatHappy = "happy"
+
 // FormatText uses TextFormatter
 const FormatText = "text"
 
