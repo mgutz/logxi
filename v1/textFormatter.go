@@ -67,7 +67,7 @@ func NewTextFormatter(name string) *TextFormatter {
 // Format records a log entry.
 func (tf *TextFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
 	buf.WriteString("t=")
-	buf.WriteString(time.Now().Format(theme.TimeFormat))
+	buf.WriteString(time.Now().Format(timeFormat))
 	buf.WriteString(tf.itoaLevelMap[level])
 	buf.WriteString(msg)
 	var lenArgs = len(args)

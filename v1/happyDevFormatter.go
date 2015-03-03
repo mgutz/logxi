@@ -17,10 +17,9 @@ import (
 
 // Theme defines a color theme for HappyDevFormatter
 type colorScheme struct {
-	TimeFormat string
-	Key        string
-	Value      string
-	Misc       string
+	Key   string
+	Value string
+	Misc  string
 
 	Debug string
 	Info  string
@@ -73,20 +72,15 @@ func parseTheme(theme string) *colorScheme {
 		}
 		return c
 	}
-	timeFormat := m["t"]
-	if timeFormat == "" {
-		timeFormat = defaultTimeFormat
-	}
 	return &colorScheme{
-		TimeFormat: timeFormat,
-		Key:        color("key"),
-		Value:      color("value"),
-		Misc:       color("misc"),
-		Debug:      color("DBG"),
-		Warn:       color("WRN"),
-		Info:       color("INF"),
-		Error:      color("ERR"),
-		Reset:      color("reset"),
+		Key:   color("key"),
+		Value: color("value"),
+		Misc:  color("misc"),
+		Debug: color("DBG"),
+		Warn:  color("WRN"),
+		Info:  color("INF"),
+		Error: color("ERR"),
+		Reset: color("reset"),
 	}
 }
 
@@ -164,7 +158,7 @@ func (tf *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{
 // Format records a log entry.
 func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
 	buf.WriteString(theme.Misc)
-	buf.WriteString(time.Now().Format(theme.TimeFormat))
+	buf.WriteString(time.Now().Format(timeFormat))
 	buf.WriteString(theme.Reset)
 
 	var colorCode string

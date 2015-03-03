@@ -44,6 +44,7 @@ var defaultFormat string
 var defaultLevel int
 var defaultLogxiEnv string
 var defaultTimeFormat string
+var timeFormat string
 
 func init() {
 	// the internal log must always work and not be colored

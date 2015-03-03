@@ -29,10 +29,26 @@ func ProcessEnv() {
 // processFormatEnv parses LOGXI_FORMAT
 func processFormatEnv() {
 	logxiFormat = os.Getenv("LOGXI_FORMAT")
-	allowed := "JSON text"
-	if logxiFormat == "" || !strings.Contains(allowed, logxiFormat) {
-		logxiFormat = defaultFormat
+	m := parseKVList(logxiFormat, ",")
+	formatterFormat := ""
+	tFormat := ""
+	for key, value := range m {
+		switch key {
+		default:
+			formatterFormat = key
+		case "t":
+			tFormat = value
+		}
 	}
+	allowed := "JSON text"
+	if formatterFormat == "" || !strings.Contains(allowed, logxiFormat) {
+		formatterFormat = defaultFormat
+	}
+	logxiFormat = formatterFormat
+	if tFormat == "" {
+		tFormat = defaultTimeFormat
+	}
+	timeFormat = tFormat
 }
 
 // processLogEnv parses LOGXI variable

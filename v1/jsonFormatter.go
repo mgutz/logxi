@@ -74,7 +74,7 @@ func (jf *JSONFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
 // Format formats log entry as JSON.
 func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
 	buf.WriteString(`{"t":"`)
-	buf.WriteString(time.Now().Format(theme.TimeFormat))
+	buf.WriteString(time.Now().Format(timeFormat))
 	buf.WriteRune('"')
 
 	buf.WriteString(`, "l":"`)
