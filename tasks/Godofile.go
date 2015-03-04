@@ -12,6 +12,7 @@ func tasks(p *Project) {
 	p.Task("demo", func() {
 		Bash(`
 clear
+echo
 echo github.com/mgutz/logxi
 echo
 echo demo built with godo and LICEcap
@@ -30,14 +31,14 @@ read ok
 			},
 			pair{
 				`show all levels`,
-				`LOGXI_FORMAT=* demo`,
+				`LOGXI=* demo`,
 			},
 			pair{
 				`show all "models" logs and only ERR for others`,
 				`LOGXI=models,*=ERR demo`,
 			},
 			pair{
-				`custom color scheme`,
+				`custom color scheme, put in your bashrc/zshrc`,
 				`LOGXI_COLORS=ERR=red,key=magenta,misc=white demo`,
 			},
 			pair{
@@ -50,7 +51,7 @@ read ok
 			},
 			pair{
 				`set custom time format`,
-				`LOGXI_FORMAT=t=04:05.000000 demo`,
+				`LOGXI_FORMAT=t=04:05.000 demo`,
 			},
 		}
 
@@ -62,7 +63,7 @@ echo
 arg="# {{.description}}"
 for (( i=0; i < ${#arg}; i+=1 )) ; do
 	echo -n "${arg:$i:1}"
-	sleep 0.1
+	sleep 0.05
 done
 sleep 0.1
 echo
@@ -72,9 +73,9 @@ sleep 0.2
 arg="{{.command}}"
 for (( i=0; i < ${#arg}; i+=1 )) ; do
 	echo -n "${arg:$i:1}"
-	sleep 0.1
+	sleep 0.05
 done
-sleep 0.1
+sleep 0.2
 echo
 echo
 
