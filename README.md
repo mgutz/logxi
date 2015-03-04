@@ -1,3 +1,6 @@
+
+![demo](https://github.com/mgutz/logxi/raw/master/images/demo.gif)
+
 # logxi
 
 Log Eleven (XI) is a [12 factor app](http://12factor.net/logs)
@@ -188,6 +191,19 @@ variable. Valid values are `"happy", "text", "JSON"`
 	LOGXI_FORMAT=JSON,t=2006-01-02T15:04:05.000000-0700 yourapp
     # Use fast text formatter
     LOGXI_FORMAT=text yourapp
+
+The "happy" formatter has more options
+
+*   fit - will try to fit a key-value pair onto the same line. If
+    result characters are longer than `maxcol` then the pair will be
+    put on the next line and indented
+
+    "happy" defaults to pretty mode where it puts each key-value pair
+    on its own line and indented
+
+*   maxcol - maximum number of columns before forcing a key to be on its
+    own line. If you want everything on a single line, set this to high
+    value like 1000
 
 ### Color Schemes
 

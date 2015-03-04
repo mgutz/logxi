@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/mgutz/logxi/v1"
 )
@@ -10,8 +11,16 @@ var logger log.Logger
 
 func main() {
 	logger = log.New("mylogger")
-	logger.Debug("I'm debugging", "fruit", "apple", "balance", 42.0)
-	logger.Info("Psst. Can you keep a secret?")
-	logger.Warn("Hmm ...", "balance", 0.0)
-	logger.Error("Oh oh", "err", fmt.Errorf("some error"), "balance", -1000.0)
+	logger.Info("Hello, log XI!")
+
+	hostname, _ := os.Hostname()
+	logger.Debug("BEGIN main", "hostname", hostname, "pid", os.Getpid())
+
+	logger.Info("Starting server")
+
+	url := "http://www.acme.local"
+	logger.Warn("Reconnecting ..", "url", url)
+
+	retries := 10
+	logger.Error("Could not reconnect", "retries", retries, "err", fmt.Errorf("connection error"))
 }

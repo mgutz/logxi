@@ -2,6 +2,7 @@ package log
 
 import (
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -51,6 +52,15 @@ func processFormatEnv(env *Configuration) {
 			formatterFormat = key
 		case "t":
 			tFormat = value
+		case "fit":
+			isPretty = !(value == "true" || value == "1" || value == "")
+		case "maxcol":
+			col, err := strconv.Atoi(value)
+			if err == nil {
+				maxCol = col
+			} else {
+				maxCol = defaultMaxCol
+			}
 		}
 	}
 	if formatterFormat == "" || formatterCreators[formatterFormat] == nil {

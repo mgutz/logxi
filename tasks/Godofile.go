@@ -41,7 +41,7 @@ func tasks(p *Project) {
 	}).Description("Installs dependencies")
 
 	p.Task("demo", func() {
-		Run("LOGXI=* go run main.go", M{"$in": "v1/cmd/demo"})
+		Run("go run main.go", M{"$in": "v1/cmd/demo"})
 	}).Description("Runs the demo")
 }
 

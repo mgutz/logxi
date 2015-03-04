@@ -45,10 +45,13 @@ var isTerminal bool
 var defaultFormat string
 var defaultLevel int
 var defaultLogxiEnv string
+var defaultMaxCol = 80
+var defaultPretty = true
 var defaultScheme string
 var defaultTimeFormat string
 var timeFormat string
 var colorableStdout = colorable.NewColorableStdout()
+var isPretty = true
 
 func setDefaults(isTerminal bool) {
 	if isTerminal {

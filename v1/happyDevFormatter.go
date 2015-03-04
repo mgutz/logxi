@@ -25,6 +25,10 @@ type colorScheme struct {
 	Reset string
 }
 
+const assignmentChar = ": "
+
+var indent = "  "
+var maxCol = defaultMaxCol
 var theme *colorScheme
 
 func parseKVList(s, separator string) map[string]string {
@@ -86,6 +90,7 @@ func DisableColors(val bool) {
 // warnings and errors occur. DO NOT use in production
 type HappyDevFormatter struct {
 	name string
+	col  int
 }
 
 // NewHappyDevFormatter returns a new instance of HappyDevFormatter.
@@ -95,48 +100,69 @@ func NewHappyDevFormatter(name string) *HappyDevFormatter {
 	return &HappyDevFormatter{name: name}
 }
 
-func (tf *HappyDevFormatter) writeKey(buf *bytes.Buffer, key string) {
+func (hd *HappyDevFormatter) writeKey(buf *bytes.Buffer, key string) {
 	// assumes this is not the first key
-	buf.WriteString(Separator)
+	hd.writeString(buf, Separator)
 	if key == "" {
 		return
 	}
 	buf.WriteString(theme.Key)
-	buf.WriteString(key)
-	buf.WriteRune('=')
+	hd.writeString(buf, key)
+	hd.writeString(buf, assignmentChar)
 	buf.WriteString(theme.Reset)
 }
 
-func (tf *HappyDevFormatter) writeError(buf *bytes.Buffer, err *errors.Error) {
-	buf.WriteString(theme.Error)
-	buf.WriteString(err.Error())
-	buf.WriteRune('\n')
-	buf.Write(err.Stack())
-	buf.WriteString(theme.Reset)
-}
+func (hd *HappyDevFormatter) offset(buf *bytes.Buffer, color string, key string, value string) {
+	val := strings.Trim(value, "\n ")
 
-func (tf *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{}, colorCode string) {
-	tf.writeKey(buf, key)
-	if colorCode != "" {
-		buf.WriteString(colorCode)
+	if (isPretty && key != "") || hd.col+len(key)+1+len(val) >= maxCol {
+		// 4 spc
+		buf.WriteString("\n")
+		hd.col = 0
+		hd.writeString(buf, indent)
 	}
-	if err, ok := value.(error); ok {
-		err2 := errors.Wrap(err, 4)
-		tf.writeError(buf, err2)
-	} else if err, ok := value.(*errors.Error); ok {
-		tf.writeError(buf, err)
-	} else {
-		fmt.Fprintf(buf, "%v", value)
+	hd.writeKey(buf, key)
+	if color != "" {
+		buf.WriteString(color)
 	}
-	if colorCode != "" {
+	hd.writeString(buf, val)
+
+	if color != "" {
 		buf.WriteString(theme.Reset)
 	}
 }
 
+func (hd *HappyDevFormatter) writeError(buf *bytes.Buffer, key string, err *errors.Error) {
+	msg := err.Error()
+	stack := string(err.Stack())
+	hd.offset(buf, theme.Error, key, msg+"\n"+stack)
+}
+
+func (hd *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{}, color string) {
+	if err, ok := value.(error); ok {
+		err2 := errors.Wrap(err, 4)
+		hd.writeError(buf, key, err2)
+	} else if err, ok := value.(*errors.Error); ok {
+		hd.writeError(buf, key, err)
+	} else {
+		hd.offset(buf, color, key, fmt.Sprintf("%v", value))
+	}
+}
+
+// tracks the position of the string so we can break lines cleanly.
+// do not send ANSI escape sequences, just raw strings
+func (hd *HappyDevFormatter) writeString(buf *bytes.Buffer, s string) {
+	buf.WriteString(s)
+	hd.col += len(s)
+}
+
 // Format records a log entry.
-func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
+func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
+	// reset the column tracker
+	hd.col = 0
+
 	buf.WriteString(theme.Misc)
-	buf.WriteString(time.Now().Format(timeFormat))
+	hd.writeString(buf, time.Now().Format(timeFormat))
 	buf.WriteString(theme.Reset)
 
 	var colorCode string
@@ -148,7 +174,7 @@ func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 	case LevelInfo:
 		colorCode = theme.Info
 	case LevelWarn:
-		c := stack.Caller(2)
+		c := stack.Caller(3)
 		context = fmt.Sprintf("%+v", c)
 		colorCode = theme.Warn
 	default:
@@ -177,22 +203,27 @@ func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		context = errbuf.String()
 		colorCode = theme.Error
 	}
-	// tf.set(buf, "l", LevelMap[level], colorCode)
-	// tf.set(buf, "n", tf.name, theme.Value)
-	// tf.set(buf, "m", msg, colorCode)
-	tf.set(buf, "", LevelMap[level], colorCode)
-	tf.set(buf, "", tf.name, theme.Misc)
-	tf.set(buf, "", msg, colorCode)
+	// DBG, INF ...
+	hd.set(buf, "", LevelMap[level], colorCode)
+	// logger name
+	hd.set(buf, "", hd.name, theme.Misc)
+	// message from user
+	hd.set(buf, "", msg, colorCode)
+
+	// WRN,ERR file, line number context
+	if context != "" {
+		hd.set(buf, "at", context, colorCode)
+	}
 
 	var lenArgs = len(args)
 	if lenArgs > 0 {
 		if lenArgs%2 == 0 {
 			for i := 0; i < lenArgs; i += 2 {
 				if key, ok := args[i].(string); ok {
-					tf.set(buf, key, args[i+1], theme.Value)
+					hd.set(buf, key, args[i+1], theme.Value)
 				} else {
-					tf.set(buf, "BADKEY_NAME_"+strconv.Itoa(i+1), args[i], theme.Error)
-					tf.set(buf, "BADKEY_VALUE_"+strconv.Itoa(i+1), args[i+1], theme.Error)
+					hd.set(buf, "BADKEY_NAME_"+strconv.Itoa(i+1), args[i], theme.Error)
+					hd.set(buf, "BADKEY_VALUE_"+strconv.Itoa(i+1), args[i+1], theme.Error)
 				}
 			}
 		} else {
@@ -203,9 +234,6 @@ func (tf *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 			fmt.Fprint(buf, args...)
 			buf.WriteString(theme.Reset)
 		}
-	}
-	if context != "" {
-		tf.set(buf, "@", context, colorCode)
 	}
 	buf.WriteRune('\n')
 	buf.WriteString(theme.Reset)
