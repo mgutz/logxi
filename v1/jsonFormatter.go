@@ -53,9 +53,6 @@ func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
 	case reflect.Float64:
 		buf.WriteString(strconv.FormatFloat(value.Float(), 'g', -1, 64))
 
-	case reflect.String:
-		buf.WriteString(strconv.Quote(value.String()))
-
 	default:
 		if err, ok := val.(error); ok {
 			buf.WriteString(strconv.Quote(err.Error()))
@@ -128,7 +125,7 @@ func (jf *JSONFormatter) LogEntry(level int, msg string, args []interface{}) map
 	var entry map[string]interface{}
 	err := json.Unmarshal(buf.Bytes(), &entry)
 	if err != nil {
-		panic("Unable to unmarhsal entry from JSONFormatter")
+		panic("Unable to unmarhsal entry from JSONFormatter: " + err.Error())
 	}
 	return entry
 }
