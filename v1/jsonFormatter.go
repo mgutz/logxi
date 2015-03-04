@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 	"time"
@@ -53,6 +54,9 @@ func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
 	case reflect.Float64:
 		buf.WriteString(strconv.FormatFloat(value.Float(), 'g', -1, 64))
 
+	// case reflect.String:
+	// 	buf.WriteString(strconv.Quote(value.String()))
+
 	default:
 		if err, ok := val.(error); ok {
 			buf.WriteString(strconv.Quote(err.Error()))
@@ -61,8 +65,11 @@ func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
 
 		b, err := json.Marshal(value.Interface())
 		if err != nil {
-			buf.WriteString("Could not json.Marshal value: ")
-			buf.WriteString(err.Error())
+			internalLog.Error("Could not json.Marshal value: ", "formatter", "JSONFormatter", "err", err.Error())
+			// must always log, use sprintf to get a string
+			s := fmt.Sprintf("%v", value.Interface())
+			b, _ := json.Marshal(s)
+			buf.Write(b)
 		}
 		buf.Write(b)
 	}
