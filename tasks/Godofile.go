@@ -87,7 +87,11 @@ sleep 3
 			})
 		}
 
-		Bash("sleep 100")
+		Bash(`
+			clear
+			echo  Done
+			sleep 100
+		`)
 
 	})
 
