@@ -227,7 +227,7 @@ What about formatting? Key-value pairs only.
 go get -u gopkg.in/godo.v1/cmd/godo
 
 # install dependencies
-godo install
+godo install -v
 
 # run test
 godo test

@@ -9,7 +9,7 @@ func tasks(p *Project) {
 
 	p.Task("allocs", func() {
 		Bash(`go test -bench . -benchmem | grep "allocs\|Bench"`, M{"$in": "v1/bench"})
-	})
+	}).Description("Runs benchmarks with allocs")
 
 	p.Task("benchjson", func() {
 		Bash("go test -bench=BenchmarkLoggerJSON -benchmem", M{"$in": "v1/bench"})
@@ -20,19 +20,29 @@ func tasks(p *Project) {
 		//Run("LOGXI=* go test -run=TestColors", M{"$in": "v1"})
 	})
 
-	p.Task("install", func() {
-		Run("go get github.com/mattn/go-colorable")
-		Run("go get github.com/mattn/go-isatty")
-		Run("go get github.com/mgutz/ansi")
+	p.Task("install", func() error {
+		packages := []string{
+			"github.com/mattn/go-colorable",
+			"github.com/mattn/go-isatty",
+			"github.com/mgutz/ansi",
+			"github.com/stretchr/testify/assert",
 
-		// needed for benchmarks
-		Run("go get github.com/Sirupsen/logrus")
-		Run("go get gopkg.in/inconshreveable/log15.v2")
-	})
+			// needed for benchmarks in bench/
+			"github.com/Sirupsen/logrus",
+			"gopkg.in/inconshreveable/log15.v2",
+		}
+		for _, pkg := range packages {
+			err := Run("go get -u " + pkg)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}).Description("Installs dependencies")
 
 	p.Task("demo", func() {
 		Run("LOGXI=* go run main.go", M{"$in": "v1/cmd/demo"})
-	})
+	}).Description("Runs the demo")
 }
 
 func main() {
