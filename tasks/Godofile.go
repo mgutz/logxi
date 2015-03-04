@@ -56,6 +56,8 @@ read ok
 
 		template := `
 clear
+# keep space at top
+echo
 
 arg="# {{.description}}"
 for (( i=0; i < ${#arg}; i+=1 )) ; do
