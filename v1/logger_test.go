@@ -13,6 +13,11 @@ func processEnv() {
 	ProcessEnv(readFromEnviron())
 }
 
+func testResetEnv() {
+	os.Clearenv()
+	processEnv()
+}
+
 func TestEnvLOGXI(t *testing.T) {
 	assert := assert.New(t)
 
@@ -66,10 +71,10 @@ func TestEnvLOGXI_FORMAT(t *testing.T) {
 	oldIsTerminal := isTerminal
 
 	os.Setenv("LOGXI_FORMAT", "")
-	isTerminal = true
+	setDefaults(true)
 	processEnv()
 	assert.Equal(FormatHappy, logxiFormat, "terminal defaults to FormatHappy")
-	isTerminal = false
+	setDefaults(false)
 	processEnv()
 	assert.Equal(FormatText, logxiFormat, "non terminal defaults to FormatText")
 
@@ -78,14 +83,15 @@ func TestEnvLOGXI_FORMAT(t *testing.T) {
 	assert.Equal(FormatJSON, logxiFormat)
 
 	os.Setenv("LOGXI_FORMAT", "json")
-	isTerminal = true
+	setDefaults(true)
 	processEnv()
 	assert.Equal(FormatHappy, logxiFormat, "Mismatches defaults to FormatHappy")
-	isTerminal = false
+	setDefaults(false)
 	processEnv()
 	assert.Equal(FormatText, logxiFormat, "Mismatches defaults to FormatText non terminal")
 
 	isTerminal = oldIsTerminal
+	setDefaults(isTerminal)
 }
 
 func TestColors(t *testing.T) {
@@ -97,13 +103,6 @@ func TestColors(t *testing.T) {
 	l.Info("something you should know")
 	l.Warn("hmm didn't expect that")
 	l.Error("oh oh, you're in trouble", "key", 1)
-}
-
-func testResetEnv() {
-	os.Setenv("LOGXI", "")
-	//os.Setenv("LOGXI_COLORS", "")
-	os.Setenv("LOGXI_FORMAT", "")
-	processEnv()
 }
 
 func TestJSON(t *testing.T) {

@@ -7,7 +7,6 @@ import (
 
 	"github.com/mattn/go-colorable"
 	"github.com/mattn/go-isatty"
-	"github.com/mgutz/ansi"
 )
 
 // scream so user fixes it
@@ -51,10 +50,8 @@ var defaultTimeFormat string
 var timeFormat string
 var colorableStdout = colorable.NewColorableStdout()
 
-func init() {
-	isTerminal = isatty.IsTerminal(os.Stdout.Fd())
+func setDefaults(isTerminal bool) {
 	if isTerminal {
-		ansi.DisableColors(disableColors)
 		defaultLogxiEnv = "*=WRN"
 		defaultFormat = FormatHappy
 		defaultLevel = LevelWarn
@@ -66,7 +63,6 @@ func init() {
 		defaultTimeFormat = "2006-01-02T15:04:05-0700"
 		disableColors = true
 	}
-
 	if runtime.GOOS == "windows" {
 		// DefaultScheme is a color scheme optimized for dark background
 		// but works well with light backgrounds
@@ -74,6 +70,12 @@ func init() {
 	} else {
 		defaultScheme = "key=cyan+h,value,misc=blue,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
 	}
+}
+
+func init() {
+	isTerminal = isatty.IsTerminal(os.Stdout.Fd())
+	setDefaults(isTerminal)
+
 	RegisterFormatFactory(FormatHappy, formatFactory)
 	RegisterFormatFactory(FormatText, formatFactory)
 	RegisterFormatFactory(FormatJSON, formatFactory)

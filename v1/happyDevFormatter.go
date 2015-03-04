@@ -56,7 +56,7 @@ func parseTheme(theme string) *colorScheme {
 		if c == "" {
 			c = ansi.ColorCode("reset")
 		}
-		//fmt.Printf("[%s] %s=%q\n", key, style, c)
+		//fmt.Printf("plain=%b [%s] %s=%q\n", ansi.Plain, key, style, c)
 		return c
 	}
 	result := &colorScheme{
@@ -80,18 +80,6 @@ func keyColor(s string) string {
 func DisableColors(val bool) {
 	disableColors = val
 }
-
-// GetColorableStdout gets a writer that can output colors
-// on Windows and non-Widows OS. If colors are disabled,
-// os.Stdout is returned.
-// func GetColorableStdout() io.Writer {
-// 	if isTerminal && !disableColors {
-// 		fmt.Println("returning Newcolorable")
-// 		return colorable.NewColorableStdout()
-// 	}
-// 	fmt.Println("returning stdout")
-// 	return os.Stdout
-// }
 
 // HappyDevFormatter is the formatter used for terminals. It is
 // colorful, dev friendly and provides meaningful logs when

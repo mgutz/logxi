@@ -17,6 +17,7 @@ func tasks(p *Project) {
 
 	p.Task("test", func() {
 		Run("LOGXI=* go test", M{"$in": "v1"})
+		//Run("LOGXI=* go test -run=TestColors", M{"$in": "v1"})
 	})
 
 	p.Task("install", func() {

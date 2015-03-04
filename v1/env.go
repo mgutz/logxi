@@ -15,9 +15,18 @@ type Configuration struct {
 
 func readFromEnviron() *Configuration {
 	conf := &Configuration{}
-	conf.Levels = os.Getenv("LOGXI")
-	conf.Format = os.Getenv("LOGXI_FORMAT")
-	conf.Colors = os.Getenv("LOGXI_COLORS")
+
+	var envOrDefault = func(name, val string) string {
+		result := os.Getenv(name)
+		if result == "" {
+			result = val
+		}
+		return result
+	}
+
+	conf.Levels = envOrDefault("LOGXI", defaultLogxiEnv)
+	conf.Format = envOrDefault("LOGXI_FORMAT", defaultFormat)
+	conf.Colors = envOrDefault("LOGXI_COLORS", defaultScheme)
 	return conf
 }
 
@@ -81,7 +90,7 @@ func processLogEnv(env *Configuration) {
 
 		level := LevelAtoi[value]
 		if level == 0 {
-			internalLog.Error("Unknown level in LOGXI environment variable", "key", key, "level", level)
+			internalLog.Error("Unknown level in LOGXI environment variable", "key", key, "value", value, "LOGXI", env.Levels)
 			level = defaultLevel
 		}
 		logxiNameLevelMap[key] = level
