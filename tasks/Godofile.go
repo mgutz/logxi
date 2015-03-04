@@ -1,8 +1,64 @@
 package main
 
-import . "gopkg.in/godo.v1"
+import (
+	"fmt"
+	"io"
+	"time"
+
+	"github.com/mattn/go-colorable"
+	"github.com/mgutz/ansi"
+	. "gopkg.in/godo.v1"
+)
 
 type pair []string
+
+var stdout io.Writer
+var promptFn = ansi.ColorFunc("cyan+h")
+var commentColor = ansi.ColorCode("yellow+h")
+var subduedColor = ansi.ColorCode("black+h")
+var reset = ansi.ColorCode("reset")
+
+func init() {
+	stdout = colorable.NewColorableStdout()
+}
+
+func clear() {
+	Bash("clear")
+	// leave a single line at top so the window
+	// overlay doesn't have to be exact
+	fmt.Fprintln(stdout, "")
+}
+
+func pseudoType(s string) {
+	for _, r := range s {
+		fmt.Fprint(stdout, string(r))
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+func pseudoSubdued(s string) {
+	fmt.Fprint(stdout, subduedColor)
+	pseudoType(s)
+	fmt.Fprint(stdout, reset)
+}
+
+func pseudoComment(s string) {
+	fmt.Fprint(stdout, commentColor)
+	pseudoType(s)
+	fmt.Fprint(stdout, reset)
+}
+
+func pseudoPrompt(prompt, s string) {
+	fmt.Fprint(stdout, promptFn(prompt))
+	pseudoType(s)
+}
+
+func intro(title, subtitle string) {
+	clear()
+	pseudoType("\n\n\t" + title + "\n\n")
+	pseudoSubdued("\t" + subtitle)
+	Prompt("")
+}
 
 func tasks(p *Project) {
 	p.Task("bench", func() {
@@ -10,19 +66,17 @@ func tasks(p *Project) {
 	})
 
 	p.Task("demo", func() {
-		Bash(`
-clear
-echo
-echo github.com/mgutz/logxi
-echo
-echo demo built with godo and LICEcap
-echo
-read ok
-		`)
+		clear()
+		Prompt("")
+		intro(
+			"log XI - faster, friendlier and more awesome",
+			"built with godo and licecap ...",
+		)
+
 		Run("go build", M{"$in": "v1/cmd/demo"})
 		commands := []pair{
 			pair{
-				`default "happy" formatter shows warnings and errors`,
+				`default "happy" formatter shows warnings and errors, aligns keys`,
 				`demo`,
 			},
 			pair{
@@ -30,23 +84,23 @@ read ok
 				`LOGXI_FORMAT=JSON demo`,
 			},
 			pair{
-				`show all levels`,
+				`show all log levels`,
 				`LOGXI=* demo`,
 			},
 			pair{
-				`show all "models" logs and only ERR for others`,
+				`show all "models" logs and only errors and above for others`,
 				`LOGXI=models,*=ERR demo`,
 			},
 			pair{
-				`custom color scheme, put in your bashrc/zshrc`,
+				`custom color scheme can be put in your bashrc/zshrc`,
 				`LOGXI_COLORS=ERR=red,key=magenta,misc=white demo`,
 			},
 			pair{
-				`focus on errors`,
+				`too many rainbows? just errors`,
 				`LOGXI_COLORS=ERR=red demo`,
 			},
 			pair{
-				`fit on line`,
+				`fit more info on line`,
 				`LOGXI_FORMAT=fit,maxcol=80 demo`,
 			},
 			pair{
@@ -55,47 +109,18 @@ read ok
 			},
 		}
 
-		template := `
-clear
-# keep space at top
-echo
-
-arg="# {{.description}}"
-for (( i=0; i < ${#arg}; i+=1 )) ; do
-	echo -n "${arg:$i:1}"
-	sleep 0.05
-done
-sleep 0.1
-echo
-
-echo -n "\$ "
-sleep 0.2
-arg="{{.command}}"
-for (( i=0; i < ${#arg}; i+=1 )) ; do
-	echo -n "${arg:$i:1}"
-	sleep 0.05
-done
-sleep 0.2
-echo
-echo
-
-{{.command}}
-sleep 3
-`
 		for _, cmd := range commands {
-			Bash(template, M{
-				"description": cmd[0],
-				"command":     cmd[1],
-				"$in":         "v1/cmd/demo",
-			})
+			clear()
+			pseudoComment("# " + cmd[0] + "\n")
+			pseudoPrompt("> ", cmd[1])
+			time.Sleep(200 * time.Millisecond)
+			fmt.Fprintln(stdout, "\n")
+			Bash(cmd[1], M{"$in": "v1/cmd/demo"})
+			time.Sleep(3 * time.Second)
 		}
-
-		Bash(`
-			clear
-			echo  Done
-			sleep 100
-		`)
-
+		clear()
+		fmt.Println("\n\n\tlog XI by @mgutz\n")
+		time.Sleep(1 * time.Minute)
 	})
 
 	p.Task("allocs", func() {
@@ -130,10 +155,6 @@ sleep 3
 		}
 		return nil
 	}).Description("Installs dependencies")
-
-	// p.Task("demo", func() {
-	// 	Run("go run main.go", M{"$in": "v1/cmd/demo"})
-	// }).Description("Runs the demo")
 }
 
 func main() {
