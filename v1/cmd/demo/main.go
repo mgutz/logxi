@@ -16,8 +16,7 @@ func main() {
 	logger.Debug("BEGIN main", "hostname", hostname, "pid", os.Getpid())
 
 	logger.Info("Starting server")
-	modelsLogger.Info("Connecting to dabase...")
-	modelsLogger.Info("OK")
+	modelsLogger.Info("Connecting to database...")
 
 	url := "http://www.acme.local"
 	logger.Warn("Reconnecting ..", "url", url)

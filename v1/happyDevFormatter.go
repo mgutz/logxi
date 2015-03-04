@@ -3,9 +3,7 @@ package log
 import (
 	"bytes"
 	"fmt"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/go-errors/errors"
 	"github.com/mgutz/ansi"
@@ -91,13 +89,19 @@ func DisableColors(val bool) {
 type HappyDevFormatter struct {
 	name string
 	col  int
+	// always use the production formatter
+	jsonFormatter *JSONFormatter
 }
 
 // NewHappyDevFormatter returns a new instance of HappyDevFormatter.
 // Performance isn't priority. It's more important developers see errors
 // and stack.
 func NewHappyDevFormatter(name string) *HappyDevFormatter {
-	return &HappyDevFormatter{name: name}
+
+	return &HappyDevFormatter{
+		name:          name,
+		jsonFormatter: NewJSONFormatter(name),
+	}
 }
 
 func (hd *HappyDevFormatter) writeKey(buf *bytes.Buffer, key string) {
@@ -156,27 +160,16 @@ func (hd *HappyDevFormatter) writeString(buf *bytes.Buffer, s string) {
 	hd.col += len(s)
 }
 
-// Format records a log entry.
-func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
-	// reset the column tracker
-	hd.col = 0
-
-	buf.WriteString(theme.Misc)
-	hd.writeString(buf, time.Now().Format(timeFormat))
-	buf.WriteString(theme.Reset)
-
-	var colorCode string
-	var context string
-
+func (hd *HappyDevFormatter) getLevelContext(level int) (context string, color string) {
 	switch level {
 	case LevelDebug:
-		colorCode = theme.Debug
+		color = theme.Debug
 	case LevelInfo:
-		colorCode = theme.Info
+		color = theme.Info
 	case LevelWarn:
 		c := stack.Caller(3)
-		context = fmt.Sprintf("%+v", c)
-		colorCode = theme.Warn
+		context = fmt.Sprintf("%#v", c)
+		color = theme.Warn
 	default:
 		trace := stack.Trace().TrimRuntime()
 
@@ -193,48 +186,81 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 			} else if i > 3 {
 				errbuf.WriteString("\n\t")
 			}
-			errbuf.WriteString(fmt.Sprintf("%+v", stack))
+			errbuf.WriteString(fmt.Sprintf("%#v", stack))
 			lines++
 		}
 		if lines > 1 {
 			errbuf.WriteRune('\n')
 		}
-
 		context = errbuf.String()
-		colorCode = theme.Error
-	}
-	// DBG, INF ...
-	hd.set(buf, "", LevelMap[level], colorCode)
-	// logger name
-	hd.set(buf, "", hd.name, theme.Misc)
-	// message from user
-	hd.set(buf, "", msg, colorCode)
-
-	// WRN,ERR file, line number context
-	if context != "" {
-		hd.set(buf, "at", context, colorCode)
+		color = theme.Error
 	}
 
-	var lenArgs = len(args)
-	if lenArgs > 0 {
-		if lenArgs%2 == 0 {
-			for i := 0; i < lenArgs; i += 2 {
-				if key, ok := args[i].(string); ok {
-					hd.set(buf, key, args[i+1], theme.Value)
-				} else {
-					hd.set(buf, "BADKEY_NAME_"+strconv.Itoa(i+1), args[i], theme.Error)
-					hd.set(buf, "BADKEY_VALUE_"+strconv.Itoa(i+1), args[i+1], theme.Error)
+	return context, color
+}
+
+// logxi reserved keys
+const levelKey = "l"
+const messageKey = "m"
+const nameKey = "n"
+const timeKey = "t"
+const atKey = "@"
+
+var logxiKeys = []string{atKey, levelKey, messageKey, nameKey, timeKey}
+
+// Format records a log entry.
+func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
+
+	// warn about reserved keys and bad keys
+argsLoop:
+	for i := 0; i < len(args); i += 2 {
+		// check if reserved
+		if s, ok := args[i].(string); ok {
+			for _, key := range logxiKeys {
+				if s == key {
+					internalLog.Fatal("Key conflicts with reserved key. Avoiding using single rune keys.", "key", key)
 				}
 			}
-		} else {
-			buf.WriteString(Separator)
-			buf.WriteString(theme.Error)
-			buf.WriteString(warnImbalancedPairs)
-			buf.WriteString(theme.Value)
-			fmt.Fprint(buf, args...)
-			buf.WriteString(theme.Reset)
+			continue argsLoop
 		}
+		// not a string
+		internalLog.Error("Key is not a string.", fmt.Sprintf("args[%d]", i), fmt.Sprintf("%v", args[i]))
 	}
+
+	// delegate to production JSON formatter
+	entry := hd.jsonFormatter.LogEntry(level, msg, args)
+
+	// reset the column tracker
+	hd.col = 0
+
+	buf.WriteString(theme.Misc)
+	hd.writeString(buf, entry[timeKey].(string))
+	buf.WriteString(theme.Reset)
+
+	context, color := hd.getLevelContext(level)
+
+	// DBG, INF ...
+	hd.set(buf, "", entry[levelKey].(string), color)
+	// logger name
+	hd.set(buf, "", entry[nameKey], theme.Misc)
+	// message from user
+	hd.set(buf, "", entry[messageKey], color)
+	// WRN,ERR file, line number context
+	if context != "" {
+		hd.set(buf, atKey, context, color)
+	}
+
+entryLoop:
+	for key, value := range entry {
+		// skip logxi keys
+		for _, k := range logxiKeys {
+			if key == k {
+				continue entryLoop
+			}
+		}
+		hd.set(buf, key, value, theme.Value)
+	}
+
 	buf.WriteRune('\n')
 	buf.WriteString(theme.Reset)
 }

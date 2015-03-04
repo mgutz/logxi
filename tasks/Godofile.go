@@ -10,13 +10,20 @@ import (
 	. "gopkg.in/godo.v1"
 )
 
-type pair []string
+type pair struct {
+	description string
+	command     string
+}
 
 var stdout io.Writer
-var promptFn = ansi.ColorFunc("cyan+h")
+
+//var promptFn = ansi.ColorFunc("cyan+h")
+var promptColor = ansi.ColorCode("cyan+h")
 var commentColor = ansi.ColorCode("yellow+h")
-var subduedColor = ansi.ColorCode("black+h")
+var titleColor = ansi.ColorCode("green+h")
+var subtitleColor = ansi.ColorCode("black+h")
 var reset = ansi.ColorCode("reset")
+var normal = ansi.ColorCode("")
 
 func init() {
 	stdout = colorable.NewColorableStdout()
@@ -29,35 +36,44 @@ func clear() {
 	fmt.Fprintln(stdout, "")
 }
 
-func pseudoType(s string) {
+func pseudoType(s string, color string) {
+	if color != "" {
+		fmt.Fprint(stdout, color)
+	}
 	for _, r := range s {
 		fmt.Fprint(stdout, string(r))
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(75 * time.Millisecond)
+	}
+	if color != "" {
+		fmt.Fprint(stdout, reset)
 	}
 }
 
-func pseudoSubdued(s string) {
-	fmt.Fprint(stdout, subduedColor)
-	pseudoType(s)
-	fmt.Fprint(stdout, reset)
-}
-
-func pseudoComment(s string) {
-	fmt.Fprint(stdout, commentColor)
-	pseudoType(s)
-	fmt.Fprint(stdout, reset)
+func pseudoTypeln(s string, color string) {
+	pseudoType(s, color)
+	fmt.Fprint(stdout, "\n")
 }
 
 func pseudoPrompt(prompt, s string) {
-	fmt.Fprint(stdout, promptFn(prompt))
-	pseudoType(s)
+	pseudoType(prompt, promptColor)
+	//fmt.Fprint(stdout, promptFn(prompt))
+	pseudoType(s, normal)
 }
 
-func intro(title, subtitle string) {
+func intro(title, subtitle string, delay time.Duration) {
 	clear()
-	pseudoType("\n\n\t" + title + "\n\n")
-	pseudoSubdued("\t" + subtitle)
-	Prompt("")
+	pseudoType("\n\n\t"+title+"\n\n", titleColor)
+	pseudoType("\t"+subtitle, subtitleColor)
+	time.Sleep(delay)
+}
+
+func typeCommand(description, commandStr string) {
+	clear()
+	pseudoTypeln("# "+description, commentColor)
+	pseudoType("> ", promptColor)
+	pseudoType(commandStr, normal)
+	time.Sleep(200 * time.Millisecond)
+	fmt.Fprintln(stdout, "\n")
 }
 
 func tasks(p *Project) {
@@ -66,61 +82,66 @@ func tasks(p *Project) {
 	})
 
 	p.Task("demo", func() {
-		clear()
-		Prompt("")
-		intro(
-			"log XI - faster, friendlier and more awesome",
-			"built with godo and licecap ...",
-		)
-
 		Run("go build", M{"$in": "v1/cmd/demo"})
+
 		commands := []pair{
-			pair{
-				`default "happy" formatter shows warnings and errors, aligns keys`,
+			{
+				`default "happy" formatter logs warnings and errors with aligned keys`,
 				`demo`,
 			},
-			pair{
-				`Fast "JSON" formatter for production, see benchmarks`,
+			{
+				`fast JSON formatter for production, see benchmarks`,
 				`LOGXI_FORMAT=JSON demo`,
 			},
-			pair{
+			{
 				`show all log levels`,
 				`LOGXI=* demo`,
 			},
-			pair{
-				`show all "models" logs and only errors and above for others`,
-				`LOGXI=models,*=ERR demo`,
+			{
+				`set all loggers to error; set dat* and models logger to debug`,
+				`LOGXI=*=ERR,dat*,models demo`,
 			},
-			pair{
-				`custom color scheme can be put in your bashrc/zshrc`,
-				`LOGXI_COLORS=ERR=red,key=magenta,misc=white demo`,
+			{
+				`custom color scheme (add to your bashrc/zshrc)`,
+				`LOGXI_COLORS=ERR=red,key=magenta,misc=black+h demo`,
 			},
-			pair{
-				`too many rainbows? just errors`,
-				`LOGXI_COLORS=ERR=red demo`,
+			{
+				`not a fan of rainbows?`,
+				`LOGXI=* LOGXI_COLORS=ERR=red demo`,
 			},
-			pair{
-				`fit more info on line`,
+			{
+				`fit more log on line up to max column`,
 				`LOGXI_FORMAT=fit,maxcol=80 demo`,
 			},
-			pair{
-				`set custom time format`,
+			{
+				`custom time format`,
 				`LOGXI_FORMAT=t=04:05.000 demo`,
 			},
 		}
 
+		// setup time for ecorder, user presses enter when ready
+		clear()
+		Prompt("")
+
+		intro(
+			"log XI by mgutz",
+			"simpler. faster. friendlier. awesomer.",
+			1*time.Second,
+		)
+
 		for _, cmd := range commands {
-			clear()
-			pseudoComment("# " + cmd[0] + "\n")
-			pseudoPrompt("> ", cmd[1])
-			time.Sleep(200 * time.Millisecond)
-			fmt.Fprintln(stdout, "\n")
-			Bash(cmd[1], M{"$in": "v1/cmd/demo"})
+			typeCommand(cmd.description, cmd.command)
+			Bash(cmd.command, M{"$in": "v1/cmd/demo"})
 			time.Sleep(3 * time.Second)
 		}
-		clear()
-		fmt.Println("\n\n\tlog XI by @mgutz\n")
-		time.Sleep(1 * time.Minute)
+
+		intro(
+			"log XI demo",
+			"built with godo and LICEcap ...",
+			1*time.Millisecond,
+		)
+
+		Prompt("")
 	})
 
 	p.Task("allocs", func() {

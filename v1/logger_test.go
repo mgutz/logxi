@@ -170,3 +170,15 @@ func TestParseLogEnvError(t *testing.T) {
 	os.Setenv("LOGXI", "ERR=red")
 	processLogEnv(readFromEnviron())
 }
+
+func TestKeyNotString(t *testing.T) {
+	testResetEnv()
+	var buf bytes.Buffer
+	l := NewLogger(&buf, "badkey")
+	l.SetLevel(LevelDebug)
+	l.SetFormatter(NewHappyDevFormatter("badkey"))
+	l.Debug("foo", 1)
+	assert.Panics(t, func() {
+		l.Debug("reserved key", "t", "trying to use time")
+	})
+}

@@ -121,6 +121,18 @@ func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args [
 	buf.WriteString("}\n")
 }
 
+// LogEntry returns the JSON log entry object built by Format().
+func (jf *JSONFormatter) LogEntry(level int, msg string, args []interface{}) map[string]interface{} {
+	var buf bytes.Buffer
+	jf.Format(&buf, level, msg, args)
+	var entry map[string]interface{}
+	err := json.Unmarshal(buf.Bytes(), &entry)
+	if err != nil {
+		panic("Unable to unmarhsal entry from JSONFormatter")
+	}
+	return entry
+}
+
 // SetName sets the name of this formatter.
 func (jf *JSONFormatter) SetName(name string) {
 	jf.name = name
