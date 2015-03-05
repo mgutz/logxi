@@ -66,7 +66,7 @@ func setDefaults(isTerminal bool) {
 		defaultTimeFormat = "15:04:05.000000"
 	} else {
 		defaultLogxiEnv = "*=ERR"
-		defaultFormat = FormatText
+		defaultFormat = FormatJSON
 		defaultLevel = LevelError
 		defaultTimeFormat = "2006-01-02T15:04:05-0700"
 		disableColors = true
