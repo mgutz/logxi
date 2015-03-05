@@ -42,7 +42,7 @@ func pseudoType(s string, color string) {
 	}
 	for _, r := range s {
 		fmt.Fprint(stdout, string(r))
-		time.Sleep(75 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 	}
 	if color != "" {
 		fmt.Fprint(stdout, reset)
@@ -86,36 +86,32 @@ func tasks(p *Project) {
 
 		commands := []pair{
 			{
-				`default "happy" formatter logs warnings and errors with aligned keys`,
+				`getting started, create a simple demo app`,
+				`cat main.ansi`,
+			},
+			{
+				`running demo displays only warnings and errors`,
 				`demo`,
 			},
 			{
-				`fast JSON formatter for production, see benchmarks`,
-				`LOGXI_FORMAT=JSON demo`,
-			},
-			{
-				`show all log levels`,
+				`let's show all log levels`,
 				`LOGXI=* demo`,
 			},
 			{
-				`set all loggers to error; set dat* and models logger to debug`,
+				`in production, log only JSON for analytics`,
+				`LOGXI_FORMAT=JSON demo`,
+			},
+			{
+				`enable/disable loggers and their level`,
 				`LOGXI=*=ERR,dat*,models demo`,
 			},
 			{
-				`custom color scheme (add to your bashrc/zshrc)`,
-				`LOGXI_COLORS=ERR=red,key=magenta,misc=black+h demo`,
+				`create custom color scheme`,
+				`LOGXI_COLORS=ERR=red,key=blue+h,misc=black+h demo`,
 			},
 			{
-				`not a fan of rainbows?`,
-				`LOGXI=* LOGXI_COLORS=ERR=red demo`,
-			},
-			{
-				`fit more log on line up to max column`,
-				`LOGXI_FORMAT=fit,maxcol=80 demo`,
-			},
-			{
-				`custom time format`,
-				`LOGXI_FORMAT=t=04:05.000 demo`,
+				`fit more log on line up to max column and set time format`,
+				`LOGXI_FORMAT=fit,maxcol=80,t=04:05.000 demo`,
 			},
 		}
 
@@ -125,14 +121,14 @@ func tasks(p *Project) {
 
 		intro(
 			"log XI by mgutz",
-			"simpler. faster. friendlier. awesomer.",
+			"structured. faster. friendlier.",
 			1*time.Second,
 		)
 
 		for _, cmd := range commands {
 			typeCommand(cmd.description, cmd.command)
 			Bash(cmd.command, M{"$in": "v1/cmd/demo"})
-			time.Sleep(3 * time.Second)
+			time.Sleep(3500 * time.Millisecond)
 		}
 
 		intro(

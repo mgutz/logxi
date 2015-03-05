@@ -3,13 +3,13 @@
 
 # logxi
 
-Log Eleven (XI) is a [12 factor app](http://12factor.net/logs)
+log XI (eleven) is a structured [12 factor app](http://12factor.net/logs)
 logger built for performance and happy development.
 
 TL;DR
 
+*   Structured with key-value pairs
 *   Faster and less allocations than logrus and log15
-*   Enforces key-value pair logging
 *   Loggers and their level are configurable via environment variables
 *   JSON formatter or very efficient key-value text formatter for production
 *   Happy, colorful, developer friendly logger in terminal. Warnings

@@ -36,6 +36,8 @@ func NewLogger(writer io.Writer, name string) Logger {
 		level:     level,
 	}
 
+	// TODO loggers will be used when watching changes to configuration such
+	// as in consul, etcd
 	loggers.Lock()
 	loggers.loggers[name] = log
 	loggers.Unlock()
@@ -76,7 +78,7 @@ func (l *DefaultLogger) Error(msg string, args ...interface{}) {
 // Fatal logs a fatal entry then panics.
 func (l *DefaultLogger) Fatal(msg string, args ...interface{}) {
 	l.Log(LevelFatal, msg, args)
-	panic("exit due to fatal error")
+	panic("Exit due to fatal error: ")
 }
 
 // Log logs a leveled entry.

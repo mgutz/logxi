@@ -208,29 +208,39 @@ const atKey = "@"
 
 var logxiKeys = []string{atKey, levelKey, messageKey, nameKey, timeKey}
 
+func isReservedKey(k interface{}) (bool, error) {
+	// check if reserved
+	if key, ok := k.(string); ok {
+		for _, key2 := range logxiKeys {
+			if key == key2 {
+				return true, nil
+			}
+		}
+	} else {
+		return false, fmt.Errorf("Key is not a string")
+	}
+	return false, nil
+}
+
 // Format records a log entry.
 func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
 
 	// warn about reserved keys and bad keys
-argsLoop:
 	for i := 0; i < len(args); i += 2 {
-		// check if reserved
-		if s, ok := args[i].(string); ok {
-			for _, key := range logxiKeys {
-				if s == key {
-					internalLog.Fatal("Key conflicts with reserved key. Avoiding using single rune keys.", "key", key)
-				}
-			}
-			continue argsLoop
+		isReserved, err := isReservedKey(args[i])
+		if err != nil {
+			// not a string
+			internalLog.Error("Key is not a string.", fmt.Sprintf("args[%d]", i), fmt.Sprintf("%v", args[i]))
+		} else if isReserved {
+			internalLog.Fatal("Key conflicts with reserved key. Avoiding using single rune keys.", "key", args[i].(string))
 		}
-		// not a string
-		internalLog.Error("Key is not a string.", fmt.Sprintf("args[%d]", i), fmt.Sprintf("%v", args[i]))
 	}
 
-	// delegate to production JSON formatter
+	// delegate to production JSON formatter, this ensures
+	// there will not be any surprises in production
 	entry := hd.jsonFormatter.LogEntry(level, msg, args)
 
-	// reset the column tracker
+	// reset the column tracker used for fancy formatting
 	hd.col = 0
 
 	buf.WriteString(theme.Misc)
@@ -250,15 +260,31 @@ argsLoop:
 		hd.set(buf, atKey, context, color)
 	}
 
-entryLoop:
-	for key, value := range entry {
-		// skip logxi keys
-		for _, k := range logxiKeys {
-			if key == k {
-				continue entryLoop
-			}
+	// print in same order as arguments. The log entry from JSONFormatter is a
+	// JSON object and likely does not match the order of the arguments.
+	// Preserve order so it's easier for developers to debug.
+	order := []string{}
+	lenArgs := len(args)
+	for i := 0; i < len(args); i += 2 {
+		if i+1 >= lenArgs {
+			continue
 		}
-		hd.set(buf, key, value, theme.Value)
+		if key, ok := args[i].(string); ok {
+			order = append(order, key)
+		} else {
+			order = append(order, badKeyAtIndex(i))
+		}
+	}
+
+	for _, key := range order {
+		// skip logxi keys
+		isReserved, err := isReservedKey(key)
+		if err != nil {
+			panic("key is invalid. Should never get here. " + err.Error())
+		} else if isReserved {
+			continue
+		}
+		hd.set(buf, key, entry[key], theme.Value)
 	}
 
 	buf.WriteRune('\n')

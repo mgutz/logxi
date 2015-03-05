@@ -3,6 +3,7 @@ package log
 import (
 	"os"
 	"runtime"
+	"strconv"
 	"sync"
 
 	"github.com/mattn/go-colorable"
@@ -12,6 +13,10 @@ import (
 // scream so user fixes it
 const warnImbalancedKey = "FIX_IMBALANCED_PAIRS"
 const warnImbalancedPairs = warnImbalancedKey + " => "
+
+func badKeyAtIndex(i int) string {
+	return "BAD_KEY_AT_INDEX_" + strconv.Itoa(i)
+}
 
 // DefaultLogLog is the default log for this package.
 var DefaultLog Logger

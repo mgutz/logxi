@@ -100,6 +100,7 @@ func TestColors(t *testing.T) {
 	l.SetLevel(LevelDebug)
 	l.Debug("just another day", "key")
 	l.Debug("and another one", "key")
+	l.Debug("and another one", "key1", 1, "key2", 2, 3, "key3", "key4", 4)
 	l.Info("something you should know")
 	l.Warn("hmm didn't expect that")
 	l.Error("oh oh, you're in trouble", "key", 1)
@@ -163,6 +164,30 @@ func TestJSONNested(t *testing.T) {
 	assert.Equal(t, "hello", obj["m"].(string))
 	o := obj["obj"]
 	assert.Equal(t, "apple", o.(map[string]interface{})["fruit"].(string))
+}
+
+func TestJSONEscapeSequences(t *testing.T) {
+	testResetEnv()
+	var buf bytes.Buffer
+	l := NewLogger(&buf, "bench")
+	l.SetLevel(LevelDebug)
+	l.SetFormatter(NewJSONFormatter("bench"))
+	esc := "I said, \"a's \\ \\\b\f\n\r\t\x1a\"你好'; DELETE FROM people"
+
+	var obj map[string]interface{}
+	// test as message
+	l.Error(esc)
+	err := json.Unmarshal(buf.Bytes(), &obj)
+	assert.NoError(t, err)
+	assert.Equal(t, esc, obj["m"].(string))
+
+	// test as arg
+	buf.Reset()
+	l.Error("with args", "esc", esc)
+	err = json.Unmarshal(buf.Bytes(), &obj)
+	assert.NoError(t, err)
+	assert.Equal(t, "with args", obj["m"].(string))
+	assert.Equal(t, esc, obj["esc"].(string))
 }
 
 func TestParseLogEnvError(t *testing.T) {
