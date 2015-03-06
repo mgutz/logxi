@@ -22,7 +22,6 @@ type colorScheme struct {
 	Info  string
 	Warn  string
 	Error string
-	Reset string
 }
 
 const assignmentChar = ": "
@@ -52,8 +51,6 @@ func parseKVList(s, separator string) map[string]string {
 	return m
 }
 
-var reset = ansi.ColorCode("reset")
-
 func parseTheme(theme string) *colorScheme {
 	m := parseKVList(theme, ",")
 	cs := &colorScheme{}
@@ -71,17 +68,15 @@ func parseTheme(theme string) *colorScheme {
 
 	wildcard = color("*")
 
-	if wildcard != reset {
+	if wildcard != ansi.Reset {
 		cs.Key = wildcard
 		cs.Value = wildcard
 		cs.Misc = wildcard
 		cs.Source = wildcard
-
 		cs.Debug = wildcard
 		cs.Warn = wildcard
 		cs.Info = wildcard
 		cs.Error = wildcard
-		cs.Reset = reset
 	}
 
 	cs.Key = color("key")
@@ -93,12 +88,11 @@ func parseTheme(theme string) *colorScheme {
 	cs.Warn = color("WRN")
 	cs.Info = color("INF")
 	cs.Error = color("ERR")
-	cs.Reset = reset
 	return cs
 }
 
 func keyColor(s string) string {
-	return theme.Key + s + theme.Reset
+	return theme.Key + s + ansi.Reset
 }
 
 // DisableColors disables coloring of log entries.
@@ -110,7 +104,12 @@ func DisableColors(val bool) {
 // colorful, dev friendly and provides meaningful logs when
 // warnings and errors occur.
 //
-// DO NOT use in production.
+// HappyDevFormatter does not worry about performance. It's at least 3-4X
+// slower than JSONFormatter since it delegates to JSONFormatter to marshal
+// then unmarshal JSON. Then it does other stuff like read source files, sort
+// keys all to give a developer more information.
+//
+// NEVER use in production.
 type HappyDevFormatter struct {
 	name string
 	col  int
@@ -119,8 +118,6 @@ type HappyDevFormatter struct {
 }
 
 // NewHappyDevFormatter returns a new instance of HappyDevFormatter.
-// Performance isn't priority. It's more important developers see errors
-// and stack.
 func NewHappyDevFormatter(name string) *HappyDevFormatter {
 	return &HappyDevFormatter{
 		name:          name,
@@ -137,14 +134,13 @@ func (hd *HappyDevFormatter) writeKey(buf *bytes.Buffer, key string) {
 	buf.WriteString(theme.Key)
 	hd.writeString(buf, key)
 	hd.writeString(buf, assignmentChar)
-	buf.WriteString(theme.Reset)
+	buf.WriteString(ansi.Reset)
 }
 
 func (hd *HappyDevFormatter) offset(buf *bytes.Buffer, color string, key string, value string) {
 	val := strings.Trim(value, "\n ")
 
 	if (isPretty && key != "") || hd.col+len(key)+1+len(val) >= maxCol {
-		// 4 spc
 		buf.WriteString("\n")
 		hd.col = 0
 		hd.writeString(buf, indent)
@@ -156,7 +152,7 @@ func (hd *HappyDevFormatter) offset(buf *bytes.Buffer, color string, key string,
 	hd.writeString(buf, val)
 
 	if color != "" {
-		buf.WriteString(theme.Reset)
+		buf.WriteString(ansi.Reset)
 	}
 }
 
@@ -168,8 +164,8 @@ func (hd *HappyDevFormatter) writeError(buf *bytes.Buffer, key string, err *erro
 	hd.offset(buf, theme.Error, key, msg+"\n"+stack)
 }
 
-// set writes a key-value pair to buf. It eventually calls offset which
-// adds formatting newlines, etc.
+// set writes a key-value pair to buf. It eventually calls offset which adds
+// formatting newlines, etc.
 func (hd *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{}, color string) {
 	if err, ok := value.(error); ok {
 		err2 := errors.Wrap(err, 4)
@@ -181,8 +177,8 @@ func (hd *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{
 	}
 }
 
-// tracks the position of the string so we can break lines cleanly.
-// do not send ANSI escape sequences, just raw strings
+// tracks the position of the string so we can break lines cleanly. Do not
+// send ANSI escape sequences, just raw strings
 func (hd *HappyDevFormatter) writeString(buf *bytes.Buffer, s string) {
 	buf.WriteString(s)
 	hd.col += len(s)
@@ -195,10 +191,19 @@ func (hd *HappyDevFormatter) getLevelContext(level int) (context string, color s
 	case LevelInfo:
 		color = theme.Info
 	case LevelWarn:
-		c := stack.Caller(3)
-		ci := newCallstackInfo(c, 3)
-		context = ci.String(theme.Warn, theme.Source)
+		trace := stack.Trace().TrimRuntime()
+		// if one line, keep it on same line, multiple lines group all
+		// on next line
+		for i, stack := range trace {
+			if i < 4 {
+				continue
+			}
+			ci := newCallstackInfo(stack, 0)
+			context = ci.String(theme.Warn, theme.Source)
+			break
+		}
 		color = theme.Warn
+
 	default:
 		trace := stack.Trace().TrimRuntime()
 
@@ -210,22 +215,14 @@ func (hd *HappyDevFormatter) getLevelContext(level int) (context string, color s
 			if i < 3 {
 				continue
 			}
-			// if i == 3 && len(trace) > 4 {
-			// 	errbuf.WriteString("\n\t")
-			// } else if i > 3 {
-			// 	errbuf.WriteString("\n\t")
-			// }
-
-			ci := newCallstackInfo(stack, 3)
+			ci := newCallstackInfo(stack, contextLines)
 			ctx := ci.String(theme.Error, theme.Source)
 			if ctx == "" {
 				continue
 			}
 			errbuf.WriteString(ctx)
-			lines++
-		}
-		if lines > 1 {
 			errbuf.WriteRune('\n')
+			lines++
 		}
 		context = errbuf.String()
 		color = theme.Error
@@ -270,7 +267,7 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 	// timestamp
 	buf.WriteString(theme.Misc)
 	hd.writeString(buf, entry[timeKey].(string))
-	buf.WriteString(theme.Reset)
+	buf.WriteString(ansi.Reset)
 
 	// emphasize warnings and errors
 	context, color := hd.getLevelContext(level)
@@ -282,7 +279,7 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 	// message from user
 	hd.set(buf, "", entry[messageKey], color)
 
-	// Preserve key order in the order developers assigned them
+	// Preserve key order in the order developer added them
 	// in the call. This makes it easier for developers to follow
 	// the log.
 	order := []string{}
@@ -299,7 +296,7 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 	}
 
 	for _, key := range order {
-		// skip logxi keys
+		// skip resetved keys which were set above
 		isReserved, err := isReservedKey(key)
 		if err != nil {
 			panic("key is invalid. Should never get here. " + err.Error())
@@ -315,5 +312,5 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 	}
 
 	buf.WriteRune('\n')
-	buf.WriteString(theme.Reset)
+	buf.WriteString(ansi.Reset)
 }

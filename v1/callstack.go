@@ -7,6 +7,8 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+
+	"github.com/mgutz/ansi"
 )
 
 type sourceLine struct {
@@ -45,8 +47,8 @@ func (ci *callstackInfo) readSource() {
 	if ci.lineno == 0 {
 		return
 	}
-	start := maxInt(1, ci.lineno-contextLines)
-	end := ci.lineno + contextLines
+	start := maxInt(1, ci.lineno-ci.contextLines)
+	end := ci.lineno + ci.contextLines
 
 	f, err := os.Open(ci.filename)
 	if err != nil {
@@ -72,11 +74,12 @@ func (ci *callstackInfo) readSource() {
 }
 
 var rePackageFile = regexp.MustCompile(`logxi/v1/\w+\.go`)
+var rePackageTestFile = regexp.MustCompile(`logxi/v1/\w+_test\.go`)
 
 func (ci *callstackInfo) String(color string, sourceColor string) string {
 	var buf bytes.Buffer
 	buf.WriteString(color)
-	if contextLines == 0 {
+	if ci.contextLines == 0 {
 		buf.WriteString("\t")
 		buf.WriteString(ci.filename)
 		buf.WriteString(":")
@@ -85,10 +88,19 @@ func (ci *callstackInfo) String(color string, sourceColor string) string {
 		return buf.String()
 	}
 
+	// fmt.Printf("DBG: HERE\n")
+	// fmt.Printf("ci.filename %#v\n", ci.filename)
+	// fmt.Printf("ci.lineno %#v\n", ci.lineno)
+	// fmt.Printf("ci.method %#v\n", ci.method)
+	// fmt.Printf("ci.relFilename %#v\n", ci.relFilename)
+	// fmt.Printf("first", !rePackageTestFile.MatchString(ci.filename))
+	// fmt.Printf("second", rePackageFile.MatchString(ci.relFilename))
+
 	// skip any in the logxi package
-	if rePackageFile.MatchString(ci.relFilename) {
+	if !rePackageTestFile.MatchString(ci.filename) && rePackageFile.MatchString(ci.relFilename) {
 		return ""
 	}
+
 	buf.WriteString("\t")
 	buf.WriteString(ci.filename)
 	buf.WriteString(":")
@@ -107,6 +119,6 @@ func (ci *callstackInfo) String(color string, sourceColor string) string {
 	}
 	// get rid of last \n
 	buf.Truncate(buf.Len() - 1)
-	buf.WriteString(theme.Reset)
+	buf.WriteString(ansi.Reset)
 	return buf.String()
 }

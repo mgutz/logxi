@@ -168,6 +168,10 @@ func tasks(p *Project) {
 		//Run("LOGXI=* go test -run=TestColors", M{"$in": "v1"})
 	})
 
+	p.Task("isolate", func() {
+		Run("LOGXI=* go test -run=TestWarningErrorContext", M{"$in": "v1"})
+	})
+
 	p.Task("install", func() error {
 		packages := []string{
 			"github.com/mattn/go-colorable",

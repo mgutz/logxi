@@ -14,8 +14,10 @@ func processEnv() {
 }
 
 func testResetEnv() {
+	testBuf.Reset()
 	os.Clearenv()
 	processEnv()
+	InternalLog = testInternalLog
 }
 
 func TestEnvLOGXI(t *testing.T) {
@@ -94,21 +96,23 @@ func TestEnvLOGXI_FORMAT(t *testing.T) {
 	setDefaults(isTerminal)
 }
 
-func TestColors(t *testing.T) {
-	testResetEnv()
-	l := New("bench")
-	l.SetLevel(LevelDebug)
-	l.Debug("just another day", "key")
-	l.Debug("and another one", "key")
-	l.Debug("and another one", "key1", 1, "key2", 2, 3, "key3", "key4", 4)
-	l.Info("something you should know")
-	l.Warn("hmm didn't expect that")
-	l.Error("oh oh, you're in trouble", "key", 1)
-}
+// func TestColors(t *testing.T) {
+// 	testResetEnv()
+// 	var buf bytes.Buffer
+// 	l := NewLogger(&buf, "bench")
+// 	l.SetLevel(LevelDebug)
+// 	l.Debug("just another day", "key")
+// 	l.Debug("and another one", "key")
+// 	l.Debug("and another one", "key1", 1, "key2", 2, 3, "key3", "key4", 4)
+// 	l.Info("something you should know")
+// 	l.Warn("hmm didn't expect that")
+// 	l.Error("oh oh, you're in trouble", "key", 1)
+// }
 
 func TestComplexKeys(t *testing.T) {
 	testResetEnv()
-	l := New("bench")
+	var buf bytes.Buffer
+	l := NewLogger(&buf, "bench")
 	assert.Panics(t, func() {
 		l.Error("complex", "foo\n", 1)
 	})
@@ -221,4 +225,15 @@ func TestKeyNotString(t *testing.T) {
 	assert.Panics(t, func() {
 		l.Debug("reserved key", "t", "trying to use time")
 	})
+}
+
+func TestWarningErrorContext(t *testing.T) {
+	testResetEnv()
+	var buf bytes.Buffer
+	l := NewLogger(&buf, "wrnerr")
+	l.SetFormatter(NewHappyDevFormatter("wrnerr"))
+	l.Warn("no keys")
+	l.Warn("has eys", "key1", 2)
+	l.Error("no keys")
+	l.Error("has keys", "key1", 2)
 }
