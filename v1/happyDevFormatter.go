@@ -1,13 +1,9 @@
 package log
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
-	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/go-errors/errors"
@@ -238,29 +234,6 @@ func (hd *HappyDevFormatter) getLevelContext(level int) (context string, color s
 	return context, color
 }
 
-// logxi reserved keys
-const levelKey = "l"
-const messageKey = "m"
-const nameKey = "n"
-const timeKey = "t"
-const atKey = "@"
-
-var logxiKeys = []string{atKey, levelKey, messageKey, nameKey, timeKey}
-
-func isReservedKey(k interface{}) (bool, error) {
-	// check if reserved
-	if key, ok := k.(string); ok {
-		for _, key2 := range logxiKeys {
-			if key == key2 {
-				return true, nil
-			}
-		}
-	} else {
-		return false, fmt.Errorf("Key is not a string")
-	}
-	return false, nil
-}
-
 // Format records a log entry.
 func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
 
@@ -272,28 +245,29 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		} else if isReserved {
 			InternalLog.Fatal("Key conflicts with reserved key. Avoiding using single rune keys.", "key", args[i].(string))
 		} else {
-			// Ensure keys are simple strings. The JSONFormatter doesn't attempt
-			// to escape keys. This panics if the JSON key value has a
-			// different value than a simple quoted string.
+			// Ensure keys are simple strings. The JSONFormatter doesn't escape
+			// keys as a performance tradeoff. This panics if the JSON key
+			// value has a different value than a simple quoted string.
 			key := args[i].(string)
 			b, err := json.Marshal(key)
 			if err != nil {
 				panic("Key is invalid. " + err.Error())
 			}
 			if string(b) != `"`+key+`"` {
-				panic("Key is too complex. Use simple keys: " + fmt.Sprintf("%q", key))
+				panic("Key is complex. Use simpler key for: " + fmt.Sprintf("%q", key))
 			}
 		}
 
 	}
 
 	// use the production JSON formatter to format the log first. This
-	// ensures there will not be any surprises in production.
+	// ensures JSON will marshal/unmarshal correctly in production.
 	entry := hd.jsonFormatter.LogEntry(level, msg, args)
 
 	// reset the column tracker used for fancy formatting
 	hd.col = 0
 
+	// timestamp
 	buf.WriteString(theme.Misc)
 	hd.writeString(buf, entry[timeKey].(string))
 	buf.WriteString(theme.Reset)
@@ -307,10 +281,6 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 	hd.set(buf, "", entry[nameKey], theme.Misc)
 	// message from user
 	hd.set(buf, "", entry[messageKey], color)
-	// WRN,ERR file, line number context
-	if context != "" {
-		hd.set(buf, atKey, context, color)
-	}
 
 	// Preserve key order in the order developers assigned them
 	// in the call. This makes it easier for developers to follow
@@ -339,108 +309,11 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		hd.set(buf, key, entry[key], theme.Value)
 	}
 
+	// WRN,ERR file, line number context
+	if context != "" {
+		hd.set(buf, atKey, context, color)
+	}
+
 	buf.WriteRune('\n')
 	buf.WriteString(theme.Reset)
-}
-
-type sourceLine struct {
-	lineno int
-	line   string
-}
-
-type callstackInfo struct {
-	filename     string
-	relFilename  string
-	lineno       int
-	method       string
-	context      []*sourceLine
-	contextLines int
-}
-
-func newCallstackInfo(callstack interface{}, contextLines int) *callstackInfo {
-	filename := fmt.Sprintf("%#s", callstack)
-	relFilename := fmt.Sprintf("%+s", callstack)
-	linestr := fmt.Sprintf("%d", callstack)
-	lineno, _ := strconv.Atoi(linestr)
-	fnname := fmt.Sprintf("%n", callstack)
-	ci := &callstackInfo{
-		filename:     filename,
-		relFilename:  relFilename,
-		lineno:       lineno,
-		method:       fnname,
-		context:      []*sourceLine{},
-		contextLines: contextLines,
-	}
-	ci.readSource()
-	return ci
-}
-
-func (ci *callstackInfo) readSource() {
-	if ci.lineno == 0 {
-		return
-	}
-	start := maxInt(1, ci.lineno-contextLines)
-	end := ci.lineno + contextLines
-
-	f, err := os.Open(ci.filename)
-	if err != nil {
-		InternalLog.Error("Could not read callstack file", "file", ci.filename, "err", err)
-		return
-	}
-	defer f.Close()
-
-	lineno := 1
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		if start <= lineno && lineno <= end {
-			line := scanner.Text()
-			line = expandTabs(line, 8)
-			ci.context = append(ci.context, &sourceLine{lineno: lineno, line: line})
-		}
-		lineno++
-	}
-
-	if err := scanner.Err(); err != nil {
-		InternalLog.Error("scanner error", "file", ci.filename, "err", err)
-	}
-}
-
-var rePackageFile = regexp.MustCompile(`logxi/v1/\w+\.go`)
-
-func (ci *callstackInfo) String(color string, sourceColor string) string {
-	var buf bytes.Buffer
-	buf.WriteString(color)
-	if contextLines == 0 {
-		buf.WriteString("\t")
-		buf.WriteString(ci.filename)
-		buf.WriteString(":")
-		buf.WriteString(strconv.Itoa(ci.lineno))
-		buf.WriteString("\n")
-		return buf.String()
-	}
-
-	// skip any in the logxi package
-	if rePackageFile.MatchString(ci.relFilename) {
-		return ""
-	}
-	buf.WriteString("\t")
-	buf.WriteString(ci.filename)
-	buf.WriteString(":")
-	buf.WriteString(strconv.Itoa(ci.lineno))
-	buf.WriteString("\n\t")
-	buf.WriteString(ci.method)
-	buf.WriteString("()\n")
-	for _, li := range ci.context {
-		if li.lineno == ci.lineno {
-			buf.WriteString(color)
-			buf.WriteString(fmt.Sprintf("\t=>%5d: %s\n", li.lineno, li.line))
-			continue
-		}
-		buf.WriteString(sourceColor)
-		buf.WriteString(fmt.Sprintf("\t%7d: %s\n", li.lineno, li.line))
-	}
-	// get rid of last \n
-	buf.Truncate(buf.Len() - 1)
-	buf.WriteString(theme.Reset)
-	return buf.String()
 }

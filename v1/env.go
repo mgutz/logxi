@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var contextLines int
+
 // Configuration comes from environment or external services like
 // consul, etcd.
 type Configuration struct {
@@ -39,8 +41,6 @@ func ProcessEnv(env *Configuration) {
 	processThemeEnv(env)
 	processFormatEnv(env)
 }
-
-var contextLines int
 
 // processFormatEnv parses LOGXI_FORMAT
 func processFormatEnv(env *Configuration) {

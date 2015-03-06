@@ -3,7 +3,6 @@ package log
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -20,8 +19,6 @@ type JSONFormatter struct {
 func NewJSONFormatter(name string) *JSONFormatter {
 	return &JSONFormatter{name: name}
 }
-
-var errorType = reflect.TypeOf(errors.New(""))
 
 func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
 	if val == nil {
@@ -110,13 +107,13 @@ func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args [
 			for i := 0; i < lenArgs; i += 2 {
 				if key, ok := args[i].(string); ok {
 					if key == "" {
-						// show the user the key is invalid
+						// show key is invalid
 						jf.set(buf, badKeyAtIndex(i), args[i+1])
 					} else {
 						jf.set(buf, key, args[i+1])
 					}
 				} else {
-					// show the user the key is invalid
+					// show key is invalid
 					jf.set(buf, badKeyAtIndex(i), args[i+1])
 				}
 			}
@@ -127,7 +124,9 @@ func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args [
 	buf.WriteString("}\n")
 }
 
-// LogEntry returns the JSON log entry object built by Format().
+// LogEntry returns the JSON log entry object built by Format(). Used by
+// HappyDevFormatter to ensure any data logged while developing
+// will properly log in production.
 func (jf *JSONFormatter) LogEntry(level int, msg string, args []interface{}) map[string]interface{} {
 	var buf bytes.Buffer
 	jf.Format(&buf, level, msg, args)
@@ -137,9 +136,4 @@ func (jf *JSONFormatter) LogEntry(level int, msg string, args []interface{}) map
 		panic("Unable to unmarhsal entry from JSONFormatter: " + err.Error())
 	}
 	return entry
-}
-
-// SetName sets the name of this formatter.
-func (jf *JSONFormatter) SetName(name string) {
-	jf.name = name
 }

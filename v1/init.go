@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 	"strconv"
@@ -59,6 +60,15 @@ var timeFormat string
 var colorableStdout = colorable.NewColorableStdout()
 var isPretty = true
 
+// logxi reserved keys
+const atKey = "@"
+const levelKey = "l"
+const messageKey = "m"
+const nameKey = "n"
+const timeKey = "t"
+
+var logxiKeys = []string{atKey, levelKey, messageKey, nameKey, timeKey}
+
 func setDefaults(isTerminal bool) {
 	contextLines = defaultContextLines
 
@@ -83,6 +93,20 @@ func setDefaults(isTerminal bool) {
 	}
 }
 
+func isReservedKey(k interface{}) (bool, error) {
+	// check if reserved
+	if key, ok := k.(string); ok {
+		for _, key2 := range logxiKeys {
+			if key == key2 {
+				return true, nil
+			}
+		}
+	} else {
+		return false, fmt.Errorf("Key is not a string")
+	}
+	return false, nil
+}
+
 func init() {
 	isTerminal = isatty.IsTerminal(os.Stdout.Fd())
 	setDefaults(isTerminal)
@@ -91,7 +115,8 @@ func init() {
 	RegisterFormatFactory(FormatText, formatFactory)
 	RegisterFormatFactory(FormatJSON, formatFactory)
 	ProcessEnv(readFromEnviron())
-	// the internal log must always work and be plain
+
+	// the internal log must be plain and always work
 	InternalLog = NewLogger(os.Stdout, "__logxi")
 	InternalLog.SetLevel(LevelError)
 	InternalLog.SetFormatter(NewTextFormatter("__logxi"))

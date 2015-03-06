@@ -56,7 +56,7 @@ func TestEnvLOGXI(t *testing.T) {
 	os.Setenv("LOGXI", "myx*=ERR")
 	processEnv()
 	level = getLogLevel("mylog")
-	assert.Equal(LevelOff, level, "no match should return off")
+	assert.Equal(LevelError, level, "no match should return LevelError")
 
 	os.Setenv("LOGXI", "myl*,-foo")
 	processEnv()

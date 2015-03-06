@@ -101,11 +101,11 @@ func tasks(p *Project) {
 	p.Task("demo", D{"build"}, func() {
 		commands := []pair{
 			{
-				`getting started, create a simple demo app`,
+				`create a simple app demo`,
 				`cat main.ansi`,
 			},
 			{
-				`running demo displays only warnings and errors (w/ context)`,
+				`running demo displays only warnings and errors with context`,
 				`demo`,
 			},
 			{
@@ -117,15 +117,15 @@ func tasks(p *Project) {
 				`LOGXI=*=ERR,models,server=INF demo`,
 			},
 			{
-				`create custom color scheme`,
-				`LOGXI_COLORS=*=black+h,ERR=red,key=blue+h demo`,
+				`create custom 256 colors colorscheme, pink=200`,
+				`LOGXI_COLORS=*=black+h,ERR=200+b,key=blue+h demo`,
 			},
 			{
-				`fit more log on line up to max column and set time format`,
-				`LOGXI_FORMAT=fit,maxcol=80,t=04:05.000 demo`,
+				`fit more on line up to max column, set time format, no context`,
+				`LOGXI=* LOGXI_FORMAT=fit,maxcol=80,t=04:05.000,context=0 demo`,
 			},
 			{
-				`in production logxi defaults to undecorated JSON and ERR`,
+				`logxi defaults to unadorned JSON and ERR in production`,
 				`demo | cat`,
 			},
 		}
@@ -136,7 +136,7 @@ func tasks(p *Project) {
 
 		intro(
 			"log XI",
-			"structured. faster. friendlier. ::mgutz",
+			"structured. faster. friendlier.\n\n\n\n\t::mgutz",
 			1*time.Second,
 		)
 

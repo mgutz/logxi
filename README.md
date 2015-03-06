@@ -99,8 +99,8 @@ BenchmarkLog15Complex   20000     85782 ns/op   12277 B/op    294 allocs/op
     `TextFormatter` may also be used which is MUCH faster than
     JSON but requires a unique separator.
 
-*   Has level guards to avoid the cost of passing arguments. These _SHOULD_
-    always be used.
+*   Has level guards to avoid the cost of building arguments. Get in the
+    habit of using guards.
 
         if log.IsDebug() {
             log.Debug("some ")
@@ -114,7 +114,7 @@ BenchmarkLog15Complex   20000     85782 ns/op   12277 B/op    294 allocs/op
             log.Warn("some ")
         }
 
-    Error and Fatal do not have guards, they MUST always log.
+    Error and Fatal do not have guards, they always log.
 
 *   Conforms to a logging interface so it can be replaced.
 
@@ -131,7 +131,7 @@ BenchmarkLog15Complex   20000     85782 ns/op   12277 B/op    294 allocs/op
             IsDebug() bool
             IsInfo() bool
             IsWarn() bool
-            // Error, Fatal have no guards, they SHOULD always log
+            // Error, Fatal have no guards, they MUST always log
         }
 
 *   Standardizes on key-value pair argument sequence for machine parsing
@@ -144,7 +144,7 @@ log.WithFields({logrus.Fields{"m":"mypkg", "key1": value1, "key2": value2}}).Deb
 ```
     logxi logs `FIX_IMBALANCED_PAIRS =>` if key-value pairs are imbalanced
 
-*   Supports Color Schemes
+*   Supports Color Schemes (256 colors)
 
     `log.New` creates a logger that supports color schemes
 
@@ -154,6 +154,9 @@ log.WithFields({logrus.Fields{"m":"mypkg", "key1": value1, "key2": value2}}).Deb
 
         # emphasize errors with white text on red background
         LOGXI_COLORS="ERR=white:red" yourapp
+
+        # emphasize errors with pink = 200 on 256 colors table
+        LOGXI_COLORS="ERR=200" yourapp
 
 ## Configuration
 
