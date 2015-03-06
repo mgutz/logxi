@@ -63,7 +63,7 @@ func (ci *callstackInfo) readSource() {
 	for scanner.Scan() {
 		if start <= lineno && lineno <= end {
 			line := scanner.Text()
-			line = expandTabs(line, 8)
+			line = expandTabs(line, 4)
 			ci.context = append(ci.context, &sourceLine{lineno: lineno, line: line})
 		}
 		lineno++
@@ -102,26 +102,54 @@ func (ci *callstackInfo) String(color string, sourceColor string) string {
 
 	var buf bytes.Buffer
 	buf.WriteString(color)
-	buf.WriteString("\t")
+	buf.WriteString(Separator)
+	buf.WriteString(indent)
+	buf.WriteString("at ")
 	buf.WriteString(ci.method)
-	buf.WriteString("():")
+	buf.WriteString("(")
 	buf.WriteString(tildeFilename)
-	buf.WriteString(":")
+	buf.WriteString("):")
 	buf.WriteString(strconv.Itoa(ci.lineno))
-	buf.WriteString("\n")
 
 	if ci.contextLines == -1 {
 		return buf.String()
 	}
+	buf.WriteString("\n")
+
+	// the width of the printed line number
+	var linenoWidth int
+	// trim spaces at start of source code based on common spaces
+	var skipSpaces = 1000
+
+	// calculate width of lineno and number of leading spaces that can be
+	// removed
+	for _, li := range ci.context {
+		linenoWidth = maxInt(linenoWidth, len(fmt.Sprintf("%d", li.lineno)))
+		index := indexOfNonSpace(li.line)
+		if index > -1 && index < skipSpaces {
+			skipSpaces = index
+		}
+	}
 
 	for _, li := range ci.context {
+		var format string
+		format = fmt.Sprintf("%%s%%%dd:  %%s\n", linenoWidth)
+
 		if li.lineno == ci.lineno {
 			buf.WriteString(color)
-			buf.WriteString(fmt.Sprintf("\t=>%5d: %s\n", li.lineno, li.line))
-			continue
+			if ci.contextLines > 2 {
+				format = fmt.Sprintf("%%s=> %%%dd:  %%s\n", linenoWidth)
+			}
+		} else {
+			buf.WriteString(sourceColor)
+			if ci.contextLines > 2 {
+				// account for "=> "
+				format = fmt.Sprintf("%%s%%%dd:  %%s\n", linenoWidth+3)
+			}
 		}
-		buf.WriteString(sourceColor)
-		buf.WriteString(fmt.Sprintf("\t%7d: %s\n", li.lineno, li.line))
+		// trim spaces at start
+		idx := minInt(len(li.line), skipSpaces)
+		buf.WriteString(fmt.Sprintf(format, Separator+indent+indent, li.lineno, li.line[idx:]))
 	}
 	// get rid of last \n
 	buf.Truncate(buf.Len() - 1)

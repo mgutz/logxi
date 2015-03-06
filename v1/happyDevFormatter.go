@@ -308,9 +308,12 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 
 	// WRN,ERR file, line number context
 	if context != "" {
-		hd.set(buf, atKey, context, color)
+		buf.WriteRune('\n')
+		buf.WriteString(color)
+		buf.WriteString(context)
+		buf.WriteString(ansi.Reset)
+		//hd.set(buf, atKey, context, color)
+	} else {
+		buf.WriteRune('\n')
 	}
-
-	buf.WriteRune('\n')
-	buf.WriteString(ansi.Reset)
 }

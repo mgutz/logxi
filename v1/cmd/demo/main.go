@@ -9,10 +9,15 @@ import (
 
 var errConnection = fmt.Errorf("connection error")
 var url = "http://www.acme.local"
+var logger log.Logger
+
+func causeError() {
+	logger.Error("error in function")
+}
 
 func main() {
 	// create the loggers
-	logger := log.New("server")
+	logger = log.New("server")
 	modelsLogger := log.New("models")
 
 	log.Info("I'm the default logger")
@@ -23,7 +28,8 @@ func main() {
 	logger.Debug("BEGIN main", "hostname", hostname, "pid", os.Getpid())
 	logger.Info("Starting server")
 
-	logger.Error("Could not connect", "err", errConnection)
+	causeError()
+
 	modelsLogger.Info("Connecting to database...")
 	logger.Warn("Reconnecting ..", "url", url)
 }

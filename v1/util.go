@@ -13,7 +13,7 @@ func expandTabs(s string, tabLen int) string {
 	var buf bytes.Buffer
 	for _, part := range parts {
 		buf.WriteString(part)
-		buf.WriteString(strings.Repeat(" ", 4-len(part)%4))
+		buf.WriteString(strings.Repeat(" ", tabLen-len(part)%tabLen))
 	}
 	return buf.String()
 }
@@ -23,4 +23,22 @@ func maxInt(a, b int) int {
 		return a
 	}
 	return b
+}
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func indexOfNonSpace(s string) int {
+	if s == "" {
+		return -1
+	}
+	for i, r := range s {
+		if r != ' ' {
+			return i
+		}
+	}
+	return -1
 }
