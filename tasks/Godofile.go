@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/mattn/go-colorable"
@@ -24,8 +26,10 @@ var titleColor = ansi.ColorCode("green+h")
 var subtitleColor = ansi.ColorCode("black+h")
 var reset = ansi.ColorCode("reset")
 var normal = ansi.ColorCode("")
+var wd string
 
 func init() {
+	wd, _ = os.Getwd()
 	stdout = colorable.NewColorableStdout()
 }
 
@@ -76,14 +80,25 @@ func typeCommand(description, commandStr string) {
 	fmt.Fprintln(stdout, "\n")
 }
 
+var version = "v1"
+
+func relv(p string) string {
+	return filepath.Join(version, p)
+}
+func absv(p string) string {
+	return filepath.Join(wd, version, p)
+}
+
 func tasks(p *Project) {
 	p.Task("bench", func() {
 		Run("LOGXI=* go test -bench . -benchmem", M{"$in": "v1/bench"})
 	})
 
-	p.Task("demo", func() {
+	p.Task("build", func() {
 		Run("go build", M{"$in": "v1/cmd/demo"})
+	})
 
+	p.Task("demo", D{"build"}, func() {
 		commands := []pair{
 			{
 				`getting started, create a simple demo app`,
@@ -98,12 +113,8 @@ func tasks(p *Project) {
 				`LOGXI=* demo`,
 			},
 			{
-				`in production, log only JSON for analytics`,
-				`LOGXI_FORMAT=JSON demo`,
-			},
-			{
 				`enable/disable loggers and their level`,
-				`LOGXI=*=ERR,dat*,models demo`,
+				`LOGXI=*=ERR,models,server=INF demo`,
 			},
 			{
 				`create custom color scheme`,
@@ -112,6 +123,10 @@ func tasks(p *Project) {
 			{
 				`fit more log on line up to max column and set time format`,
 				`LOGXI_FORMAT=fit,maxcol=80,t=04:05.000 demo`,
+			},
+			{
+				`in production logxi defaults to JSON and ERR level`,
+				`demo | cat`,
 			},
 		}
 
@@ -172,6 +187,7 @@ func tasks(p *Project) {
 		}
 		return nil
 	}).Description("Installs dependencies")
+
 }
 
 func main() {

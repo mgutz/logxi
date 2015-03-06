@@ -100,7 +100,7 @@ func processLogEnv(env *Configuration) {
 
 		level := LevelAtoi[value]
 		if level == 0 {
-			internalLog.Error("Unknown level in LOGXI environment variable", "key", key, "value", value, "LOGXI", env.Levels)
+			InternalLog.Error("Unknown level in LOGXI environment variable", "key", key, "value", value, "LOGXI", env.Levels)
 			level = defaultLevel
 		}
 		logxiNameLevelMap[key] = level

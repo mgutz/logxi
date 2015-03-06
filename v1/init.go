@@ -22,7 +22,7 @@ func badKeyAtIndex(i int) string {
 var DefaultLog Logger
 
 // internalLog is the logger used by logxi itself
-var internalLog Logger
+var InternalLog Logger
 
 // Whether to force disabling of Colors
 var disableColors bool
@@ -89,8 +89,9 @@ func init() {
 	RegisterFormatFactory(FormatJSON, formatFactory)
 	ProcessEnv(readFromEnviron())
 	// the internal log must always work and not be colored
-	internalLog = NewLogger(os.Stdout, "__logxi")
-	internalLog.SetLevel(LevelError)
-	internalLog.SetFormatter(NewTextFormatter("__logxi"))
+	InternalLog = NewLogger(os.Stdout, "__logxi")
+	InternalLog.SetLevel(LevelError)
+	InternalLog.SetFormatter(NewTextFormatter("__logxi"))
+
 	DefaultLog = New("~")
 }

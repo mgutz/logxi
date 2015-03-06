@@ -15,15 +15,16 @@ func main() {
 	logger := log.New("server")
 	modelsLogger := log.New("models")
 
+	log.Info("I'm the default logger")
+
 	logger.Info("Hello, log XI!")
 
 	hostname, _ := os.Hostname()
 	logger.Debug("BEGIN main", "hostname", hostname, "pid", os.Getpid())
-
 	logger.Info("Starting server")
+
 	modelsLogger.Info("Connecting to database...")
 
 	logger.Warn("Reconnecting ..", "url", url)
-
 	logger.Error("Could not connect", "tries", 10, "err", errConnection)
 }

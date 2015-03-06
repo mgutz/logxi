@@ -76,7 +76,7 @@ func TestEnvLOGXI_FORMAT(t *testing.T) {
 	assert.Equal(FormatHappy, logxiFormat, "terminal defaults to FormatHappy")
 	setDefaults(false)
 	processEnv()
-	assert.Equal(FormatText, logxiFormat, "non terminal defaults to FormatText")
+	assert.Equal(FormatJSON, logxiFormat, "non terminal defaults to FormatJSON")
 
 	os.Setenv("LOGXI_FORMAT", "JSON")
 	processEnv()
@@ -88,7 +88,7 @@ func TestEnvLOGXI_FORMAT(t *testing.T) {
 	assert.Equal(FormatHappy, logxiFormat, "Mismatches defaults to FormatHappy")
 	setDefaults(false)
 	processEnv()
-	assert.Equal(FormatText, logxiFormat, "Mismatches defaults to FormatText non terminal")
+	assert.Equal(FormatJSON, logxiFormat, "Mismatches defaults to FormatJSON non terminal")
 
 	isTerminal = oldIsTerminal
 	setDefaults(isTerminal)
@@ -104,6 +104,20 @@ func TestColors(t *testing.T) {
 	l.Info("something you should know")
 	l.Warn("hmm didn't expect that")
 	l.Error("oh oh, you're in trouble", "key", 1)
+}
+
+func TestComplexKeys(t *testing.T) {
+	testResetEnv()
+	l := New("bench")
+	assert.Panics(t, func() {
+		l.Error("complex", "foo\n", 1)
+	})
+
+	assert.Panics(t, func() {
+		l.Error("complex", "foo\"s", 1)
+	})
+
+	l.Error("apos is ok", "foo's", 1)
 }
 
 func TestJSON(t *testing.T) {
@@ -181,13 +195,14 @@ func TestJSONEscapeSequences(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, esc, obj["m"].(string))
 
-	// test as arg
+	// test as key
 	buf.Reset()
-	l.Error("with args", "esc", esc)
+	key := "你好"
+	l.Error("as key", key, "esc")
 	err = json.Unmarshal(buf.Bytes(), &obj)
 	assert.NoError(t, err)
-	assert.Equal(t, "with args", obj["m"].(string))
-	assert.Equal(t, esc, obj["esc"].(string))
+	assert.Equal(t, "as key", obj["m"].(string))
+	assert.Equal(t, "esc", obj[key].(string))
 }
 
 func TestParseLogEnvError(t *testing.T) {

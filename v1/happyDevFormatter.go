@@ -2,6 +2,7 @@ package log
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -225,17 +226,26 @@ func isReservedKey(k interface{}) (bool, error) {
 // Format records a log entry.
 func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
 
-	// warn about reserved keys and bad keys
+	// warn about reserved, bad and complex keys
 	for i := 0; i < len(args); i += 2 {
 		isReserved, err := isReservedKey(args[i])
 		if err != nil {
-			// not a string
-			internalLog.Error("Key is not a string.", fmt.Sprintf("args[%d]", i), fmt.Sprintf("%v", args[i]))
+			InternalLog.Error("Key is not a string.", fmt.Sprintf("args[%d]", i), fmt.Sprintf("%v", args[i]))
 		} else if isReserved {
-			internalLog.Fatal("Key conflicts with reserved key. Avoiding using single rune keys.", "key", args[i].(string))
+			InternalLog.Fatal("Key conflicts with reserved key. Avoiding using single rune keys.", "key", args[i].(string))
+		} else {
+			key := args[i].(string)
+			// ensure key is simple
+			b, err := json.Marshal(key)
+			if err != nil {
+				panic("Key is invalid. " + err.Error())
+			}
+			if string(b) != `"`+key+`"` {
+				panic("Key is too complex. Use simple keys: " + fmt.Sprintf("%q", key))
+			}
 		}
-	}
 
+	}
 	// delegate to production JSON formatter, this ensures
 	// there will not be any surprises in production
 	entry := hd.jsonFormatter.LogEntry(level, msg, args)

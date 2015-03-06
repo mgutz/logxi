@@ -234,7 +234,10 @@ What about other writers? 12 factor apps only concern themselves with
 STDOUT. Use shell redirection operators to write to file or create
 a custom `io.Writer`.
 
-What about formatting? Key-value pairs only.
+```sh
+# to use Apache's roratelogs
+yourapp | rotatelogs demo 86400
+```
 
 ## Testing
 
