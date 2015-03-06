@@ -47,6 +47,7 @@ var logxiNameLevelMap map[string]int
 var logxiFormat string
 
 var isTerminal bool
+var defaultContextLines = 2
 var defaultFormat string
 var defaultLevel int
 var defaultLogxiEnv string
@@ -59,6 +60,8 @@ var colorableStdout = colorable.NewColorableStdout()
 var isPretty = true
 
 func setDefaults(isTerminal bool) {
+	contextLines = defaultContextLines
+
 	if isTerminal {
 		defaultLogxiEnv = "*=WRN"
 		defaultFormat = FormatHappy
@@ -74,9 +77,9 @@ func setDefaults(isTerminal bool) {
 	if runtime.GOOS == "windows" {
 		// DefaultScheme is a color scheme optimized for dark background
 		// but works well with light backgrounds
-		defaultScheme = "key=cyan,value,misc=blue,DBG,WRN=yellow,INF=green,ERR=red"
+		defaultScheme = "key=cyan,value,misc=blue,source=magenta,DBG,WRN=yellow,INF=green,ERR=red"
 	} else {
-		defaultScheme = "key=cyan+h,value,misc=blue,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
+		defaultScheme = "key=cyan+h,value,misc=blue,source=magenta,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
 	}
 }
 
@@ -88,7 +91,7 @@ func init() {
 	RegisterFormatFactory(FormatText, formatFactory)
 	RegisterFormatFactory(FormatJSON, formatFactory)
 	ProcessEnv(readFromEnviron())
-	// the internal log must always work and not be colored
+	// the internal log must always work and be plain
 	InternalLog = NewLogger(os.Stdout, "__logxi")
 	InternalLog.SetLevel(LevelError)
 	InternalLog.SetFormatter(NewTextFormatter("__logxi"))

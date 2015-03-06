@@ -105,7 +105,7 @@ func tasks(p *Project) {
 				`cat main.ansi`,
 			},
 			{
-				`running demo displays only warnings and errors`,
+				`running demo displays only warnings and errors (w/ context)`,
 				`demo`,
 			},
 			{
@@ -113,19 +113,19 @@ func tasks(p *Project) {
 				`LOGXI=* demo`,
 			},
 			{
-				`enable/disable loggers and their level`,
+				`enable/disable loggers and set each level`,
 				`LOGXI=*=ERR,models,server=INF demo`,
 			},
 			{
 				`create custom color scheme`,
-				`LOGXI_COLORS=ERR=red,key=blue+h,misc=black+h demo`,
+				`LOGXI_COLORS=*=black+h,ERR=red,key=blue+h demo`,
 			},
 			{
 				`fit more log on line up to max column and set time format`,
 				`LOGXI_FORMAT=fit,maxcol=80,t=04:05.000 demo`,
 			},
 			{
-				`in production logxi defaults to JSON and ERR level`,
+				`in production logxi defaults to undecorated JSON and ERR`,
 				`demo | cat`,
 			},
 		}
@@ -135,8 +135,8 @@ func tasks(p *Project) {
 		Prompt("")
 
 		intro(
-			"log XI by mgutz",
-			"structured. faster. friendlier.",
+			"log XI",
+			"structured. faster. friendlier. ::mgutz",
 			1*time.Second,
 		)
 

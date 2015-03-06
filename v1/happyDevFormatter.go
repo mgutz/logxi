@@ -1,9 +1,13 @@
 package log
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/go-errors/errors"
@@ -13,9 +17,10 @@ import (
 
 // Theme defines a color theme for HappyDevFormatter
 type colorScheme struct {
-	Key   string
-	Value string
-	Misc  string
+	Key    string
+	Value  string
+	Misc   string
+	Source string
 
 	Debug string
 	Info  string
@@ -51,28 +56,49 @@ func parseKVList(s, separator string) map[string]string {
 	return m
 }
 
+var reset = ansi.ColorCode("reset")
+
 func parseTheme(theme string) *colorScheme {
 	m := parseKVList(theme, ",")
+	cs := &colorScheme{}
+	var wildcard string
+
 	var color = func(key string) string {
 		style := m[key]
 		c := ansi.ColorCode(style)
 		if c == "" {
-			c = ansi.ColorCode("reset")
+			c = wildcard
 		}
 		//fmt.Printf("plain=%b [%s] %s=%q\n", ansi.Plain, key, style, c)
 		return c
 	}
-	result := &colorScheme{
-		Key:   color("key"),
-		Value: color("value"),
-		Misc:  color("misc"),
-		Debug: color("DBG"),
-		Warn:  color("WRN"),
-		Info:  color("INF"),
-		Error: color("ERR"),
-		Reset: color("reset"),
+
+	wildcard = color("*")
+
+	if wildcard != reset {
+		cs.Key = wildcard
+		cs.Value = wildcard
+		cs.Misc = wildcard
+		cs.Source = wildcard
+
+		cs.Debug = wildcard
+		cs.Warn = wildcard
+		cs.Info = wildcard
+		cs.Error = wildcard
+		cs.Reset = reset
 	}
-	return result
+
+	cs.Key = color("key")
+	cs.Value = color("value")
+	cs.Misc = color("misc")
+	cs.Source = color("source")
+
+	cs.Debug = color("DBG")
+	cs.Warn = color("WRN")
+	cs.Info = color("INF")
+	cs.Error = color("ERR")
+	cs.Reset = reset
+	return cs
 }
 
 func keyColor(s string) string {
@@ -86,7 +112,9 @@ func DisableColors(val bool) {
 
 // HappyDevFormatter is the formatter used for terminals. It is
 // colorful, dev friendly and provides meaningful logs when
-// warnings and errors occur. DO NOT use in production
+// warnings and errors occur.
+//
+// DO NOT use in production.
 type HappyDevFormatter struct {
 	name string
 	col  int
@@ -98,7 +126,6 @@ type HappyDevFormatter struct {
 // Performance isn't priority. It's more important developers see errors
 // and stack.
 func NewHappyDevFormatter(name string) *HappyDevFormatter {
-
 	return &HappyDevFormatter{
 		name:          name,
 		jsonFormatter: NewJSONFormatter(name),
@@ -137,12 +164,16 @@ func (hd *HappyDevFormatter) offset(buf *bytes.Buffer, color string, key string,
 	}
 }
 
+// writeError writes an error. It eventually calls offset which adds formatting
+// newlines, etc.
 func (hd *HappyDevFormatter) writeError(buf *bytes.Buffer, key string, err *errors.Error) {
 	msg := err.Error()
 	stack := string(err.Stack())
 	hd.offset(buf, theme.Error, key, msg+"\n"+stack)
 }
 
+// set writes a key-value pair to buf. It eventually calls offset which
+// adds formatting newlines, etc.
 func (hd *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{}, color string) {
 	if err, ok := value.(error); ok {
 		err2 := errors.Wrap(err, 4)
@@ -169,7 +200,8 @@ func (hd *HappyDevFormatter) getLevelContext(level int) (context string, color s
 		color = theme.Info
 	case LevelWarn:
 		c := stack.Caller(3)
-		context = fmt.Sprintf("%#v", c)
+		ci := newCallstackInfo(c, 3)
+		context = ci.String(theme.Warn, theme.Source)
 		color = theme.Warn
 	default:
 		trace := stack.Trace().TrimRuntime()
@@ -182,12 +214,18 @@ func (hd *HappyDevFormatter) getLevelContext(level int) (context string, color s
 			if i < 3 {
 				continue
 			}
-			if i == 3 && len(trace) > 4 {
-				errbuf.WriteString("\n\t")
-			} else if i > 3 {
-				errbuf.WriteString("\n\t")
+			// if i == 3 && len(trace) > 4 {
+			// 	errbuf.WriteString("\n\t")
+			// } else if i > 3 {
+			// 	errbuf.WriteString("\n\t")
+			// }
+
+			ci := newCallstackInfo(stack, 3)
+			ctx := ci.String(theme.Error, theme.Source)
+			if ctx == "" {
+				continue
 			}
-			errbuf.WriteString(fmt.Sprintf("%#v", stack))
+			errbuf.WriteString(ctx)
 			lines++
 		}
 		if lines > 1 {
@@ -234,8 +272,10 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		} else if isReserved {
 			InternalLog.Fatal("Key conflicts with reserved key. Avoiding using single rune keys.", "key", args[i].(string))
 		} else {
+			// Ensure keys are simple strings. The JSONFormatter doesn't attempt
+			// to escape keys. This panics if the JSON key value has a
+			// different value than a simple quoted string.
 			key := args[i].(string)
-			// ensure key is simple
 			b, err := json.Marshal(key)
 			if err != nil {
 				panic("Key is invalid. " + err.Error())
@@ -246,8 +286,9 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		}
 
 	}
-	// delegate to production JSON formatter, this ensures
-	// there will not be any surprises in production
+
+	// use the production JSON formatter to format the log first. This
+	// ensures there will not be any surprises in production.
 	entry := hd.jsonFormatter.LogEntry(level, msg, args)
 
 	// reset the column tracker used for fancy formatting
@@ -257,6 +298,7 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 	hd.writeString(buf, entry[timeKey].(string))
 	buf.WriteString(theme.Reset)
 
+	// emphasize warnings and errors
 	context, color := hd.getLevelContext(level)
 
 	// DBG, INF ...
@@ -270,9 +312,9 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		hd.set(buf, atKey, context, color)
 	}
 
-	// print in same order as arguments. The log entry from JSONFormatter is a
-	// JSON object and likely does not match the order of the arguments.
-	// Preserve order so it's easier for developers to debug.
+	// Preserve key order in the order developers assigned them
+	// in the call. This makes it easier for developers to follow
+	// the log.
 	order := []string{}
 	lenArgs := len(args)
 	for i := 0; i < len(args); i += 2 {
@@ -299,4 +341,106 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 
 	buf.WriteRune('\n')
 	buf.WriteString(theme.Reset)
+}
+
+type sourceLine struct {
+	lineno int
+	line   string
+}
+
+type callstackInfo struct {
+	filename     string
+	relFilename  string
+	lineno       int
+	method       string
+	context      []*sourceLine
+	contextLines int
+}
+
+func newCallstackInfo(callstack interface{}, contextLines int) *callstackInfo {
+	filename := fmt.Sprintf("%#s", callstack)
+	relFilename := fmt.Sprintf("%+s", callstack)
+	linestr := fmt.Sprintf("%d", callstack)
+	lineno, _ := strconv.Atoi(linestr)
+	fnname := fmt.Sprintf("%n", callstack)
+	ci := &callstackInfo{
+		filename:     filename,
+		relFilename:  relFilename,
+		lineno:       lineno,
+		method:       fnname,
+		context:      []*sourceLine{},
+		contextLines: contextLines,
+	}
+	ci.readSource()
+	return ci
+}
+
+func (ci *callstackInfo) readSource() {
+	if ci.lineno == 0 {
+		return
+	}
+	start := maxInt(1, ci.lineno-contextLines)
+	end := ci.lineno + contextLines
+
+	f, err := os.Open(ci.filename)
+	if err != nil {
+		InternalLog.Error("Could not read callstack file", "file", ci.filename, "err", err)
+		return
+	}
+	defer f.Close()
+
+	lineno := 1
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		if start <= lineno && lineno <= end {
+			line := scanner.Text()
+			line = expandTabs(line, 8)
+			ci.context = append(ci.context, &sourceLine{lineno: lineno, line: line})
+		}
+		lineno++
+	}
+
+	if err := scanner.Err(); err != nil {
+		InternalLog.Error("scanner error", "file", ci.filename, "err", err)
+	}
+}
+
+var rePackageFile = regexp.MustCompile(`logxi/v1/\w+\.go`)
+
+func (ci *callstackInfo) String(color string, sourceColor string) string {
+	var buf bytes.Buffer
+	buf.WriteString(color)
+	if contextLines == 0 {
+		buf.WriteString("\t")
+		buf.WriteString(ci.filename)
+		buf.WriteString(":")
+		buf.WriteString(strconv.Itoa(ci.lineno))
+		buf.WriteString("\n")
+		return buf.String()
+	}
+
+	// skip any in the logxi package
+	if rePackageFile.MatchString(ci.relFilename) {
+		return ""
+	}
+	buf.WriteString("\t")
+	buf.WriteString(ci.filename)
+	buf.WriteString(":")
+	buf.WriteString(strconv.Itoa(ci.lineno))
+	buf.WriteString("\n\t")
+	buf.WriteString(ci.method)
+	buf.WriteString("()\n")
+	for _, li := range ci.context {
+		if li.lineno == ci.lineno {
+			buf.WriteString(color)
+			buf.WriteString(fmt.Sprintf("\t=>%5d: %s\n", li.lineno, li.line))
+			continue
+		}
+		buf.WriteString(sourceColor)
+		buf.WriteString(fmt.Sprintf("\t%7d: %s\n", li.lineno, li.line))
+	}
+	// get rid of last \n
+	buf.Truncate(buf.Len() - 1)
+	buf.WriteString(theme.Reset)
+	return buf.String()
 }

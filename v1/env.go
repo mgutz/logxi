@@ -40,6 +40,8 @@ func ProcessEnv(env *Configuration) {
 	processFormatEnv(env)
 }
 
+var contextLines int
+
 // processFormatEnv parses LOGXI_FORMAT
 func processFormatEnv(env *Configuration) {
 	logxiFormat = env.Format
@@ -61,7 +63,15 @@ func processFormatEnv(env *Configuration) {
 			} else {
 				maxCol = defaultMaxCol
 			}
+		case "context":
+			lines, err := strconv.Atoi(value)
+			if err == nil {
+				contextLines = lines
+			} else {
+				contextLines = defaultContextLines
+			}
 		}
+
 	}
 	if formatterFormat == "" || formatterCreators[formatterFormat] == nil {
 		formatterFormat = defaultFormat
@@ -106,6 +116,10 @@ func processLogEnv(env *Configuration) {
 		logxiNameLevelMap[key] = level
 	}
 
+	// must always have global default, otherwise errs may get eaten up
+	if _, ok := logxiNameLevelMap["*"]; !ok {
+		logxiNameLevelMap["*"] = LevelError
+	}
 }
 
 func getLogLevel(name string) int {

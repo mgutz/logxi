@@ -203,7 +203,10 @@ The "happy" formatter has more options
 
 *   maxcol - maximum number of columns before forcing a key to be on its
     own line. If you want everything on a single line, set this to high
-    value like 1000
+    value like 1000. Default is 80.
+
+*   context - the number of context lines to print on source. Set to 0
+    to see only filepath:lineno. Default is 2.
 
 ### Color Schemes
 
@@ -211,11 +214,11 @@ The color scheme may be set with `LOGXI_COLORS` environment variable. For
 example, the default dark scheme is emulated like this
 
     # on non-Windows
-    export LOGXI_COLORS=key=cyan+h,value,misc=blue+h,DBG,WRN=yellow+h,INF=green+h,ERR=red+h
+    export LOGXI_COLORS=key=cyan+h,value,misc=blue+h,source=magenta,DBG,WRN=yellow+h,INF=green+h,ERR=red+h
     yourapp
 
     # on windows, stick to basic colors, styles liked bold, etc will not work
-    SET LOGXI_COLORS=key=cyan,value,misc=blue,DBG,WRN=yellow,INF=green,ERR=red
+    SET LOGXI_COLORS=key=cyan,value,misc=blue,source=magenta,DBG,WRN=yellow,INF=green,ERR=red
     yourapp
 
     # color only errors
@@ -224,6 +227,18 @@ example, the default dark scheme is emulated like this
 See [ansi](http://github.com/mgutz/ansi) package for styling. An empty
 value, like "value" and "DBG" above means use default foreground and
 background on terminal.
+
+Keys
+
+*   \*  - default color
+*   DBG - debug color
+*   WRN - warn color
+*   INF - info color
+*   ERR - error color
+*   key - key color
+*   value - value color unless WRN or ERR
+*   misc - time and log name color
+*   source - source context color (excluding error line)
 
 ## Extending
 
@@ -234,8 +249,10 @@ What about other writers? 12 factor apps only concern themselves with
 STDOUT. Use shell redirection operators to write to file or create
 a custom `io.Writer`.
 
+There are many utilities to rotate logs with simple pipe
+
 ```sh
-# to use Apache's roratelogs
+# Apache's roratelogs
 yourapp | rotatelogs demo 86400
 ```
 

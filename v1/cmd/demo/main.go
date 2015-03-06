@@ -23,8 +23,7 @@ func main() {
 	logger.Debug("BEGIN main", "hostname", hostname, "pid", os.Getpid())
 	logger.Info("Starting server")
 
+	logger.Error("Could not connect", "err", errConnection)
 	modelsLogger.Info("Connecting to database...")
-
 	logger.Warn("Reconnecting ..", "url", url)
-	logger.Error("Could not connect", "tries", 10, "err", errConnection)
 }
