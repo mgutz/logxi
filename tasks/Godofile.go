@@ -155,6 +155,10 @@ func tasks(p *Project) {
 		Prompt("")
 	})
 
+	p.Task("demo-gif", func() {
+		Bash(`cp ~/Desktop/demo.gif images`)
+	})
+
 	p.Task("allocs", func() {
 		Bash(`go test -bench . -benchmem | grep "allocs\|Bench"`, M{"$in": "v1/bench"})
 	}).Description("Runs benchmarks with allocs")

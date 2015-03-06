@@ -217,7 +217,7 @@ The color scheme may be set with `LOGXI_COLORS` environment variable. For
 example, the default dark scheme is emulated like this
 
     # on non-Windows
-    export LOGXI_COLORS=key=cyan+h,value,misc=blue+h,source=magenta,DBG,WRN=yellow+h,INF=green+h,ERR=red+h
+    export LOGXI_COLORS=key=cyan+h,value,misc=blue+h,source=magenta,DBG,WRN=yellow,INF=green,ERR=red+h
     yourapp
 
     # on windows, stick to basic colors, styles liked bold, etc will not work

@@ -89,7 +89,12 @@ func setDefaults(isTerminal bool) {
 		// but works well with light backgrounds
 		defaultScheme = "key=cyan,value,misc=blue,source=magenta,DBG,WRN=yellow,INF=green,ERR=red"
 	} else {
-		defaultScheme = "key=cyan+h,value,misc=blue,source=magenta,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
+		term := os.Getenv("TERM")
+		if term == "xterm-256color" {
+			defaultScheme = "key=cyan+h,value,misc=blue,source=88,DBG,WRN=yellow,INF=green+h,ERR=red+h"
+		} else {
+			defaultScheme = "key=cyan+h,value,misc=blue,source=magenta,DBG,WRN=yellow,INF=green,ERR=red+h"
+		}
 	}
 }
 
