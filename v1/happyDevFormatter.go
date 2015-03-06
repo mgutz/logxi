@@ -198,7 +198,7 @@ func (hd *HappyDevFormatter) getLevelContext(level int) (context string, color s
 			if i < 4 {
 				continue
 			}
-			ci := newCallstackInfo(stack, 0)
+			ci := newCallstackInfo(stack, -1)
 			context = ci.String(theme.Warn, theme.Source)
 			break
 		}

@@ -192,8 +192,6 @@ variable. Valid values are `"happy", "text", "JSON"`
 
     # Use JSON in production with custom time
 	LOGXI_FORMAT=JSON,t=2006-01-02T15:04:05.000000-0700 yourapp
-    # Use fast text formatter
-    LOGXI_FORMAT=text yourapp
 
 The "happy" formatter has more options
 
@@ -208,8 +206,8 @@ The "happy" formatter has more options
     own line. If you want everything on a single line, set this to high
     value like 1000. Default is 80.
 
-*   context - the number of context lines to print on source. Set to 0
-    to see only filepath:lineno. Default is 2.
+*   context - the number of context lines to print on source. Set to -1
+    to see only file:lineno. Default is 2.
 
 ### Color Schemes
 

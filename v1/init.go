@@ -46,6 +46,7 @@ var logxiNameLevelMap map[string]int
 
 // logxiFormat is the formatter kind to create
 var logxiFormat string
+var home string
 
 var isTerminal bool
 var defaultContextLines = 2
@@ -59,6 +60,8 @@ var defaultTimeFormat string
 var timeFormat string
 var colorableStdout = colorable.NewColorableStdout()
 var isPretty = true
+var isWindows = runtime.GOOS == "windows"
+var wd string
 
 // logxi reserved keys
 const atKey = "@"
@@ -70,7 +73,12 @@ const timeKey = "t"
 var logxiKeys = []string{atKey, levelKey, messageKey, nameKey, timeKey}
 
 func setDefaults(isTerminal bool) {
+	var err error
 	contextLines = defaultContextLines
+	wd, err = os.Getwd()
+	if err != nil {
+		InternalLog.Error("Could not get working directory")
+	}
 
 	if isTerminal {
 		defaultLogxiEnv = "*=WRN"
@@ -84,11 +92,13 @@ func setDefaults(isTerminal bool) {
 		defaultTimeFormat = "2006-01-02T15:04:05-0700"
 		disableColors = true
 	}
-	if runtime.GOOS == "windows" {
+	if isWindows {
+		home = os.Getenv("HOMEPATH")
 		// DefaultScheme is a color scheme optimized for dark background
 		// but works well with light backgrounds
 		defaultScheme = "key=cyan,value,misc=blue,source=magenta,DBG,WRN=yellow,INF=green,ERR=red"
 	} else {
+		home = os.Getenv("HOME")
 		term := os.Getenv("TERM")
 		if term == "xterm-256color" {
 			defaultScheme = "key=cyan+h,value,misc=blue,source=88,DBG,WRN=yellow,INF=green+h,ERR=red+h"

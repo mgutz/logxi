@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/mgutz/ansi"
 )
@@ -76,38 +77,43 @@ func (ci *callstackInfo) readSource() {
 var rePackageFile = regexp.MustCompile(`logxi/v1/\w+\.go`)
 var rePackageTestFile = regexp.MustCompile(`logxi/v1/\w+_test\.go`)
 
+func (ci *callstackInfo) dump() {
+	fmt.Printf("DBG: HERE\n")
+	fmt.Printf("ci.filename %#v\n", ci.filename)
+	fmt.Printf("ci.lineno %#v\n", ci.lineno)
+	fmt.Printf("ci.method %#v\n", ci.method)
+	fmt.Printf("ci.relFilename %#v\n", ci.relFilename)
+	fmt.Printf("first", !rePackageTestFile.MatchString(ci.filename))
+	fmt.Printf("second", rePackageFile.MatchString(ci.relFilename))
+}
+
 func (ci *callstackInfo) String(color string, sourceColor string) string {
-	var buf bytes.Buffer
-	buf.WriteString(color)
-	if ci.contextLines == 0 {
-		buf.WriteString("\t")
-		buf.WriteString(ci.filename)
-		buf.WriteString(":")
-		buf.WriteString(strconv.Itoa(ci.lineno))
-		buf.WriteString("\n")
-		return buf.String()
-	}
-
-	// fmt.Printf("DBG: HERE\n")
-	// fmt.Printf("ci.filename %#v\n", ci.filename)
-	// fmt.Printf("ci.lineno %#v\n", ci.lineno)
-	// fmt.Printf("ci.method %#v\n", ci.method)
-	// fmt.Printf("ci.relFilename %#v\n", ci.relFilename)
-	// fmt.Printf("first", !rePackageTestFile.MatchString(ci.filename))
-	// fmt.Printf("second", rePackageFile.MatchString(ci.relFilename))
-
-	// skip any in the logxi package
+	// skip anything in the logxi package (except for tests)
 	if !rePackageTestFile.MatchString(ci.filename) && rePackageFile.MatchString(ci.relFilename) {
 		return ""
 	}
 
+	tildeFilename := ci.filename
+	if strings.HasPrefix(ci.filename, wd) {
+		tildeFilename = strings.Replace(ci.filename, wd+string(os.PathSeparator), "", 1)
+	} else if strings.HasPrefix(ci.filename, home) {
+		tildeFilename = strings.Replace(ci.filename, home, "~", 1)
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString(color)
 	buf.WriteString("\t")
-	buf.WriteString(ci.filename)
+	buf.WriteString(ci.method)
+	buf.WriteString("():")
+	buf.WriteString(tildeFilename)
 	buf.WriteString(":")
 	buf.WriteString(strconv.Itoa(ci.lineno))
-	buf.WriteString("\n\t")
-	buf.WriteString(ci.method)
-	buf.WriteString("()\n")
+	buf.WriteString("\n")
+
+	if ci.contextLines == -1 {
+		return buf.String()
+	}
+
 	for _, li := range ci.context {
 		if li.lineno == ci.lineno {
 			buf.WriteString(color)

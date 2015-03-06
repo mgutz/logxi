@@ -109,23 +109,23 @@ func tasks(p *Project) {
 				`demo`,
 			},
 			{
-				`let's show all log levels`,
+				`show all log levels`,
 				`LOGXI=* demo`,
 			},
 			{
-				`enable/disable loggers and set each level`,
+				`enable/disable loggers with level`,
 				`LOGXI=*=ERR,models,server=INF demo`,
 			},
 			{
-				`create custom 256 colors colorscheme, pink=200`,
+				`create custom 256 colors colorscheme, pink==200`,
 				`LOGXI_COLORS=*=black+h,ERR=200+b,key=blue+h demo`,
 			},
 			{
-				`fit more on line up to max column, set time format, no context`,
-				`LOGXI=* LOGXI_FORMAT=fit,maxcol=80,t=04:05.000,context=0 demo`,
+				`fit more on line, set time format, no context`,
+				`LOGXI=* LOGXI_FORMAT=fit,maxcol=80,t=04:05.000,context=-1 demo`,
 			},
 			{
-				`logxi defaults to unadorned JSON and ERR in production`,
+				`logxi defaults to fast, unadorned JSON in production`,
 				`demo | cat`,
 			},
 		}
@@ -172,8 +172,9 @@ func tasks(p *Project) {
 		//Run("LOGXI=* go test -run=TestColors", M{"$in": "v1"})
 	})
 
-	p.Task("isolate", func() {
-		Run("LOGXI=* go test -run=TestWarningErrorContext", M{"$in": "v1"})
+	p.Task("isolate", D{"build"}, func() error {
+		return Bash("LOGXI=* LOGXI_FORMAT=fit,maxcol=80,t=04:05.000,context=2 demo", M{"$in": "v1/cmd/demo"})
+		//Run("LOGXI=* go test -run=TestWarningErrorContext", M{"$in": "v1"})
 	})
 
 	p.Task("install", func() error {
