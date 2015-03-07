@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"runtime/debug"
 	"strings"
 
-	"github.com/go-errors/errors"
 	"github.com/mgutz/ansi"
-	"gopkg.in/stack.v1"
 )
 
 // Theme defines a color theme for HappyDevFormatter
@@ -120,7 +119,6 @@ type HappyDevFormatter struct {
 // NewHappyDevFormatter returns a new instance of HappyDevFormatter.
 func NewHappyDevFormatter(name string) *HappyDevFormatter {
 	jf := NewJSONFormatter(name)
-	jf.disableCallStack(true)
 	return &HappyDevFormatter{
 		name:          name,
 		jsonFormatter: jf,
@@ -152,31 +150,15 @@ func (hd *HappyDevFormatter) offset(buf *bytes.Buffer, color string, key string,
 		buf.WriteString(color)
 	}
 	hd.writeString(buf, val)
-
 	if color != "" {
 		buf.WriteString(ansi.Reset)
 	}
 }
 
-// writeError writes an error. It eventually calls offset which adds formatting
-// newlines, etc.
-func (hd *HappyDevFormatter) writeError(buf *bytes.Buffer, key string, err *errors.Error) {
-	msg := err.Error()
-	stack := string(err.Stack())
-	hd.offset(buf, theme.Error, key, msg+"\n"+stack)
-}
-
 // set writes a key-value pair to buf. It eventually calls offset which adds
 // formatting newlines, etc.
 func (hd *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{}, color string) {
-	if err, ok := value.(error); ok {
-		err2 := errors.Wrap(err, 4)
-		hd.writeError(buf, key, err2)
-	} else if err, ok := value.(*errors.Error); ok {
-		hd.writeError(buf, key, err)
-	} else {
-		hd.offset(buf, color, key, fmt.Sprintf("%v", value))
-	}
+	hd.offset(buf, color, key, fmt.Sprintf("%v", value))
 }
 
 // tracks the position of the string so we can break lines cleanly. Do not
@@ -186,39 +168,33 @@ func (hd *HappyDevFormatter) writeString(buf *bytes.Buffer, s string) {
 	hd.col += len(s)
 }
 
-func (hd *HappyDevFormatter) getLevelContext(level int) (context string, color string) {
+func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interface{}) (message string, context string, color string) {
 	switch level {
 	case LevelDebug:
 		color = theme.Debug
 	case LevelInfo:
 		color = theme.Info
 	case LevelWarn:
-		trace := stack.Trace().TrimRuntime()
-		// if one line, keep it on same line, multiple lines group all
-		// on next line
-		for i, stack := range trace {
-			if i < 4 {
-				continue
-			}
-			ci := newCallstackInfo(stack, -1)
-			context = ci.String(theme.Warn, theme.Source)
+		frames := parseDebugStack(string(debug.Stack()), 4, true)
+		context = frames[0].String(theme.Warn, theme.Source)
+		context += "\n"
+		color = theme.Warn
+	case LevelError, LevelFatal:
+		color = theme.Error
+		if contextLines == -1 {
 			break
 		}
-		color = theme.Warn
+		frames := parseLogxiStack(entry, 4, true)
+		if frames == nil {
+			frames = parseDebugStack(string(debug.Stack()), 4, true)
+		}
 
-	default:
-		trace := stack.Trace().TrimRuntime()
-
-		// if one line, keep it on same line, multiple lines group all
-		// on next line
 		var errbuf bytes.Buffer
 		lines := 0
-		for i, stack := range trace {
-			if i < 3 {
-				continue
-			}
-			ci := newCallstackInfo(stack, contextLines)
-			ctx := ci.String(theme.Error, theme.Source)
+		for _, frame := range frames {
+			//ci := newCallstackInfo(stack, contextLines)
+			frame.readSource(contextLines)
+			ctx := frame.String(theme.Error, theme.Source)
 			if ctx == "" {
 				continue
 			}
@@ -227,10 +203,10 @@ func (hd *HappyDevFormatter) getLevelContext(level int) (context string, color s
 			lines++
 		}
 		context = errbuf.String()
-		color = theme.Error
+	default:
+		panic("should never get here")
 	}
-
-	return context, color
+	return message, context, color
 }
 
 // Format records a log entry.
@@ -272,14 +248,19 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 	buf.WriteString(ansi.Reset)
 
 	// emphasize warnings and errors
-	context, color := hd.getLevelContext(level)
+	message, context, color := hd.getLevelContext(level, entry)
+
+	if message == "" {
+		message = entry[messageKey].(string)
+	}
 
 	// DBG, INF ...
 	hd.set(buf, "", entry[levelKey].(string), color)
 	// logger name
 	hd.set(buf, "", entry[nameKey], theme.Misc)
+
 	// message from user
-	hd.set(buf, "", entry[messageKey], color)
+	hd.set(buf, "", message, color)
 
 	// Preserve key order in the order developer added them
 	// in the call. This makes it easier for developers to follow

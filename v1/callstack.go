@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -19,7 +20,6 @@ type sourceLine struct {
 
 type callstackInfo struct {
 	filename     string
-	relFilename  string
 	lineno       int
 	method       string
 	context      []*sourceLine
@@ -28,28 +28,25 @@ type callstackInfo struct {
 
 func newCallstackInfo(callstack interface{}, contextLines int) *callstackInfo {
 	filename := fmt.Sprintf("%#s", callstack)
-	relFilename := fmt.Sprintf("%+s", callstack)
 	linestr := fmt.Sprintf("%d", callstack)
 	lineno, _ := strconv.Atoi(linestr)
 	fnname := fmt.Sprintf("%n", callstack)
 	ci := &callstackInfo{
-		filename:     filename,
-		relFilename:  relFilename,
-		lineno:       lineno,
-		method:       fnname,
-		context:      []*sourceLine{},
-		contextLines: contextLines,
+		filename: filename,
+		lineno:   lineno,
+		method:   fnname,
+		context:  []*sourceLine{},
 	}
-	ci.readSource()
+	ci.readSource(contextLines)
 	return ci
 }
 
-func (ci *callstackInfo) readSource() {
+func (ci *callstackInfo) readSource(contextLines int) {
 	if ci.lineno == 0 || disableCallstack {
 		return
 	}
-	start := maxInt(1, ci.lineno-ci.contextLines)
-	end := ci.lineno + ci.contextLines
+	start := maxInt(1, ci.lineno-contextLines)
+	end := ci.lineno + contextLines
 
 	f, err := os.Open(ci.filename)
 	if err != nil {
@@ -79,19 +76,9 @@ func (ci *callstackInfo) readSource() {
 var rePackageFile = regexp.MustCompile(`logxi/v1/\w+\.go`)
 var rePackageTestFile = regexp.MustCompile(`logxi/v1/\w+_test\.go`)
 
-func (ci *callstackInfo) dump() {
-	fmt.Printf("DBG: HERE\n")
-	fmt.Printf("ci.filename %#v\n", ci.filename)
-	fmt.Printf("ci.lineno %#v\n", ci.lineno)
-	fmt.Printf("ci.method %#v\n", ci.method)
-	fmt.Printf("ci.relFilename %#v\n", ci.relFilename)
-	fmt.Printf("first", !rePackageTestFile.MatchString(ci.filename))
-	fmt.Printf("second", rePackageFile.MatchString(ci.relFilename))
-}
-
 func (ci *callstackInfo) String(color string, sourceColor string) string {
 	// skip anything in the logxi package (except for tests)
-	if !rePackageTestFile.MatchString(ci.filename) && rePackageFile.MatchString(ci.relFilename) {
+	if !rePackageTestFile.MatchString(ci.filename) && rePackageFile.MatchString(ci.filename) {
 		return ""
 	}
 
@@ -106,12 +93,13 @@ func (ci *callstackInfo) String(color string, sourceColor string) string {
 	buf.WriteString(color)
 	buf.WriteString(Separator)
 	buf.WriteString(indent)
-	buf.WriteString("at ")
+	buf.WriteString("in ")
 	buf.WriteString(ci.method)
 	buf.WriteString("(")
 	buf.WriteString(tildeFilename)
-	buf.WriteString("):")
+	buf.WriteRune(':')
 	buf.WriteString(strconv.Itoa(ci.lineno))
+	buf.WriteString(")")
 
 	if ci.contextLines == -1 {
 		return buf.String()
@@ -157,4 +145,89 @@ func (ci *callstackInfo) String(color string, sourceColor string) string {
 	buf.Truncate(buf.Len() - 1)
 	buf.WriteString(ansi.Reset)
 	return buf.String()
+}
+
+func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*callstackInfo {
+	lines := strings.Split(stack, "\n")
+	frames := []*callstackInfo{}
+	for i := skip * 2; i < len(lines); i += 2 {
+		ci := &callstackInfo{}
+		sourceLine := lines[i]
+		if sourceLine == "" {
+			break
+		}
+		if ignoreRuntime && strings.Contains(sourceLine, filepath.Join("src", "runtime")) {
+			break
+		}
+
+		colon := strings.Index(sourceLine, ":")
+		space := strings.Index(sourceLine, " ")
+		ci.filename = sourceLine[0:colon]
+		numstr := sourceLine[colon+1 : space]
+		lineno, err := strconv.Atoi(numstr)
+		if err != nil {
+			InternalLog.Error("Could not parse line number", "sourceLine", sourceLine, "numstr", numstr)
+			continue
+		}
+		ci.lineno = lineno
+
+		methodLine := lines[i+1]
+		colon = strings.Index(methodLine, ":")
+		ci.method = strings.Trim(methodLine[0:colon], "\t ")
+		frames = append(frames, ci)
+	}
+	return frames
+}
+
+func parseLogxiStack(entry map[string]interface{}, skip int, ignoreRuntime bool) []*callstackInfo {
+	var errStack string
+	// logxi.stack:connection error
+	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:45 (0x5fa70)
+	// 	(*JSONFormatter).writeError: jf.writeString(buf, err.Error()+"\n"+string(debug.Stack()))
+	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:82 (0x5fdc3)
+	// 	(*JSONFormatter).appendValue: jf.writeError(buf, err)
+	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:109 (0x605ca)
+	// 	(*JSONFormatter).set: jf.appendValue(buf, val)
+	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:138 (0x60a2c)
+	// 	(*JSONFormatter).Format: jf.set(buf, key, args[i+1])
+	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:157 (0x60c10)
+	// 	(*JSONFormatter).LogEntry: jf.Format(&buf, level, msg, args)
+	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/happyDevFormatter.go:263 (0x5ddb8)
+	// 	(*HappyDevFormatter).Format: entry := hd.jsonFormatter.LogEntry(level, msg, args)
+	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/defaultLogger.go:87 (0x5a4a9)
+	// 	(*DefaultLogger).Log: l.formatter.Format(&buf, level, msg, args)
+	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/defaultLogger.go:75 (0x5a343)
+	// 	(*DefaultLogger).Error: l.Log(LevelError, msg, args)
+	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/cmd/demo/main.go:15 (0x214c)
+	// 	causeError: logger.Error("error in function", "err", errConnection)
+	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/cmd/demo/main.go:31 (0x2503)
+	// 	main: causeError()
+	// /Users/mgutz/goroot/src/runtime/proc.go:63 (0x13d13)
+	// 	main: main_main()
+	// /Users/mgutz/goroot/src/runtime/asm_amd64.s:2232 (0x38bf1)
+	// 	goexit:
+
+	found := ""
+	for key, val := range entry {
+		if s, ok := val.(string); ok {
+			if strings.HasPrefix(s, "logxi.stack") {
+				found = key
+				errStack = s
+				break
+			}
+		}
+	}
+	if found == "" {
+		return nil
+	}
+
+	// get rid of "logxi.stack:"
+	colon := strings.IndexRune(errStack, ':')
+	newline := strings.IndexRune(errStack, '\n')
+	msg := errStack[colon+1 : newline]
+	frames := parseDebugStack(errStack[newline+1:], skip, ignoreRuntime)
+
+	// replace original message with just the error
+	entry[found] = msg
+	return frames
 }

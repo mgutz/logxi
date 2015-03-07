@@ -42,7 +42,7 @@ func (jf *JSONFormatter) writeError(buf *bytes.Buffer, err error) {
 		return
 	}
 
-	jf.writeString(buf, err.Error()+"\n"+string(debug.Stack()))
+	jf.writeString(buf, "logxi.stack:"+err.Error()+"\n"+string(debug.Stack()))
 	return
 }
 

@@ -98,7 +98,11 @@ func tasks(p *Project) {
 		Run("go build", M{"$in": "v1/cmd/demo"})
 	})
 
-	p.Task("demo", D{"build"}, func() {
+	p.Task("demo", func() {
+		Run("go run main.go", M{"$in": "v1/cmd/demo"})
+	})
+
+	p.Task("gifcast", D{"build"}, func() {
 		commands := []pair{
 			{
 				`create a simple app demo`,
@@ -121,7 +125,7 @@ func tasks(p *Project) {
 				`LOGXI_COLORS=*=black+h,ERR=200+b,key=blue+h demo`,
 			},
 			{
-				`fit more on line, set time format, no context`,
+				`fit more on line, set time format, disable context`,
 				`LOGXI=* LOGXI_FORMAT=fit,maxcol=80,t=04:05.000,context=-1 demo`,
 			},
 			{

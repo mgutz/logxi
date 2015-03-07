@@ -3,9 +3,8 @@ package log
 import (
 	"bytes"
 	"fmt"
+	"runtime/debug"
 	"time"
-
-	"github.com/go-errors/errors"
 )
 
 // Separator is the separator to use between key value pairs
@@ -23,20 +22,6 @@ type TextFormatter struct {
 	name         string
 	itoaLevelMap map[int]string
 }
-
-// var maxTextFormatterArgs = 10
-// var textFormatterKVFormat map[int]string
-// var textFormatterFormat = Separator + "%s=%v"
-
-// func init() {
-// 	// caches the format string for key value pairs
-// 	format := textFormatterFormat
-// 	textFormatterKVFormat = map[int]string{}
-// 	for i := 2; i < maxTextFormatterArgs; i += 2 {
-// 		textFormatterKVFormat[i] = format
-// 		format += textFormatterFormat
-// 	}
-// }
 
 // NewTextFormatter returns a new instance of TextFormatter. SetName
 // must be called befored using it.
@@ -71,14 +56,10 @@ func (tf *TextFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
 	buf.WriteString(key)
 	buf.WriteRune('=')
 	if err, ok := val.(error); ok {
-		err2 := errors.Wrap(err, 4)
-		msg := err2.Error()
-		stack := string(err2.Stack())
-		buf.WriteString(msg)
+		buf.WriteString(err.Error())
 		buf.WriteRune('\n')
-		buf.WriteString(stack)
+		buf.WriteString(string(debug.Stack()))
 		return
-
 	}
 	buf.WriteString(fmt.Sprintf("%#v", val))
 }
