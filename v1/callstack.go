@@ -45,7 +45,7 @@ func newCallstackInfo(callstack interface{}, contextLines int) *callstackInfo {
 }
 
 func (ci *callstackInfo) readSource() {
-	if ci.lineno == 0 {
+	if ci.lineno == 0 || disableCallstack {
 		return
 	}
 	start := maxInt(1, ci.lineno-ci.contextLines)
@@ -53,7 +53,9 @@ func (ci *callstackInfo) readSource() {
 
 	f, err := os.Open(ci.filename)
 	if err != nil {
-		InternalLog.Error("Could not read callstack file", "file", ci.filename, "err", err)
+		// if we can't read a file, it means user is running this in production
+		disableCallstack = true
+		InternalLog.Error("Disabling callstack context. Maybe you are running in production? Could not read source file.", "file", ci.filename, "err", err)
 		return
 	}
 	defer f.Close()

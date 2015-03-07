@@ -12,7 +12,7 @@ var url = "http://www.acme.local"
 var logger log.Logger
 
 func causeError() {
-	logger.Error("error in function")
+	logger.Error("error in function", "err", errConnection)
 }
 
 func main() {

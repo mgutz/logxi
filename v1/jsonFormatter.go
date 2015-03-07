@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"runtime/debug"
 	"strconv"
 	"time"
 )
@@ -12,12 +13,37 @@ import (
 // JSONFormatter formats log entries as JSON. This should be used
 // in production because it is machine parseable.
 type JSONFormatter struct {
-	name string
+	name              string
+	disableErrorStack bool
 }
 
 // NewJSONFormatter creates a new instance of JSONFormatter.
 func NewJSONFormatter(name string) *JSONFormatter {
 	return &JSONFormatter{name: name}
+}
+
+func (jf *JSONFormatter) disableCallStack(disable bool) {
+	jf.disableErrorStack = disable
+}
+
+func (jf *JSONFormatter) writeString(buf *bytes.Buffer, s string) {
+	b, err := json.Marshal(s)
+	if err != nil {
+		InternalLog.Error("Could not write string.", "string", s)
+		buf.WriteString(`"Could not marshal this key's string"`)
+		return
+	}
+	buf.Write(b)
+}
+
+func (jf *JSONFormatter) writeError(buf *bytes.Buffer, err error) {
+	if jf.disableErrorStack {
+		jf.writeString(buf, err.Error())
+		return
+	}
+
+	jf.writeString(buf, err.Error()+"\n"+string(debug.Stack()))
+	return
 }
 
 func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
@@ -53,16 +79,15 @@ func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
 
 	default:
 		if err, ok := val.(error); ok {
-			buf.WriteString(strconv.Quote(err.Error()))
+			jf.writeError(buf, err)
 			return
 		}
 
 		b, err := json.Marshal(value.Interface())
 		if err != nil {
 			InternalLog.Error("Could not json.Marshal value: ", "formatter", "JSONFormatter", "err", err.Error())
-
 			// must always log, use sprintf to get a string
-			s := fmt.Sprintf("%v", value.Interface())
+			s := fmt.Sprintf("%#v", value.Interface())
 			b, err = json.Marshal(s)
 			if err != nil {
 				// should never get here, but JSONFormatter should never panic

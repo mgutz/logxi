@@ -119,9 +119,11 @@ type HappyDevFormatter struct {
 
 // NewHappyDevFormatter returns a new instance of HappyDevFormatter.
 func NewHappyDevFormatter(name string) *HappyDevFormatter {
+	jf := NewJSONFormatter(name)
+	jf.disableCallStack(true)
 	return &HappyDevFormatter{
 		name:          name,
-		jsonFormatter: NewJSONFormatter(name),
+		jsonFormatter: jf,
 	}
 }
 
@@ -312,6 +314,9 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		buf.WriteString(color)
 		buf.WriteString(context)
 		buf.WriteString(ansi.Reset)
+		if context[len(context)-1:] != "\n" {
+			buf.WriteRune('\n')
+		}
 		//hd.set(buf, atKey, context, color)
 	} else {
 		buf.WriteRune('\n')

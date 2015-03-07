@@ -57,11 +57,13 @@ var defaultMaxCol = 80
 var defaultPretty = true
 var defaultScheme string
 var defaultTimeFormat string
+var disableCallstack bool
 var timeFormat string
 var colorableStdout = colorable.NewColorableStdout()
 var isPretty = true
 var isWindows = runtime.GOOS == "windows"
 var wd string
+var pkgMutex sync.Mutex
 
 // logxi reserved keys
 const atKey = "@"
@@ -135,6 +137,7 @@ func init() {
 	InternalLog = NewLogger(os.Stdout, "__logxi")
 	InternalLog.SetLevel(LevelError)
 	InternalLog.SetFormatter(NewTextFormatter("__logxi"))
+	//InternalLog = New("__logxi")
 
 	DefaultLog = New("~")
 }
