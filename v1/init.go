@@ -131,11 +131,12 @@ func init() {
 	RegisterFormatFactory(FormatJSON, formatFactory)
 	ProcessEnv(readFromEnviron())
 
-	// the internal log must be plain and always work
+	// the internal logger to report errors
 	InternalLog = NewLogger(os.Stdout, "__logxi")
 	InternalLog.SetLevel(LevelError)
-	InternalLog.SetFormatter(NewTextFormatter("__logxi"))
+	InternalLog.SetFormatter(NewJSONFormatter("__logxi"))
 	//InternalLog = New("__logxi")
 
+	// package logger for users
 	DefaultLog = New("~")
 }

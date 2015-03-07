@@ -29,15 +29,15 @@ func NewTextFormatter(name string) *TextFormatter {
 	var buildKV = func(level string) string {
 		var buf bytes.Buffer
 		buf.WriteString(Separator)
-		buf.WriteString("n=")
+		buf.WriteString("_n=")
 		buf.WriteString(name)
 
 		buf.WriteString(Separator)
-		buf.WriteString("l=")
+		buf.WriteString("_l=")
 		buf.WriteString(level)
 
 		buf.WriteString(Separator)
-		buf.WriteString("m=")
+		buf.WriteString("_m=")
 
 		return buf.String()
 	}
@@ -66,7 +66,7 @@ func (tf *TextFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
 
 // Format records a log entry.
 func (tf *TextFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
-	buf.WriteString("t=")
+	buf.WriteString("_t=")
 	buf.WriteString(time.Now().Format(timeFormat))
 	buf.WriteString(tf.itoaLevelMap[level])
 	buf.WriteString(msg)

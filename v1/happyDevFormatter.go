@@ -175,6 +175,9 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 	case LevelInfo:
 		color = theme.Info
 	case LevelWarn:
+		if disableCallstack {
+			break
+		}
 		frames := parseDebugStack(string(debug.Stack()), 4, true)
 		color = theme.Warn
 		if len(frames) == 0 {
@@ -184,7 +187,7 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 		context += "\n"
 	case LevelError, LevelFatal:
 		color = theme.Error
-		if contextLines == -1 {
+		if disableCallstack || contextLines == -1 {
 			break
 		}
 		frames := parseLogxiStack(entry, 4, true)
@@ -194,12 +197,15 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 		if len(frames) == 0 {
 			break
 		}
-
 		var errbuf bytes.Buffer
 		lines := 0
 		for _, frame := range frames {
-			//ci := newCallstackInfo(stack, contextLines)
-			frame.readSource(contextLines)
+			// by setting to empty, we use the original stack
+			err := frame.readSource(contextLines)
+			if err != nil {
+				errbuf.Reset()
+				break
+			}
 			ctx := frame.String(theme.Error, theme.Source)
 			if ctx == "" {
 				continue

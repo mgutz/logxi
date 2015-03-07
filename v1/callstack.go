@@ -29,9 +29,9 @@ type frameInfo struct {
 	contextLines int
 }
 
-func (ci *frameInfo) readSource(contextLines int) {
+func (ci *frameInfo) readSource(contextLines int) error {
 	if ci.lineno == 0 || disableCallstack {
-		return
+		return nil
 	}
 	start := maxInt(1, ci.lineno-contextLines)
 	end := ci.lineno + contextLines
@@ -40,8 +40,7 @@ func (ci *frameInfo) readSource(contextLines int) {
 	if err != nil {
 		// if we can't read a file, it means user is running this in production
 		disableCallstack = true
-		InternalLog.Error(`Disabling reading source callstack.`, "file", ci.filename)
-		return
+		return err
 	}
 	defer f.Close()
 
@@ -59,9 +58,21 @@ func (ci *frameInfo) readSource(contextLines int) {
 	if err := scanner.Err(); err != nil {
 		InternalLog.Error("scanner error", "file", ci.filename, "err", err)
 	}
+	return nil
 }
 
 func (ci *frameInfo) String(color string, sourceColor string) string {
+	var buf bytes.Buffer
+	if disableCallstack {
+		buf.WriteString(color)
+		buf.WriteString(Separator)
+		buf.WriteString(indent)
+		buf.WriteString(ci.filename)
+		buf.WriteRune(':')
+		buf.WriteString(strconv.Itoa(ci.lineno))
+		return buf.String()
+	}
+
 	// skip anything in the logxi package (except for tests)
 	if !rePackageTestFile.MatchString(ci.filename) && rePackageFile.MatchString(ci.filename) {
 		return ""
@@ -74,7 +85,6 @@ func (ci *frameInfo) String(color string, sourceColor string) string {
 		tildeFilename = strings.Replace(ci.filename, home, "~", 1)
 	}
 
-	var buf bytes.Buffer
 	buf.WriteString(color)
 	buf.WriteString(Separator)
 	buf.WriteString(indent)
