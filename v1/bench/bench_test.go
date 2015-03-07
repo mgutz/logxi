@@ -23,9 +23,6 @@ var testObject = M{
 	},
 }
 
-var simpleArgs = []interface{}{"key", 1, "key2", "string", "key3", false}
-var complexArgs = []interface{}{"key", 1, "obj", testObject}
-
 func BenchmarkBuiltinLog(b *testing.B) {
 	l := L.New(os.Stdout, " [log] ", L.LstdFlags)
 	b.ResetTimer()

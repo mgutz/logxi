@@ -13,8 +13,7 @@ import (
 // JSONFormatter formats log entries as JSON. This should be used
 // in production because it is machine parseable.
 type JSONFormatter struct {
-	name              string
-	disableErrorStack bool
+	name string
 }
 
 // NewJSONFormatter creates a new instance of JSONFormatter.
@@ -22,14 +21,10 @@ func NewJSONFormatter(name string) *JSONFormatter {
 	return &JSONFormatter{name: name}
 }
 
-func (jf *JSONFormatter) disableCallStack(disable bool) {
-	jf.disableErrorStack = disable
-}
-
 func (jf *JSONFormatter) writeString(buf *bytes.Buffer, s string) {
 	b, err := json.Marshal(s)
 	if err != nil {
-		InternalLog.Error("Could not write string.", "string", s)
+		InternalLog.Error("Could not json.Marshal string.", "str", s)
 		buf.WriteString(`"Could not marshal this key's string"`)
 		return
 	}
@@ -37,12 +32,8 @@ func (jf *JSONFormatter) writeString(buf *bytes.Buffer, s string) {
 }
 
 func (jf *JSONFormatter) writeError(buf *bytes.Buffer, err error) {
-	if jf.disableErrorStack {
-		jf.writeString(buf, err.Error())
-		return
-	}
-
-	jf.writeString(buf, "logxi.stack:"+err.Error()+"\n"+string(debug.Stack()))
+	jf.writeString(buf, err.Error())
+	jf.set(buf, callstackKey, string(debug.Stack()))
 	return
 }
 
@@ -111,19 +102,19 @@ func (jf *JSONFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
 
 // Format formats log entry as JSON.
 func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
-	buf.WriteString(`{"t":"`)
+	buf.WriteString(`{"_t":"`)
 	buf.WriteString(time.Now().Format(timeFormat))
 	buf.WriteRune('"')
 
-	buf.WriteString(`, "l":"`)
+	buf.WriteString(`, "_l":"`)
 	buf.WriteString(LevelMap[level])
 	buf.WriteRune('"')
 
-	buf.WriteString(`, "n":"`)
+	buf.WriteString(`, "_n":"`)
 	buf.WriteString(jf.name)
 	buf.WriteRune('"')
 
-	buf.WriteString(`, "m":`)
+	buf.WriteString(`, "_m":`)
 	jf.appendValue(buf, msg)
 
 	var lenArgs = len(args)

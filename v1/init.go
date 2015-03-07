@@ -25,9 +25,6 @@ var DefaultLog Logger
 // internalLog is the logger used by logxi itself
 var InternalLog Logger
 
-// Whether to force disabling of Colors
-var disableColors bool
-
 type loggerMap struct {
 	sync.Mutex
 	loggers map[string]Logger
@@ -57,6 +54,7 @@ var defaultMaxCol = 80
 var defaultPretty = true
 var defaultScheme string
 var defaultTimeFormat string
+var disableColors bool
 var disableCallstack bool
 var timeFormat string
 var colorableStdout = colorable.NewColorableStdout()
@@ -66,13 +64,13 @@ var wd string
 var pkgMutex sync.Mutex
 
 // logxi reserved keys
-const atKey = "@"
-const levelKey = "l"
-const messageKey = "m"
-const nameKey = "n"
-const timeKey = "t"
+const levelKey = "_l"
+const messageKey = "_m"
+const nameKey = "_n"
+const timeKey = "_t"
+const callstackKey = "_c"
 
-var logxiKeys = []string{atKey, levelKey, messageKey, nameKey, timeKey}
+var logxiKeys = []string{levelKey, messageKey, nameKey, timeKey, callstackKey}
 
 func setDefaults(isTerminal bool) {
 	var err error

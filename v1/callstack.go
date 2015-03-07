@@ -13,12 +13,15 @@ import (
 	"github.com/mgutz/ansi"
 )
 
+var rePackageFile = regexp.MustCompile(`logxi/v1/\w+\.go`)
+var rePackageTestFile = regexp.MustCompile(`logxi/v1/\w+_test\.go`)
+
 type sourceLine struct {
 	lineno int
 	line   string
 }
 
-type callstackInfo struct {
+type frameInfo struct {
 	filename     string
 	lineno       int
 	method       string
@@ -26,22 +29,7 @@ type callstackInfo struct {
 	contextLines int
 }
 
-func newCallstackInfo(callstack interface{}, contextLines int) *callstackInfo {
-	filename := fmt.Sprintf("%#s", callstack)
-	linestr := fmt.Sprintf("%d", callstack)
-	lineno, _ := strconv.Atoi(linestr)
-	fnname := fmt.Sprintf("%n", callstack)
-	ci := &callstackInfo{
-		filename: filename,
-		lineno:   lineno,
-		method:   fnname,
-		context:  []*sourceLine{},
-	}
-	ci.readSource(contextLines)
-	return ci
-}
-
-func (ci *callstackInfo) readSource(contextLines int) {
+func (ci *frameInfo) readSource(contextLines int) {
 	if ci.lineno == 0 || disableCallstack {
 		return
 	}
@@ -52,7 +40,7 @@ func (ci *callstackInfo) readSource(contextLines int) {
 	if err != nil {
 		// if we can't read a file, it means user is running this in production
 		disableCallstack = true
-		InternalLog.Error("Disabling callstack context. Maybe you are running in production? Could not read source file.", "file", ci.filename, "err", err)
+		InternalLog.Error(`Disabling reading source callstack.`, "file", ci.filename)
 		return
 	}
 	defer f.Close()
@@ -73,10 +61,7 @@ func (ci *callstackInfo) readSource(contextLines int) {
 	}
 }
 
-var rePackageFile = regexp.MustCompile(`logxi/v1/\w+\.go`)
-var rePackageTestFile = regexp.MustCompile(`logxi/v1/\w+_test\.go`)
-
-func (ci *callstackInfo) String(color string, sourceColor string) string {
+func (ci *frameInfo) String(color string, sourceColor string) string {
 	// skip anything in the logxi package (except for tests)
 	if !rePackageTestFile.MatchString(ci.filename) && rePackageFile.MatchString(ci.filename) {
 		return ""
@@ -147,11 +132,23 @@ func (ci *callstackInfo) String(color string, sourceColor string) string {
 	return buf.String()
 }
 
-func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*callstackInfo {
+// parseDebugStack parases a stack created by debug.Stack()
+//
+// This is what the string looks like
+// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:45 (0x5fa70)
+// 	(*JSONFormatter).writeError: jf.writeString(buf, err.Error()+"\n"+string(debug.Stack()))
+// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:82 (0x5fdc3)
+// 	(*JSONFormatter).appendValue: jf.writeError(buf, err)
+// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:109 (0x605ca)
+// 	(*JSONFormatter).set: jf.appendValue(buf, val)
+// ...
+// /Users/mgutz/goroot/src/runtime/asm_amd64.s:2232 (0x38bf1)
+// 	goexit:
+func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*frameInfo {
 	lines := strings.Split(stack, "\n")
-	frames := []*callstackInfo{}
+	frames := []*frameInfo{}
 	for i := skip * 2; i < len(lines); i += 2 {
-		ci := &callstackInfo{}
+		ci := &frameInfo{}
 		sourceLine := lines[i]
 		if sourceLine == "" {
 			break
@@ -179,55 +176,15 @@ func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*callstackInf
 	return frames
 }
 
-func parseLogxiStack(entry map[string]interface{}, skip int, ignoreRuntime bool) []*callstackInfo {
-	var errStack string
-	// logxi.stack:connection error
-	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:45 (0x5fa70)
-	// 	(*JSONFormatter).writeError: jf.writeString(buf, err.Error()+"\n"+string(debug.Stack()))
-	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:82 (0x5fdc3)
-	// 	(*JSONFormatter).appendValue: jf.writeError(buf, err)
-	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:109 (0x605ca)
-	// 	(*JSONFormatter).set: jf.appendValue(buf, val)
-	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:138 (0x60a2c)
-	// 	(*JSONFormatter).Format: jf.set(buf, key, args[i+1])
-	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:157 (0x60c10)
-	// 	(*JSONFormatter).LogEntry: jf.Format(&buf, level, msg, args)
-	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/happyDevFormatter.go:263 (0x5ddb8)
-	// 	(*HappyDevFormatter).Format: entry := hd.jsonFormatter.LogEntry(level, msg, args)
-	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/defaultLogger.go:87 (0x5a4a9)
-	// 	(*DefaultLogger).Log: l.formatter.Format(&buf, level, msg, args)
-	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/defaultLogger.go:75 (0x5a343)
-	// 	(*DefaultLogger).Error: l.Log(LevelError, msg, args)
-	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/cmd/demo/main.go:15 (0x214c)
-	// 	causeError: logger.Error("error in function", "err", errConnection)
-	// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/cmd/demo/main.go:31 (0x2503)
-	// 	main: causeError()
-	// /Users/mgutz/goroot/src/runtime/proc.go:63 (0x13d13)
-	// 	main: main_main()
-	// /Users/mgutz/goroot/src/runtime/asm_amd64.s:2232 (0x38bf1)
-	// 	goexit:
-
-	found := ""
-	for key, val := range entry {
-		if s, ok := val.(string); ok {
-			if strings.HasPrefix(s, "logxi.stack") {
-				found = key
-				errStack = s
-				break
-			}
-		}
-	}
-	if found == "" {
+func parseLogxiStack(entry map[string]interface{}, skip int, ignoreRuntime bool) []*frameInfo {
+	kv := entry[callstackKey]
+	if kv == nil {
 		return nil
 	}
 
-	// get rid of "logxi.stack:"
-	colon := strings.IndexRune(errStack, ':')
-	newline := strings.IndexRune(errStack, '\n')
-	msg := errStack[colon+1 : newline]
-	frames := parseDebugStack(errStack[newline+1:], skip, ignoreRuntime)
-
-	// replace original message with just the error
-	entry[found] = msg
+	var frames []*frameInfo
+	if stack, ok := kv.(string); ok {
+		frames = parseDebugStack(stack, skip, ignoreRuntime)
+	}
 	return frames
 }

@@ -176,9 +176,12 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 		color = theme.Info
 	case LevelWarn:
 		frames := parseDebugStack(string(debug.Stack()), 4, true)
+		color = theme.Warn
+		if len(frames) == 0 {
+			break
+		}
 		context = frames[0].String(theme.Warn, theme.Source)
 		context += "\n"
-		color = theme.Warn
 	case LevelError, LevelFatal:
 		color = theme.Error
 		if contextLines == -1 {
@@ -187,6 +190,9 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 		frames := parseLogxiStack(entry, 4, true)
 		if frames == nil {
 			frames = parseDebugStack(string(debug.Stack()), 4, true)
+		}
+		if len(frames) == 0 {
+			break
 		}
 
 		var errbuf bytes.Buffer
@@ -289,17 +295,18 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		hd.set(buf, key, entry[key], theme.Value)
 	}
 
+	addLF := true
 	// WRN,ERR file, line number context
 	if context != "" {
 		buf.WriteRune('\n')
 		buf.WriteString(color)
+		addLF = context[len(context)-1:len(context)] != "\n"
 		buf.WriteString(context)
 		buf.WriteString(ansi.Reset)
-		if context[len(context)-1:] != "\n" {
-			buf.WriteRune('\n')
-		}
-		//hd.set(buf, atKey, context, color)
-	} else {
+	} else if entry[callstackKey] != nil {
+		hd.set(buf, "", entry[callstackKey], color)
+	}
+	if addLF {
 		buf.WriteRune('\n')
 	}
 }

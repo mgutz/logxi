@@ -98,6 +98,14 @@ func tasks(p *Project) {
 		Run("go build", M{"$in": "v1/cmd/demo"})
 	})
 
+	p.Task("linux-build", func() {
+		Bash(`
+			set -e
+			GOOS=linux GOARCH=amd64 go build
+			scp -F ~/projects/provision/matcherino/ssh.vagrant.config demo devmaster1:~/.
+		`, M{"$in": "v1/cmd/demo"})
+	})
+
 	p.Task("demo", func() {
 		Run("go run main.go", M{"$in": "v1/cmd/demo"})
 	})
@@ -164,7 +172,7 @@ func tasks(p *Project) {
 	})
 
 	p.Task("allocs", func() {
-		Bash(`go test -bench . -benchmem | grep "allocs\|Bench"`, M{"$in": "v1/bench"})
+		Bash(`go test -bench . -benchmem | grep "allocs\|^Bench"`, M{"$in": "v1/bench"})
 	}).Description("Runs benchmarks with allocs")
 
 	p.Task("benchjson", func() {
