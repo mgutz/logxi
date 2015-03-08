@@ -54,13 +54,11 @@ var LevelAtoi = map[string]int{
 	"all":   LevelAll,
 	"debug": LevelDebug,
 	"info":  LevelInfo,
-	"wrn":   LevelWarn,
+	"warn":  LevelWarn,
 	"error": LevelError,
 	"fatal": LevelFatal,
 	"off":   LevelOff,
 }
-
-var levelTab = []string{"0", "1", "2", "3", "4", "5", "6"}
 
 // Logger is the interface for logging.
 type Logger interface {
