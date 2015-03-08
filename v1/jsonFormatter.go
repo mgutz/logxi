@@ -33,7 +33,7 @@ func (jf *JSONFormatter) writeString(buf *bytes.Buffer, s string) {
 
 func (jf *JSONFormatter) writeError(buf *bytes.Buffer, err error) {
 	jf.writeString(buf, err.Error())
-	jf.set(buf, callstackKey, string(debug.Stack()))
+	jf.set(buf, CallStackKey, string(debug.Stack()))
 	return
 }
 

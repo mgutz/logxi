@@ -187,7 +187,7 @@ func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*frameInfo {
 }
 
 func parseLogxiStack(entry map[string]interface{}, skip int, ignoreRuntime bool) []*frameInfo {
-	kv := entry[callstackKey]
+	kv := entry[CallStackKey]
 	if kv == nil {
 		return nil
 	}

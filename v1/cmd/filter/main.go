@@ -5,13 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
+
+	"github.com/mgutz/logxi/v1"
 )
 
 func sendExternal(obj map[string]interface{}) {
-	// do something with the log entry here
-	fmt.Printf("Sending ... %#v\n", obj)
+	// normally you would send this to an external service like InfluxDB
+	// or some logging framework. Let's filter out some data.
+	fmt.Printf("Time: %s Level: %s Message: %s\n",
+		obj[log.TimeKey],
+		obj[log.LevelKey],
+		obj[log.MessageKey],
+	)
 }
 
 func main() {
@@ -22,7 +28,7 @@ func main() {
 		if err := dec.Decode(&obj); err == io.EOF {
 			break
 		} else if err != nil {
-			log.Fatal(err)
+			log.InternalLog.Fatal("Could not decode", "err", err)
 		}
 		sendExternal(obj)
 	}

@@ -136,7 +136,7 @@ func TestJSON(t *testing.T) {
 	err := json.Unmarshal(buf.Bytes(), &obj)
 	assert.NoError(t, err)
 	assert.Equal(t, "bar", obj["foo"].(string))
-	assert.Equal(t, "hello", obj[messageKey].(string))
+	assert.Equal(t, "hello", obj[MessageKey].(string))
 }
 
 func TestJSONImbalanced(t *testing.T) {
@@ -151,7 +151,7 @@ func TestJSONImbalanced(t *testing.T) {
 	err := json.Unmarshal(buf.Bytes(), &obj)
 	assert.NoError(t, err)
 	assert.Exactly(t, []interface{}{"foo"}, obj[warnImbalancedKey])
-	assert.Equal(t, "hello", obj[messageKey].(string))
+	assert.Equal(t, "hello", obj[MessageKey].(string))
 }
 
 func TestJSONNoArgs(t *testing.T) {
@@ -165,7 +165,7 @@ func TestJSONNoArgs(t *testing.T) {
 	var obj map[string]interface{}
 	err := json.Unmarshal(buf.Bytes(), &obj)
 	assert.NoError(t, err)
-	assert.Equal(t, "hello", obj[messageKey].(string))
+	assert.Equal(t, "hello", obj[MessageKey].(string))
 }
 
 func TestJSONNested(t *testing.T) {
@@ -179,7 +179,7 @@ func TestJSONNested(t *testing.T) {
 	var obj map[string]interface{}
 	err := json.Unmarshal(buf.Bytes(), &obj)
 	assert.NoError(t, err)
-	assert.Equal(t, "hello", obj[messageKey].(string))
+	assert.Equal(t, "hello", obj[MessageKey].(string))
 	o := obj["obj"]
 	assert.Equal(t, "apple", o.(map[string]interface{})["fruit"].(string))
 }
@@ -197,7 +197,7 @@ func TestJSONEscapeSequences(t *testing.T) {
 	l.Error(esc)
 	err := json.Unmarshal(buf.Bytes(), &obj)
 	assert.NoError(t, err)
-	assert.Equal(t, esc, obj[messageKey].(string))
+	assert.Equal(t, esc, obj[MessageKey].(string))
 
 	// test as key
 	buf.Reset()
@@ -205,7 +205,7 @@ func TestJSONEscapeSequences(t *testing.T) {
 	l.Error("as key", key, "esc")
 	err = json.Unmarshal(buf.Bytes(), &obj)
 	assert.NoError(t, err)
-	assert.Equal(t, "as key", obj[messageKey].(string))
+	assert.Equal(t, "as key", obj[MessageKey].(string))
 	assert.Equal(t, "esc", obj[key].(string))
 }
 

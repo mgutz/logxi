@@ -10,7 +10,7 @@ import (
 	"github.com/mgutz/ansi"
 )
 
-// Theme defines a color theme for HappyDevFormatter
+// colorScheme defines a color theme for HappyDevFormatter
 type colorScheme struct {
 	Key    string
 	Value  string
@@ -64,7 +64,6 @@ func parseTheme(theme string) *colorScheme {
 		//fmt.Printf("plain=%b [%s] %s=%q\n", ansi.Plain, key, style, c)
 		return c
 	}
-
 	wildcard = color("*")
 
 	if wildcard != ansi.Reset {
@@ -108,7 +107,8 @@ func DisableColors(val bool) {
 // then unmarshal JSON. Then it does other stuff like read source files, sort
 // keys all to give a developer more information.
 //
-// NEVER use in production.
+// SHOULD NOT be used in production for extended period of time. It
+// works fine with remote terminals and binary deployments.
 type HappyDevFormatter struct {
 	name string
 	col  int
@@ -139,7 +139,6 @@ func (hd *HappyDevFormatter) writeKey(buf *bytes.Buffer, key string) {
 
 func (hd *HappyDevFormatter) offset(buf *bytes.Buffer, color string, key string, value string) {
 	val := strings.Trim(value, "\n ")
-
 	if (isPretty && key != "") || hd.col+len(key)+1+len(val) >= maxCol {
 		buf.WriteString("\n")
 		hd.col = 0
@@ -200,9 +199,9 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 		var errbuf bytes.Buffer
 		lines := 0
 		for _, frame := range frames {
-			// by setting to empty, we use the original stack
 			err := frame.readSource(contextLines)
 			if err != nil {
+				// by setting to empty, the original stack is used
 				errbuf.Reset()
 				break
 			}
@@ -221,7 +220,7 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 	return message, context, color
 }
 
-// Format records a log entry.
+// Format a log entry.
 func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
 
 	// warn about reserved, bad and complex keys
@@ -244,7 +243,6 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 				panic("Key is complex. Use simpler key for: " + fmt.Sprintf("%q", key))
 			}
 		}
-
 	}
 
 	// use the production JSON formatter to format the log first. This
@@ -256,27 +254,24 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 
 	// timestamp
 	buf.WriteString(theme.Misc)
-	hd.writeString(buf, entry[timeKey].(string))
+	hd.writeString(buf, entry[TimeKey].(string))
 	buf.WriteString(ansi.Reset)
 
 	// emphasize warnings and errors
 	message, context, color := hd.getLevelContext(level, entry)
-
 	if message == "" {
-		message = entry[messageKey].(string)
+		message = entry[MessageKey].(string)
 	}
 
 	// DBG, INF ...
-	hd.set(buf, "", entry[levelKey].(string), color)
+	hd.set(buf, "", entry[LevelKey].(string), color)
 	// logger name
-	hd.set(buf, "", entry[nameKey], theme.Misc)
-
+	hd.set(buf, "", entry[NameKey], theme.Misc)
 	// message from user
 	hd.set(buf, "", message, color)
 
-	// Preserve key order in the order developer added them
-	// in the call. This makes it easier for developers to follow
-	// the log.
+	// Preserve key order in the sequencethey were added by developer.This
+	// makes it easier for developers to follow the log.
 	order := []string{}
 	lenArgs := len(args)
 	for i := 0; i < len(args); i += 2 {
@@ -291,7 +286,7 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 	}
 
 	for _, key := range order {
-		// skip resetved keys which were set above
+		// skip reserved keys which were already added to buffer above
 		isReserved, err := isReservedKey(key)
 		if err != nil {
 			panic("key is invalid. Should never get here. " + err.Error())
@@ -309,8 +304,8 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		addLF = context[len(context)-1:len(context)] != "\n"
 		buf.WriteString(context)
 		buf.WriteString(ansi.Reset)
-	} else if entry[callstackKey] != nil {
-		hd.set(buf, "", entry[callstackKey], color)
+	} else if entry[CallStackKey] != nil {
+		hd.set(buf, "", entry[CallStackKey], color)
 	}
 	if addLF {
 		buf.WriteRune('\n')

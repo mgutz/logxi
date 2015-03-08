@@ -64,13 +64,13 @@ var wd string
 var pkgMutex sync.Mutex
 
 // logxi reserved keys
-const levelKey = "_l"
-const messageKey = "_m"
-const nameKey = "_n"
-const timeKey = "_t"
-const callstackKey = "_c"
+const LevelKey = "_l"
+const MessageKey = "_m"
+const NameKey = "_n"
+const TimeKey = "_t"
+const CallStackKey = "_c"
 
-var logxiKeys = []string{levelKey, messageKey, nameKey, timeKey, callstackKey}
+var logxiKeys = []string{LevelKey, MessageKey, NameKey, TimeKey, CallStackKey}
 
 func setDefaults(isTerminal bool) {
 	var err error
