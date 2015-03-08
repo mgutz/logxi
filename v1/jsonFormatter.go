@@ -69,16 +69,18 @@ func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
 		buf.WriteString(strconv.FormatFloat(value.Float(), 'g', -1, 64))
 
 	default:
+		// always show errors even at cost of some performance. there's
+		// nothing worse than looking at production logs without a clue
 		if err, ok := val.(error); ok {
 			jf.writeError(buf, err)
 			return
 		}
 
-		b, err := json.Marshal(value.Interface())
+		b, err := json.Marshal(val)
 		if err != nil {
 			InternalLog.Error("Could not json.Marshal value: ", "formatter", "JSONFormatter", "err", err.Error())
 			// must always log, use sprintf to get a string
-			s := fmt.Sprintf("%#v", value.Interface())
+			s := fmt.Sprintf("%#v", val)
 			b, err = json.Marshal(s)
 			if err != nil {
 				// should never get here, but JSONFormatter should never panic
@@ -104,17 +106,14 @@ func (jf *JSONFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
 func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
 	buf.WriteString(`{"_t":"`)
 	buf.WriteString(time.Now().Format(timeFormat))
-	buf.WriteRune('"')
 
-	buf.WriteString(`, "_l":"`)
+	buf.WriteString(`", "_l":"`)
 	buf.WriteString(LevelMap[level])
-	buf.WriteRune('"')
 
-	buf.WriteString(`, "_n":"`)
+	buf.WriteString(`", "_n":"`)
 	buf.WriteString(jf.name)
-	buf.WriteRune('"')
 
-	buf.WriteString(`, "_m":`)
+	buf.WriteString(`", "_m":`)
 	jf.appendValue(buf, msg)
 
 	var lenArgs = len(args)

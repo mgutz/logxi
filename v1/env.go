@@ -96,7 +96,7 @@ func processLogEnv(env *Configuration) {
 		logxiNameLevelMap["*"] = defaultLevel
 	}
 	for key, value := range m {
-		// * => defaults to DBG because if someone took the time to
+		// * => defaults to DBG. If someone took the time to
 		// enable it ad-hoc, it probably means they are debugging
 		if strings.HasPrefix(key, "-") {
 			logxiNameLevelMap[key[1:]] = LevelOff
