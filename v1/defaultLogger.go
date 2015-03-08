@@ -1,9 +1,6 @@
 package log
 
-import (
-	"bytes"
-	"io"
-)
+import "io"
 
 // DefaultLogger is the default logger for this package.
 type DefaultLogger struct {
@@ -83,9 +80,7 @@ func (l *DefaultLogger) Fatal(msg string, args ...interface{}) {
 
 // Log logs a leveled entry.
 func (l *DefaultLogger) Log(level int, msg string, args []interface{}) {
-	var buf bytes.Buffer
-	l.formatter.Format(&buf, level, msg, args)
-	buf.WriteTo(l.writer)
+	l.formatter.Format(l.writer, level, msg, args)
 }
 
 // IsDebug determines if this logger logs a debug statement.

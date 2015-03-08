@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"runtime/debug"
 	"strings"
 
@@ -221,7 +222,8 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 }
 
 // Format a log entry.
-func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
+func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
+	var buf bytes.Buffer
 
 	// warn about reserved, bad and complex keys
 	for i := 0; i < len(args); i += 2 {
@@ -254,7 +256,7 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 
 	// timestamp
 	buf.WriteString(theme.Misc)
-	hd.writeString(buf, entry[TimeKey].(string))
+	hd.writeString(&buf, entry[TimeKey].(string))
 	buf.WriteString(ansi.Reset)
 
 	// emphasize warnings and errors
@@ -264,11 +266,11 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 	}
 
 	// DBG, INF ...
-	hd.set(buf, "", entry[LevelKey].(string), color)
+	hd.set(&buf, "", entry[LevelKey].(string), color)
 	// logger name
-	hd.set(buf, "", entry[NameKey], theme.Misc)
+	hd.set(&buf, "", entry[NameKey], theme.Misc)
 	// message from user
-	hd.set(buf, "", message, color)
+	hd.set(&buf, "", message, color)
 
 	// Preserve key order in the sequencethey were added by developer.This
 	// makes it easier for developers to follow the log.
@@ -293,7 +295,7 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		} else if isReserved {
 			continue
 		}
-		hd.set(buf, key, entry[key], theme.Value)
+		hd.set(&buf, key, entry[key], theme.Value)
 	}
 
 	addLF := true
@@ -305,9 +307,10 @@ func (hd *HappyDevFormatter) Format(buf *bytes.Buffer, level int, msg string, ar
 		buf.WriteString(context)
 		buf.WriteString(ansi.Reset)
 	} else if entry[CallStackKey] != nil {
-		hd.set(buf, "", entry[CallStackKey], color)
+		hd.set(&buf, "", entry[CallStackKey], color)
 	}
 	if addLF {
 		buf.WriteRune('\n')
 	}
+	buf.WriteTo(writer)
 }

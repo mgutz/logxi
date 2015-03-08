@@ -3,6 +3,7 @@ package log
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"runtime/debug"
 	"time"
 )
@@ -13,7 +14,7 @@ var Separator = " "
 
 // Formatter records log entries.
 type Formatter interface {
-	Format(buf *bytes.Buffer, level int, msg string, args []interface{})
+	Format(writer io.Writer, level int, msg string, args []interface{})
 }
 
 // TextFormatter is the default recorder used if one is unspecified when
@@ -65,7 +66,8 @@ func (tf *TextFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
 }
 
 // Format records a log entry.
-func (tf *TextFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
+func (tf *TextFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
+	var buf bytes.Buffer
 	buf.WriteString("_t=")
 	buf.WriteString(time.Now().Format(timeFormat))
 	buf.WriteString(tf.itoaLevelMap[level])
@@ -77,18 +79,19 @@ func (tf *TextFormatter) Format(buf *bytes.Buffer, level int, msg string, args [
 				if key, ok := args[i].(string); ok {
 					if key == "" {
 						// show key is invalid
-						tf.set(buf, badKeyAtIndex(i), args[i+1])
+						tf.set(&buf, badKeyAtIndex(i), args[i+1])
 					} else {
-						tf.set(buf, key, args[i+1])
+						tf.set(&buf, key, args[i+1])
 					}
 				} else {
 					// show key is invalid
-					tf.set(buf, badKeyAtIndex(i), args[i+1])
+					tf.set(&buf, badKeyAtIndex(i), args[i+1])
 				}
 			}
 		} else {
-			tf.set(buf, warnImbalancedKey, args)
+			tf.set(&buf, warnImbalancedKey, args)
 		}
 	}
 	buf.WriteRune('\n')
+	buf.WriteTo(writer)
 }

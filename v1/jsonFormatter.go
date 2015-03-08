@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"reflect"
 	"runtime/debug"
 	"strconv"
@@ -103,7 +104,8 @@ func (jf *JSONFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
 }
 
 // Format formats log entry as JSON.
-func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args []interface{}) {
+func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
+	var buf bytes.Buffer
 	buf.WriteString(`{"_t":"`)
 	buf.WriteString(time.Now().Format(timeFormat))
 
@@ -114,7 +116,7 @@ func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args [
 	buf.WriteString(jf.name)
 
 	buf.WriteString(`", "_m":`)
-	jf.appendValue(buf, msg)
+	jf.appendValue(&buf, msg)
 
 	var lenArgs = len(args)
 	if lenArgs > 0 {
@@ -123,20 +125,21 @@ func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args [
 				if key, ok := args[i].(string); ok {
 					if key == "" {
 						// show key is invalid
-						jf.set(buf, badKeyAtIndex(i), args[i+1])
+						jf.set(&buf, badKeyAtIndex(i), args[i+1])
 					} else {
-						jf.set(buf, key, args[i+1])
+						jf.set(&buf, key, args[i+1])
 					}
 				} else {
 					// show key is invalid
-					jf.set(buf, badKeyAtIndex(i), args[i+1])
+					jf.set(&buf, badKeyAtIndex(i), args[i+1])
 				}
 			}
 		} else {
-			jf.set(buf, warnImbalancedKey, args)
+			jf.set(&buf, warnImbalancedKey, args)
 		}
 	}
 	buf.WriteString("}\n")
+	buf.WriteTo(writer)
 }
 
 // LogEntry returns the JSON log entry object built by Format(). Used by
