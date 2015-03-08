@@ -246,18 +246,19 @@ Keys
 What about hooks? There are least two ways to do this
 
 * 	Implement your own `io.Writer` to write to external services. Be sure to set
-  	the formatter to JSON so to easily decode JSON stream.
-* 	Create an external filter. See `v1/cmd/filter` for a simple example.
+  	the formatter to JSON to faciliate decoding with Go's built-in streaming
+  	decoder.
+* 	Create an external filter. See `v1/cmd/filter` as an example.
 
-What about log rotation ... 12 factor apps only concern themselves with
-STDOUT. Use shell redirection operators to write to file or create
-a custom `io.Writer`.
+What about log rotation? 12 factor apps only concern themselves with
+STDOUT. Use shell redirection operators to write to a file.
 
-There are many utilities to rotate logs with simple pipe, send emails, etc
+There are many utilities to rotate logs which accept STDIN as input. They can
+do many things like send alerts, etc. The two obvious choices are Apache's `rotatelogs`
+utility and `lograte`.
 
 ```sh
-# Apache's roratelogs
-yourapp | rotatelogs demo 86400
+yourapp | rotatelogs yourapp 86400
 ```
 
 ## Testing
