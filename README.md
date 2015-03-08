@@ -243,14 +243,17 @@ Keys
 
 ## Extending
 
-What about hooks? Implement your own `io.Writer` to write to external
-services and use `JSONFormatter`.
+What about hooks? There are least two ways to do this
 
-What about other writers? 12 factor apps only concern themselves with
+* 	Implement your own `io.Writer` to write to external services. Be sure to set
+  	the formatter to JSON so to easily decode JSON stream.
+* 	Create an external filter. See `v1/cmd/filter` for a simple example.
+
+What about log rotation ... 12 factor apps only concern themselves with
 STDOUT. Use shell redirection operators to write to file or create
 a custom `io.Writer`.
 
-There are many utilities to rotate logs with simple pipe
+There are many utilities to rotate logs with simple pipe, send emails, etc
 
 ```sh
 # Apache's roratelogs
