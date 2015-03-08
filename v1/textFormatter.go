@@ -61,7 +61,7 @@ func (tf *TextFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
 		buf.WriteString(string(debug.Stack()))
 		return
 	}
-	buf.WriteString(fmt.Sprintf("%#v", val))
+	buf.WriteString(fmt.Sprintf("%v", val))
 }
 
 // Format records a log entry.

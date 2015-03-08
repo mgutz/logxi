@@ -110,6 +110,11 @@ func tasks(p *Project) {
 		Run("go run main.go", M{"$in": "v1/cmd/demo"})
 	})
 
+	p.Task("filter", D{"build"}, func() {
+		Run("go build", M{"$in": "v1/cmd/filter"})
+		Bash("LOGXI=* ../demo/demo | ./filter", M{"$in": "v1/cmd/filter"})
+	})
+
 	p.Task("gifcast", D{"build"}, func() {
 		commands := []pair{
 			{

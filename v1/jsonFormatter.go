@@ -141,8 +141,8 @@ func (jf *JSONFormatter) Format(buf *bytes.Buffer, level int, msg string, args [
 }
 
 // LogEntry returns the JSON log entry object built by Format(). Used by
-// HappyDevFormatter to ensure any data logged while developing
-// will properly log in production.
+// HappyDevFormatter to ensure any data logged while developing will properly
+// log in production.
 func (jf *JSONFormatter) LogEntry(level int, msg string, args []interface{}) map[string]interface{} {
 	var buf bytes.Buffer
 	jf.Format(&buf, level, msg, args)
