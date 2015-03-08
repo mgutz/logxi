@@ -12,6 +12,15 @@ type DefaultLogger struct {
 
 // NewLogger creates a new default logger.
 func NewLogger(writer io.Writer, name string) Logger {
+	formatter, err := createFormatter(name, logxiFormat)
+	if err != nil {
+		panic("Could not create formatter")
+	}
+	return NewLogger3(writer, name, formatter)
+}
+
+// NewLogger3 creates a new logger with a writer, name and formatter.
+func NewLogger3(writer io.Writer, name string, formatter Formatter) Logger {
 	var level int
 	if name != "__logxi" {
 		// if err is returned, then it means the log is disabled
@@ -19,11 +28,6 @@ func NewLogger(writer io.Writer, name string) Logger {
 		if level == LevelOff {
 			return NullLog
 		}
-	}
-
-	formatter, err := createFormatter(name, logxiFormat)
-	if err != nil {
-		panic("Could not create formatter")
 	}
 
 	log := &DefaultLogger{
@@ -44,6 +48,13 @@ func NewLogger(writer io.Writer, name string) Logger {
 // New creates a colorable default logger.
 func New(name string) Logger {
 	return NewLogger(colorableStdout, name)
+}
+
+// Trace logs a debug entry.
+func (l *DefaultLogger) Trace(msg string, args ...interface{}) {
+	if l.level <= LevelTrace {
+		l.Log(LevelTrace, msg, args)
+	}
 }
 
 // Debug logs a debug entry.
@@ -81,6 +92,11 @@ func (l *DefaultLogger) Fatal(msg string, args ...interface{}) {
 // Log logs a leveled entry.
 func (l *DefaultLogger) Log(level int, msg string, args []interface{}) {
 	l.formatter.Format(l.writer, level, msg, args)
+}
+
+// IsDebug determines if this logger logs a debug statement.
+func (l *DefaultLogger) IsTrace() bool {
+	return l.level <= LevelTrace
 }
 
 // IsDebug determines if this logger logs a debug statement.

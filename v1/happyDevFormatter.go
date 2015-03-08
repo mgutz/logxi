@@ -18,6 +18,7 @@ type colorScheme struct {
 	Misc   string
 	Source string
 
+	Trace string
 	Debug string
 	Info  string
 	Warn  string
@@ -72,6 +73,7 @@ func parseTheme(theme string) *colorScheme {
 		cs.Value = wildcard
 		cs.Misc = wildcard
 		cs.Source = wildcard
+		cs.Trace = wildcard
 		cs.Debug = wildcard
 		cs.Warn = wildcard
 		cs.Info = wildcard
@@ -83,6 +85,7 @@ func parseTheme(theme string) *colorScheme {
 	cs.Misc = color("misc")
 	cs.Source = color("source")
 
+	cs.Trace = color("TRC")
 	cs.Debug = color("DBG")
 	cs.Warn = color("WRN")
 	cs.Info = color("INF")
@@ -168,22 +171,37 @@ func (hd *HappyDevFormatter) writeString(buf *bytes.Buffer, s string) {
 	hd.col += len(s)
 }
 
+func (hd *HappyDevFormatter) getContext(color string) string {
+	if disableCallstack {
+		return ""
+	}
+	frames := parseDebugStack(string(debug.Stack()), 5, true)
+	if len(frames) == 0 {
+		return ""
+	}
+	for _, frame := range frames {
+		context := frame.String(color, theme.Source)
+		if context != "" {
+			return context
+		}
+	}
+	return ""
+}
+
 func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interface{}) (message string, context string, color string) {
+
 	switch level {
+	case LevelTrace:
+		color = theme.Trace
+		context = hd.getContext(color)
+		context += "\n"
 	case LevelDebug:
 		color = theme.Debug
 	case LevelInfo:
 		color = theme.Info
 	case LevelWarn:
-		if disableCallstack {
-			break
-		}
-		frames := parseDebugStack(string(debug.Stack()), 4, true)
 		color = theme.Warn
-		if len(frames) == 0 {
-			break
-		}
-		context = frames[0].String(theme.Warn, theme.Source)
+		context = hd.getContext(color)
 		context += "\n"
 	case LevelError, LevelFatal:
 		color = theme.Error
@@ -229,7 +247,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	for i := 0; i < len(args); i += 2 {
 		isReserved, err := isReservedKey(args[i])
 		if err != nil {
-			InternalLog.Error("Key is not a string.", fmt.Sprintf("args[%d]", i), fmt.Sprintf("%v", args[i]))
+			InternalLog.Error("Key is not a string.", "err", fmt.Errorf("args[%d]=%v", i, args[i]))
 		} else if isReserved {
 			InternalLog.Fatal("Key conflicts with reserved key. Avoiding using single rune keys.", "key", args[i].(string))
 		} else {
@@ -301,11 +319,19 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	addLF := true
 	// WRN,ERR file, line number context
 	if context != "" {
-		buf.WriteRune('\n')
-		buf.WriteString(color)
-		addLF = context[len(context)-1:len(context)] != "\n"
-		buf.WriteString(context)
-		buf.WriteString(ansi.Reset)
+		// warnings and traces are single line, space can be optimized
+		if level == LevelWarn || level == LevelTrace {
+			// gets rid of "in "
+			idx := strings.IndexRune(context, 'n')
+			hd.set(&buf, "in", context[idx+2:], color)
+		} else {
+			buf.WriteRune('\n')
+			buf.WriteString(color)
+			addLF = context[len(context)-1:len(context)] != "\n"
+			buf.WriteString(context)
+			buf.WriteString(ansi.Reset)
+		}
+
 	} else if entry[CallStackKey] != nil {
 		hd.set(&buf, "", entry[CallStackKey], color)
 	}

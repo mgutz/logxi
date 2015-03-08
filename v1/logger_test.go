@@ -63,7 +63,7 @@ func TestEnvLOGXI(t *testing.T) {
 	os.Setenv("LOGXI", "myl*,-foo")
 	processEnv()
 	level = getLogLevel("mylog")
-	assert.Equal(LevelDebug, level)
+	assert.Equal(LevelAll, level)
 	level = getLogLevel("foo")
 	assert.Equal(LevelOff, level)
 }
@@ -127,9 +127,8 @@ func TestComplexKeys(t *testing.T) {
 func TestJSON(t *testing.T) {
 	testResetEnv()
 	var buf bytes.Buffer
-	l := NewLogger(&buf, "bench")
+	l := NewLogger3(&buf, "bench", NewJSONFormatter("bench"))
 	l.SetLevel(LevelDebug)
-	l.SetFormatter(NewJSONFormatter("bench"))
 	l.Error("hello", "foo", "bar")
 
 	var obj map[string]interface{}
@@ -142,9 +141,8 @@ func TestJSON(t *testing.T) {
 func TestJSONImbalanced(t *testing.T) {
 	testResetEnv()
 	var buf bytes.Buffer
-	l := NewLogger(&buf, "bench")
+	l := NewLogger3(&buf, "bench", NewJSONFormatter("bench"))
 	l.SetLevel(LevelDebug)
-	l.SetFormatter(NewJSONFormatter("bench"))
 	l.Error("hello", "foo")
 
 	var obj map[string]interface{}
@@ -157,9 +155,8 @@ func TestJSONImbalanced(t *testing.T) {
 func TestJSONNoArgs(t *testing.T) {
 	testResetEnv()
 	var buf bytes.Buffer
-	l := NewLogger(&buf, "bench")
+	l := NewLogger3(&buf, "bench", NewJSONFormatter("bench"))
 	l.SetLevel(LevelDebug)
-	l.SetFormatter(NewJSONFormatter("bench"))
 	l.Error("hello")
 
 	var obj map[string]interface{}
@@ -171,9 +168,8 @@ func TestJSONNoArgs(t *testing.T) {
 func TestJSONNested(t *testing.T) {
 	testResetEnv()
 	var buf bytes.Buffer
-	l := NewLogger(&buf, "bench")
+	l := NewLogger3(&buf, "bench", NewJSONFormatter("bench"))
 	l.SetLevel(LevelDebug)
-	l.SetFormatter(NewJSONFormatter("bench"))
 	l.Error("hello", "obj", map[string]string{"fruit": "apple"})
 
 	var obj map[string]interface{}
@@ -187,9 +183,8 @@ func TestJSONNested(t *testing.T) {
 func TestJSONEscapeSequences(t *testing.T) {
 	testResetEnv()
 	var buf bytes.Buffer
-	l := NewLogger(&buf, "bench")
+	l := NewLogger3(&buf, "bench", NewJSONFormatter("bench"))
 	l.SetLevel(LevelDebug)
-	l.SetFormatter(NewJSONFormatter("bench"))
 	esc := "I said, \"a's \\ \\\b\f\n\r\t\x1a\"你好'; DELETE FROM people"
 
 	var obj map[string]interface{}
@@ -218,9 +213,8 @@ func TestParseLogEnvError(t *testing.T) {
 func TestKeyNotString(t *testing.T) {
 	testResetEnv()
 	var buf bytes.Buffer
-	l := NewLogger(&buf, "badkey")
+	l := NewLogger3(&buf, "badkey", NewHappyDevFormatter("badkey"))
 	l.SetLevel(LevelDebug)
-	l.SetFormatter(NewHappyDevFormatter("badkey"))
 	l.Debug("foo", 1)
 	assert.Panics(t, func() {
 		l.Debug("reserved key", "_t", "trying to use time")
@@ -230,8 +224,7 @@ func TestKeyNotString(t *testing.T) {
 func TestWarningErrorContext(t *testing.T) {
 	testResetEnv()
 	var buf bytes.Buffer
-	l := NewLogger(&buf, "wrnerr")
-	l.SetFormatter(NewHappyDevFormatter("wrnerr"))
+	l := NewLogger3(&buf, "wrnerr", NewHappyDevFormatter("wrnerr"))
 	l.Warn("no keys")
 	l.Warn("has eys", "key1", 2)
 	l.Error("no keys")

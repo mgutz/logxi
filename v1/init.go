@@ -54,6 +54,7 @@ var defaultMaxCol = 80
 var defaultPretty = true
 var defaultScheme string
 var defaultTimeFormat string
+var disableCheckKeys bool
 var disableColors bool
 var disableCallstack bool
 var timeFormat string
@@ -64,10 +65,20 @@ var wd string
 var pkgMutex sync.Mutex
 
 // logxi reserved keys
+
+// LevelKey is the index key for level
 const LevelKey = "_l"
+
+// MessageKey is the index key for message
 const MessageKey = "_m"
+
+// NameKey is the index key for name
 const NameKey = "_n"
+
+// TimeKey is the index key for time
 const TimeKey = "_t"
+
+// CallStackKey is the indexkey for callstack
 const CallStackKey = "_c"
 
 var logxiKeys = []string{LevelKey, MessageKey, NameKey, TimeKey, CallStackKey}
@@ -96,28 +107,29 @@ func setDefaults(isTerminal bool) {
 		home = os.Getenv("HOMEPATH")
 		// DefaultScheme is a color scheme optimized for dark background
 		// but works well with light backgrounds
-		defaultScheme = "key=cyan,value,misc=blue,source=magenta,DBG,WRN=yellow,INF=green,ERR=red"
+		defaultScheme = "key=cyan,value,misc=blue,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red"
 	} else {
 		home = os.Getenv("HOME")
 		term := os.Getenv("TERM")
 		if term == "xterm-256color" {
-			defaultScheme = "key=cyan+h,value,misc=blue,source=88,DBG,WRN=yellow,INF=green+h,ERR=red+h"
+			defaultScheme = "key=cyan+h,value,misc=blue,source=88,TRC,DBG,WRN=yellow,INF=green+h,ERR=red+h"
 		} else {
-			defaultScheme = "key=cyan+h,value,misc=blue,source=magenta,DBG,WRN=yellow,INF=green,ERR=red+h"
+			defaultScheme = "key=cyan+h,value,misc=blue,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red+h"
 		}
 	}
 }
 
 func isReservedKey(k interface{}) (bool, error) {
-	// check if reserved
-	if key, ok := k.(string); ok {
-		for _, key2 := range logxiKeys {
-			if key == key2 {
-				return true, nil
-			}
-		}
-	} else {
+	key, ok := k.(string)
+	if !ok {
 		return false, fmt.Errorf("Key is not a string")
+	}
+
+	// check if reserved
+	for _, key2 := range logxiKeys {
+		if key == key2 {
+			return true, nil
+		}
 	}
 	return false, nil
 }
@@ -132,10 +144,12 @@ func init() {
 	ProcessEnv(readFromEnviron())
 
 	// the internal logger to report errors
-	InternalLog = NewLogger(os.Stdout, "__logxi")
+	if isTerminal {
+		InternalLog = NewLogger3(os.Stdout, "__logxi", NewTextFormatter("__logxi"))
+	} else {
+		InternalLog = NewLogger3(os.Stdout, "__logxi", NewJSONFormatter("__logxi"))
+	}
 	InternalLog.SetLevel(LevelError)
-	InternalLog.SetFormatter(NewJSONFormatter("__logxi"))
-	//InternalLog = New("__logxi")
 
 	// package logger for users
 	DefaultLog = New("~")

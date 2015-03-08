@@ -78,11 +78,15 @@ func (ci *frameInfo) String(color string, sourceColor string) string {
 		return ""
 	}
 
-	tildeFilename := ci.filename
-	if strings.HasPrefix(ci.filename, wd) {
-		tildeFilename = strings.Replace(ci.filename, wd+string(os.PathSeparator), "", 1)
-	} else if strings.HasPrefix(ci.filename, home) {
-		tildeFilename = strings.Replace(ci.filename, home, "~", 1)
+	// make path relative to current working directory or home
+	tildeFilename, err := filepath.Rel(wd, ci.filename)
+	if err != nil {
+		InternalLog.Error("Could not make path relative", "path", ci.filename)
+		return ""
+	}
+	// ../../../ is too complex.  Make path relative to home
+	if strings.HasPrefix(tildeFilename, strings.Repeat(".."+string(os.PathSeparator), 3)) {
+		tildeFilename = strings.Replace(tildeFilename, home, "~", 1)
 	}
 
 	buf.WriteString(color)

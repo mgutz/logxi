@@ -76,42 +76,44 @@ This logger package
 
     ```
 # primitive types
-BenchmarkLogxi         100000     14832 ns/op    2112 B/op     72 allocs/op
-BenchmarkLogrus         30000     43343 ns/op    7704 B/op    174 allocs/op
-BenchmarkLog15          30000     58706 ns/op    8780 B/op    220 allocs/op
+BenchmarkLogxi         100000     20795 ns/op    3458 B/op     72 allocs/op
+BenchmarkLogrus         20000     64447 ns/op    8691 B/op    180 allocs/op
+BenchmarkLog15          20000     98889 ns/op    8756 B/op    220 allocs/op
 
 # nested object
-BenchmarkLogxiComplex   30000     48154 ns/op    8201 B/op    200 allocs/op
-BenchmarkLogrusComplex  20000     61914 ns/op   10889 B/op    257 allocs/op
-BenchmarkLog15Complex   20000     85782 ns/op   12277 B/op    294 allocs/op
+BenchmarkLogxiComplex   20000     75537 ns/op    8900 B/op    200 allocs/op
+BenchmarkLogrusComplex  10000    103580 ns/op   11872 B/op    262 allocs/op
+BenchmarkLog15Complex   10000    157817 ns/op   12259 B/op    294 allocs/op
+
+* BenchmarkLog15Complex doesn't marshal nested object as JSON
 ```
 
-*   Is developer friendly in development environments. The default
-    formatter in terminals is colorful, prints file and line numbers
-    when warnings and errors occur.
+*   Is developer friendly in the terminal. The HappyDevFormatter
+    is colorful, prints file and line numbers for traces, warnings
+    and errors. Errors print the call stack.
 
     `HappyDevFormatter` is not too concerned with performance
-    and should never be used in production environments.
+    and delegates to JSONFormatter internally.
 
 *   Logs machine parsable output in production environments.
-    The recommended formatter for production is `JSONFormatter`.
+    The default formatter for non terminals is `JSONFormatter`.
 
     `TextFormatter` may also be used which is MUCH faster than
-    JSON but requires a unique separator.
+    JSON but there is no guarantee it can be easily parsed.
 
 *   Has level guards to avoid the cost of building arguments. Get in the
     habit of using guards.
 
         if log.IsDebug() {
-            log.Debug("some ")
+            log.Debug("some ", "key1", expensive())
         }
 
         if log.IsInfo() {
-            log.Info("some ")
+            log.Info("some ", "key1", expensive())
         }
 
         if log.IsWarn() {
-            log.Warn("some ")
+            log.Warn("some ", "key1", expensive())
         }
 
     Error and Fatal do not have guards, they always log.
@@ -119,28 +121,26 @@ BenchmarkLog15Complex   20000     85782 ns/op   12277 B/op    294 allocs/op
 *   Conforms to a logging interface so it can be replaced.
 
         type Logger interface {
-            Debug(string, ...interface{})
-            Info(string, ...interface{})
-            Warn(string, ...interface{})
-            Error(string, ...interface{})
-            Fatal(string, ...interface{})
+            Trace(msg string, args ...interface{})
+            Debug(msg string, args ...interface{})
+            Info(msg string, args ...interface{})
+            Warn(msg string, args ...interface{})
+            Error(msg string, args ...interface{})
+            Fatal(msg string, args ...interface{})
+            Log(level int, msg string, args []interface{})
 
             SetLevel(int)
-            SetFormatter(Formatter)
-
+            IsTrace() bool
             IsDebug() bool
             IsInfo() bool
             IsWarn() bool
-            // Error, Fatal have no guards, they MUST always log
+            // Error, Fatal not needed, those SHOULD always be logged
         }
 
 *   Standardizes on key-value pair argument sequence for machine parsing
 
     ```go
 log.Debug("inside Fn()", "key1", value1, "key2", value2)
-
-// instead of carpal tunnel syndrome logging
-log.WithFields({logrus.Fields{"m":"mypkg", "key1": value1, "key2": value2}}).Debug("inside Fn()")
 ```
     logxi logs `FIX_IMBALANCED_PAIRS =>` if key-value pairs are imbalanced
 
@@ -191,7 +191,7 @@ The format may be set via `LOGXI_FORMAT` environment
 variable. Valid values are `"happy", "text", "JSON"`
 
     # Use JSON in production with custom time
-	LOGXI_FORMAT=JSON,t=2006-01-02T15:04:05.000000-0700 yourapp
+    LOGXI_FORMAT=JSON,t=2006-01-02T15:04:05.000000-0700 yourapp
 
 The "happy" formatter has more options
 
@@ -215,11 +215,11 @@ The color scheme may be set with `LOGXI_COLORS` environment variable. For
 example, the default dark scheme is emulated like this
 
     # on non-Windows
-    export LOGXI_COLORS=key=cyan+h,value,misc=blue+h,source=magenta,DBG,WRN=yellow,INF=green,ERR=red+h
+    export LOGXI_COLORS=key=cyan+h,value,misc=blue+h,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red+h
     yourapp
 
     # on windows, stick to basic colors, styles liked bold, etc will not work
-    SET LOGXI_COLORS=key=cyan,value,misc=blue,source=magenta,DBG,WRN=yellow,INF=green,ERR=red
+    SET LOGXI_COLORS=key=cyan,value,misc=blue,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red
     yourapp
 
     # color only errors
@@ -232,6 +232,7 @@ background on terminal.
 Keys
 
 *   \*  - default color
+*   TRC - trace color
 *   DBG - debug color
 *   WRN - warn color
 *   INF - info color
@@ -245,10 +246,10 @@ Keys
 
 What about hooks? There are least two ways to do this
 
-* 	Implement your own `io.Writer` to write to external services. Be sure to set
-  	the formatter to JSON to faciliate decoding with Go's built-in streaming
-  	decoder.
-* 	Create an external filter. See `v1/cmd/filter` as an example.
+*   Implement your own `io.Writer` to write to external services. Be sure to set
+    the formatter to JSON to faciliate decoding with Go's built-in streaming
+    decoder.
+*   Create an external filter. See `v1/cmd/filter` as an example.
 
 What about log rotation? 12 factor apps only concern themselves with
 STDOUT. Use shell redirection operators to write to a file.

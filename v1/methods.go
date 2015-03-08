@@ -1,28 +1,38 @@
 package log
 
-// Debug records a debug statement.
+// Trace logs a trace statement. On terminals file and line number are logged.
+func Trace(msg string, args ...interface{}) {
+	DefaultLog.Trace(msg, args...)
+}
+
+// Debug logs a debug statement.
 func Debug(msg string, args ...interface{}) {
 	DefaultLog.Debug(msg, args...)
 }
 
-// Info records an info statement.
+// Info logs an info statement.
 func Info(msg string, args ...interface{}) {
 	DefaultLog.Info(msg, args...)
 }
 
-// Warn records a warning statement.
+// Warn logs a warning statement. On terminals it logs file and line number.
 func Warn(msg string, args ...interface{}) {
 	DefaultLog.Warn(msg, args...)
 }
 
-// Error records an error statement.
+// Error logs an error statement with callstack.
 func Error(msg string, args ...interface{}) {
-	DefaultLog.Error(msg, args)
+	DefaultLog.Error(msg, args...)
 }
 
-// Fatal records a fatal statement.
+// Fatal logs a fatal statement.
 func Fatal(msg string, args ...interface{}) {
 	DefaultLog.Fatal(msg, args...)
+}
+
+// IsTrace determines if this logger logs a trace statement.
+func IsTrace() bool {
+	return DefaultLog.IsTrace()
 }
 
 // IsDebug determines if this logger logs a debug statement.

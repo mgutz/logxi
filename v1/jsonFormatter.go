@@ -70,7 +70,7 @@ func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
 		buf.WriteString(strconv.FormatFloat(value.Float(), 'g', -1, 64))
 
 	default:
-		// always show errors even at cost of some performance. there's
+		// always show error stack even at cost of some performance. there's
 		// nothing worse than looking at production logs without a clue
 		if err, ok := val.(error); ok {
 			jf.writeError(buf, err)

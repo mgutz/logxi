@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/mgutz/logxi/v1"
+	"github.com/mgutz/logxi/v1/cmd/reldir"
 )
 
 var errConnection = fmt.Errorf("connection error")
@@ -22,12 +23,13 @@ func causeError() {
 
 func main() {
 	// create the loggers
+	log.Trace("creating loggers")
 	logger = log.New("server")
 	modelsLogger := log.New("models")
 
-	log.Debug("I'm the default logger")
-
-	logger.Info("BEGIN main", "hostname", hostname, "pid", os.Getpid())
+	logger.Debug("Process", "hostname", hostname, "pid", os.Getpid())
+	logger.Info("Starting server...")
+	reldir.Foo()
 
 	causeError()
 

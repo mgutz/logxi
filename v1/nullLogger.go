@@ -6,6 +6,10 @@ var NullLog = &NullLogger{}
 // NullLogger is the default logger for this package.
 type NullLogger struct{}
 
+// Trace logs a debug entry.
+func (l *NullLogger) Trace(msg string, args ...interface{}) {
+}
+
 // Debug logs a debug entry.
 func (l *NullLogger) Debug(msg string, args ...interface{}) {
 }
@@ -29,6 +33,11 @@ func (l *NullLogger) Fatal(msg string, args ...interface{}) {
 
 // Log logs a leveled entry.
 func (l *NullLogger) Log(level int, msg string, args []interface{}) {
+}
+
+// IsTrace determines if this logger logs a trace statement.
+func (l *NullLogger) IsTrace() bool {
+	return false
 }
 
 // IsDebug determines if this logger logs a debug statement.

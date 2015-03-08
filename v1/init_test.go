@@ -13,9 +13,8 @@ var testBuf bytes.Buffer
 var testInternalLog Logger
 
 func init() {
-	testInternalLog = NewLogger(&testBuf, "__logxi")
+	testInternalLog = NewLogger3(&testBuf, "__logxi", NewTextFormatter("__logxi"))
 	testInternalLog.SetLevel(LevelError)
-	testInternalLog.SetFormatter(NewTextFormatter("__logxi"))
 }
 
 func TestUnknownLevel(t *testing.T) {

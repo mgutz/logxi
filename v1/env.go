@@ -104,7 +104,7 @@ func processLogEnv(env *Configuration) {
 			key = key[1:]
 			continue
 		} else if value == "" {
-			logxiNameLevelMap[key] = LevelDebug
+			logxiNameLevelMap[key] = LevelAll
 			continue
 		}
 

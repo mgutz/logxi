@@ -6,11 +6,13 @@ const (
 	LevelEnv = iota
 	// LevelAll is all levels
 	LevelAll
+	// LevelTrace is trace level and displays file and line in terminal
+	LevelTrace
 	// LevelDebug is debug level
 	LevelDebug
 	// LevelInfo is info level
 	LevelInfo
-	// LevelWarn is warn level
+	// LevelWarn is warn level and display file and line in terminal
 	LevelWarn
 	// LevelError is error level
 	LevelError
@@ -35,6 +37,7 @@ const FormatEnv = ""
 
 // LevelMap maps int enums to string level.
 var LevelMap = map[int]string{
+	LevelTrace: "TRC",
 	LevelDebug: "DBG",
 	LevelInfo:  "INF",
 	LevelWarn:  "WRN",
@@ -45,6 +48,7 @@ var LevelMap = map[int]string{
 // LevelMap maps int enums to string level.
 var LevelAtoi = map[string]int{
 	"ALL":   LevelAll,
+	"TRC":   LevelTrace,
 	"DBG":   LevelDebug,
 	"INF":   LevelInfo,
 	"WRN":   LevelWarn,
@@ -52,6 +56,7 @@ var LevelAtoi = map[string]int{
 	"FTL":   LevelFatal,
 	"OFF":   LevelOff,
 	"all":   LevelAll,
+	"trace": LevelTrace,
 	"debug": LevelDebug,
 	"info":  LevelInfo,
 	"warn":  LevelWarn,
@@ -62,17 +67,16 @@ var LevelAtoi = map[string]int{
 
 // Logger is the interface for logging.
 type Logger interface {
+	Trace(msg string, args ...interface{})
 	Debug(msg string, args ...interface{})
 	Info(msg string, args ...interface{})
 	Warn(msg string, args ...interface{})
 	Error(msg string, args ...interface{})
 	Fatal(msg string, args ...interface{})
-
 	Log(level int, msg string, args []interface{})
 
 	SetLevel(int)
-	SetFormatter(Formatter)
-
+	IsTrace() bool
 	IsDebug() bool
 	IsInfo() bool
 	IsWarn() bool
