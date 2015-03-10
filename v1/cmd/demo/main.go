@@ -5,34 +5,30 @@ import (
 	"os"
 
 	"github.com/mgutz/logxi/v1"
-	"github.com/mgutz/logxi/v1/cmd/reldir"
 )
 
-var errConnection = fmt.Errorf("connection error")
-var url = "http://www.acme.local"
+var errConfig = fmt.Errorf("file not found")
+var dsn = "dbname=testdb"
 var logger log.Logger
 var hostname string
+var configFile = "config.json"
 
 func init() {
 	hostname, _ = os.Hostname()
 }
 
-func causeError() {
-	logger.Error("error in function", "err", errConnection)
+func loadConfig() {
+	logger.Error("Could not read config file", "err", errConfig)
 }
 
 func main() {
-	// create the loggers
+	// create loggers
 	log.Trace("creating loggers")
 	logger = log.New("server")
 	modelsLogger := log.New("models")
 
 	logger.Debug("Process", "hostname", hostname, "pid", os.Getpid())
-	logger.Info("Starting server...")
-	reldir.Foo()
-
-	causeError()
-
 	modelsLogger.Info("Connecting to database...")
-	logger.Warn("Reconnecting ..", "url", url)
+	modelsLogger.Warn("Could not connect, retrying ...", "dsn", dsn)
+	loadConfig()
 }

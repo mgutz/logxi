@@ -1,7 +1,6 @@
 package log
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"runtime/debug"
@@ -28,7 +27,8 @@ type TextFormatter struct {
 // must be called befored using it.
 func NewTextFormatter(name string) *TextFormatter {
 	var buildKV = func(level string) string {
-		var buf bytes.Buffer
+		buf := pool.Get()
+		defer pool.Put(buf)
 		buf.WriteString(Separator)
 		buf.WriteString("_n=")
 		buf.WriteString(name)
@@ -52,7 +52,7 @@ func NewTextFormatter(name string) *TextFormatter {
 	return &TextFormatter{itoaLevelMap: itoaLevelMap, name: name}
 }
 
-func (tf *TextFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
+func (tf *TextFormatter) set(buf bufferWriter, key string, val interface{}) {
 	buf.WriteString(Separator)
 	buf.WriteString(key)
 	buf.WriteRune('=')
@@ -67,7 +67,8 @@ func (tf *TextFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
 
 // Format records a log entry.
 func (tf *TextFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
-	var buf bytes.Buffer
+	buf := pool.Get()
+	defer pool.Put(buf)
 	buf.WriteString("_t=")
 	buf.WriteString(time.Now().Format(timeFormat))
 	buf.WriteString(tf.itoaLevelMap[level])
@@ -79,17 +80,17 @@ func (tf *TextFormatter) Format(writer io.Writer, level int, msg string, args []
 				if key, ok := args[i].(string); ok {
 					if key == "" {
 						// show key is invalid
-						tf.set(&buf, badKeyAtIndex(i), args[i+1])
+						tf.set(buf, badKeyAtIndex(i), args[i+1])
 					} else {
-						tf.set(&buf, key, args[i+1])
+						tf.set(buf, key, args[i+1])
 					}
 				} else {
 					// show key is invalid
-					tf.set(&buf, badKeyAtIndex(i), args[i+1])
+					tf.set(buf, badKeyAtIndex(i), args[i+1])
 				}
 			}
 		} else {
-			tf.set(&buf, warnImbalancedKey, args)
+			tf.set(buf, warnImbalancedKey, args)
 		}
 	}
 	buf.WriteRune('\n')

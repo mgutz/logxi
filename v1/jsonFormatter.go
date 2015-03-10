@@ -1,7 +1,6 @@
 package log
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,8 +10,22 @@ import (
 	"time"
 )
 
-// JSONFormatter formats log entries as JSON. This should be used
-// in production because it is machine parseable.
+type bufferWriter interface {
+	Write(p []byte) (nn int, err error)
+	WriteRune(r rune) (n int, err error)
+	WriteString(s string) (n int, err error)
+}
+
+// JSONFormatter is a fast, efficient JSON formatter optimized for logging.
+//
+// It's faster due to
+//
+// *	log entry keys are not escaped
+//		Who uses complex keys when coding? Checked by HappyDevFormatter in case user does.
+//		Nested object keys are escaped by json.Marshal().
+// *	Primitive types uses strconv
+// *	Logger reserved key values (time, log name, level) require no conversion
+// *	sync.Pool buffer for bytes.Buffer
 type JSONFormatter struct {
 	name string
 }
@@ -22,7 +35,7 @@ func NewJSONFormatter(name string) *JSONFormatter {
 	return &JSONFormatter{name: name}
 }
 
-func (jf *JSONFormatter) writeString(buf *bytes.Buffer, s string) {
+func (jf *JSONFormatter) writeString(buf bufferWriter, s string) {
 	b, err := json.Marshal(s)
 	if err != nil {
 		InternalLog.Error("Could not json.Marshal string.", "str", s)
@@ -32,13 +45,13 @@ func (jf *JSONFormatter) writeString(buf *bytes.Buffer, s string) {
 	buf.Write(b)
 }
 
-func (jf *JSONFormatter) writeError(buf *bytes.Buffer, err error) {
+func (jf *JSONFormatter) writeError(buf bufferWriter, err error) {
 	jf.writeString(buf, err.Error())
 	jf.set(buf, CallStackKey, string(debug.Stack()))
 	return
 }
 
-func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
+func (jf *JSONFormatter) appendValue(buf bufferWriter, val interface{}) {
 	if val == nil {
 		buf.WriteString("null")
 		return
@@ -95,7 +108,7 @@ func (jf *JSONFormatter) appendValue(buf *bytes.Buffer, val interface{}) {
 	}
 }
 
-func (jf *JSONFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
+func (jf *JSONFormatter) set(buf bufferWriter, key string, val interface{}) {
 	// WARNING: assumes this is not first key
 	buf.WriteString(`, "`)
 	buf.WriteString(key)
@@ -105,7 +118,11 @@ func (jf *JSONFormatter) set(buf *bytes.Buffer, key string, val interface{}) {
 
 // Format formats log entry as JSON.
 func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
-	var buf bytes.Buffer
+	//buf := bufio.NewWriter(writer)
+	//buf := bytes.NewBuffer(make([]byte, 256))
+	buf := pool.Get()
+	defer pool.Put(buf)
+
 	buf.WriteString(`{"_t":"`)
 	buf.WriteString(time.Now().Format(timeFormat))
 
@@ -116,7 +133,7 @@ func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []
 	buf.WriteString(jf.name)
 
 	buf.WriteString(`", "_m":`)
-	jf.appendValue(&buf, msg)
+	jf.appendValue(buf, msg)
 
 	var lenArgs = len(args)
 	if lenArgs > 0 {
@@ -125,17 +142,17 @@ func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []
 				if key, ok := args[i].(string); ok {
 					if key == "" {
 						// show key is invalid
-						jf.set(&buf, badKeyAtIndex(i), args[i+1])
+						jf.set(buf, badKeyAtIndex(i), args[i+1])
 					} else {
-						jf.set(&buf, key, args[i+1])
+						jf.set(buf, key, args[i+1])
 					}
 				} else {
 					// show key is invalid
-					jf.set(&buf, badKeyAtIndex(i), args[i+1])
+					jf.set(buf, badKeyAtIndex(i), args[i+1])
 				}
 			}
 		} else {
-			jf.set(&buf, warnImbalancedKey, args)
+			jf.set(buf, warnImbalancedKey, args)
 		}
 	}
 	buf.WriteString("}\n")
@@ -146,8 +163,9 @@ func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []
 // HappyDevFormatter to ensure any data logged while developing will properly
 // log in production.
 func (jf *JSONFormatter) LogEntry(level int, msg string, args []interface{}) map[string]interface{} {
-	var buf bytes.Buffer
-	jf.Format(&buf, level, msg, args)
+	buf := pool.Get()
+	defer pool.Put(buf)
+	jf.Format(buf, level, msg, args)
 	var entry map[string]interface{}
 	err := json.Unmarshal(buf.Bytes(), &entry)
 	if err != nil {

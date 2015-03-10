@@ -28,8 +28,8 @@ func readFromEnviron() *Configuration {
 	}
 
 	conf.Levels = envOrDefault("LOGXI", defaultLogxiEnv)
-	conf.Format = envOrDefault("LOGXI_FORMAT", defaultFormat)
-	conf.Colors = envOrDefault("LOGXI_COLORS", defaultScheme)
+	conf.Format = envOrDefault("LOGXI_FORMAT", defaultLogxiFormatEnv)
+	conf.Colors = envOrDefault("LOGXI_COLORS", defaultLogxiColorsEnv)
 	return conf
 }
 
@@ -37,14 +37,14 @@ func readFromEnviron() *Configuration {
 func ProcessEnv(env *Configuration) {
 	// TODO: allow reading from etcd
 
-	processLogEnv(env)
-	processThemeEnv(env)
-	processFormatEnv(env)
+	ProcessLogxiEnv(env.Levels)
+	ProcessLogxiColorsEnv(env.Colors)
+	ProcessLogxiFormatEnv(env.Format)
 }
 
-// processFormatEnv parses LOGXI_FORMAT
-func processFormatEnv(env *Configuration) {
-	logxiFormat = env.Format
+// ProcessLogxiFormatEnv parses LOGXI_FORMAT
+func ProcessLogxiFormatEnv(env string) {
+	logxiFormat = env
 	m := parseKVList(logxiFormat, ",")
 	formatterFormat := ""
 	tFormat := ""
@@ -54,8 +54,8 @@ func processFormatEnv(env *Configuration) {
 			formatterFormat = key
 		case "t":
 			tFormat = value
-		case "fit":
-			isPretty = !(value == "true" || value == "1" || value == "")
+		case "pretty":
+			isPretty = value != "false" && value != "0"
 		case "maxcol":
 			col, err := strconv.Atoi(value)
 			if err == nil {
@@ -83,9 +83,9 @@ func processFormatEnv(env *Configuration) {
 	timeFormat = tFormat
 }
 
-// processLogEnv parses LOGXI variable
-func processLogEnv(env *Configuration) {
-	logxiEnable := env.Levels
+// ProcessLogxiEnv parses LOGXI variable
+func ProcessLogxiEnv(env string) {
+	logxiEnable := env
 	if logxiEnable == "" {
 		logxiEnable = defaultLogxiEnv
 	}
@@ -110,7 +110,7 @@ func processLogEnv(env *Configuration) {
 
 		level := LevelAtoi[value]
 		if level == 0 {
-			InternalLog.Error("Unknown level in LOGXI environment variable", "key", key, "value", value, "LOGXI", env.Levels)
+			InternalLog.Error("Unknown level in LOGXI environment variable", "key", key, "value", value, "LOGXI", env)
 			level = defaultLevel
 		}
 		logxiNameLevelMap[key] = level
@@ -153,10 +153,11 @@ func getLogLevel(name string) int {
 	return LevelOff
 }
 
-func processThemeEnv(env *Configuration) {
-	colors := env.Colors
+// ProcessLogxiColorsEnv parases LOGXI_COLORS
+func ProcessLogxiColorsEnv(env string) {
+	colors := env
 	if colors == "" {
-		colors = defaultScheme
+		colors = defaultLogxiColorsEnv
 	}
 	theme = parseTheme(colors)
 }

@@ -56,7 +56,7 @@ func (ci *frameInfo) readSource(contextLines int) error {
 	}
 
 	if err := scanner.Err(); err != nil {
-		InternalLog.Error("scanner error", "file", ci.filename, "err", err)
+		InternalLog.Warn("scanner error", "file", ci.filename, "err", err)
 	}
 	return nil
 }
@@ -81,7 +81,7 @@ func (ci *frameInfo) String(color string, sourceColor string) string {
 	// make path relative to current working directory or home
 	tildeFilename, err := filepath.Rel(wd, ci.filename)
 	if err != nil {
-		InternalLog.Error("Could not make path relative", "path", ci.filename)
+		InternalLog.Warn("Could not make path relative", "path", ci.filename)
 		return ""
 	}
 	// ../../../ is too complex.  Make path relative to home
@@ -177,7 +177,7 @@ func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*frameInfo {
 		numstr := sourceLine[colon+1 : space]
 		lineno, err := strconv.Atoi(numstr)
 		if err != nil {
-			InternalLog.Error("Could not parse line number", "sourceLine", sourceLine, "numstr", numstr)
+			InternalLog.Warn("Could not parse line number", "sourceLine", sourceLine, "numstr", numstr)
 			continue
 		}
 		ci.lineno = lineno

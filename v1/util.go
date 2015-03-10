@@ -1,16 +1,14 @@
 package log
 
-import (
-	"bytes"
-	"strings"
-)
+import "strings"
 
 func expandTabs(s string, tabLen int) string {
 	if s == "" {
 		return s
 	}
 	parts := strings.Split(s, "\t")
-	var buf bytes.Buffer
+	buf := pool.Get()
+	defer pool.Put(buf)
 	for _, part := range parts {
 		buf.WriteString(part)
 		buf.WriteString(strings.Repeat(" ", tabLen-len(part)%tabLen))

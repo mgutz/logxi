@@ -1,6 +1,8 @@
 package bench
 
 import (
+	"encoding/json"
+	"fmt"
 	L "log"
 	"os"
 	"testing"
@@ -23,20 +25,53 @@ var testObject = M{
 	},
 }
 
-func BenchmarkBuiltinLog(b *testing.B) {
-	l := L.New(os.Stdout, " [log] ", L.LstdFlags)
+func toJSON(m map[string]interface{}) string {
+	b, _ := json.Marshal(m)
+	return string(b)
+}
+
+func BenchmarkLog(b *testing.B) {
+	fmt.Println("")
+	l := L.New(os.Stdout, "bench ", L.LstdFlags)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		l.Printf("debug %s=%v %s=%v \n", "key", 1, "other", testObject)
-		l.Printf("info %s=%v %s=%v \n", "key", 1, "other", testObject)
-		l.Printf("warn %s=%v %s=%v \n", "key", 1, "other", testObject)
-		l.Printf("error %s=%v %s=%v \n", "key", 1, "other", testObject)
+		debug := map[string]interface{}{"l": "debug", "key1": 1, "key2": "string", "key3": false}
+		l.Printf(toJSON(debug))
+
+		info := map[string]interface{}{"l": "info", "key1": 1, "key2": "string", "key3": false}
+		l.Printf(toJSON(info))
+
+		warn := map[string]interface{}{"l": "warn", "key1": 1, "key2": "string", "key3": false}
+		l.Printf(toJSON(warn))
+
+		err := map[string]interface{}{"l": "error", "key1": 1, "key2": "string", "key3": false}
+		l.Printf(toJSON(err))
+	}
+	b.StopTimer()
+}
+
+func BenchmarkLogComplex(b *testing.B) {
+	fmt.Println("")
+	l := L.New(os.Stdout, "bench ", L.LstdFlags)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		debug := map[string]interface{}{"l": "debug", "key1": 1, "obj": testObject}
+		l.Printf(toJSON(debug))
+
+		info := map[string]interface{}{"l": "info", "key1": 1, "obj": testObject}
+		l.Printf(toJSON(info))
+
+		warn := map[string]interface{}{"l": "warn", "key1": 1, "obj": testObject}
+		l.Printf(toJSON(warn))
+
+		err := map[string]interface{}{"l": "error", "key1": 1, "obj": testObject}
+		l.Printf(toJSON(err))
 	}
 	b.StopTimer()
 }
 
 func BenchmarkLogxi(b *testing.B) {
-	log.DisableColors(true)
+	fmt.Println("")
 	l := log.NewLogger3(os.Stdout, "bench", log.NewJSONFormatter("bench"))
 	l.SetLevel(log.LevelDebug)
 
@@ -48,10 +83,10 @@ func BenchmarkLogxi(b *testing.B) {
 		l.Error("error", "key", 1, "key2", "string", "key3", false)
 	}
 	b.StopTimer()
-	log.DisableColors(false)
 }
 
 func BenchmarkLogxiComplex(b *testing.B) {
+	fmt.Println("")
 	l := log.NewLogger3(os.Stdout, "bench", log.NewJSONFormatter("bench"))
 	l.SetLevel(log.LevelDebug)
 
@@ -67,6 +102,7 @@ func BenchmarkLogxiComplex(b *testing.B) {
 }
 
 func BenchmarkLogrus(b *testing.B) {
+	fmt.Println("")
 	l := logrus.New()
 	l.Formatter = &logrus.JSONFormatter{}
 
@@ -81,6 +117,7 @@ func BenchmarkLogrus(b *testing.B) {
 }
 
 func BenchmarkLogrusComplex(b *testing.B) {
+	fmt.Println("")
 	l := logrus.New()
 	l.Formatter = &logrus.JSONFormatter{}
 
@@ -95,6 +132,7 @@ func BenchmarkLogrusComplex(b *testing.B) {
 }
 
 func BenchmarkLog15(b *testing.B) {
+	fmt.Println("")
 	l := log15.New(log15.Ctx{"m": "bench"})
 	l.SetHandler(log15.StreamHandler(os.Stdout, log15.JsonFormat()))
 
@@ -110,6 +148,7 @@ func BenchmarkLog15(b *testing.B) {
 }
 
 func BenchmarkLog15Complex(b *testing.B) {
+	fmt.Println("")
 	l := log15.New(log15.Ctx{"m": "bench"})
 	l.SetHandler(log15.StreamHandler(os.Stdout, log15.JsonFormat()))
 

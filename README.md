@@ -3,21 +3,17 @@
 
 # logxi
 
-log XI (eleven) is a structured [12 factor app](http://12factor.net/logs)
-logger built for performance and happy development.
+log XI is a structured [12-factor app](http://12factor.net/logs)
+logger built for speed and happy development.
 
-TL;DR
-
-*   Structured with key-value pairs
-*   Faster and less allocations than logrus and log15
-*   Loggers and their level are configurable via environment variables
-*   JSON formatter or very efficient key-value text formatter for production
-*   Happy, colorful, developer friendly logger in terminal. Warnings
-    and errors are emphasized with their call stack.
-*   Defines a simple interface for logging
-*   Colored logging works on Windows
-*   Loggers are named
-*   Has level guards to avoid cost of passing arguments
+*   Simpler. Sane no-configuration defaults out of the box.
+*   Faster. See benchmarks vs logrus and log15.
+*   Structured. Key-value pairs are enforced. Logs JSON in production.
+*   Configurable. Enable/disalbe Loggers and levels via env vars.
+*   Friendlier. Happy, colorful and developer friendly logger in terminal.
+*   Helpul. Traces, warnings and errors are emphasized with file, line
+    number and callstack.
+*   Efficient. Has level guards to avoid cost of building complex arguments.
 
 ### Installation
 
@@ -33,12 +29,11 @@ var logger log.Logger
 
 func main() {
     // use default logger
-    if log.IsInfo() {
-        log.Info("Hello", "name", "mario")
-    }
+    who := "mario"
+    log.Info("Hello", "who", who)
 
-    // create a logger for your package, assigning a unique
-    // name which can be enabled from environment variables
+    // create a logger with a unique identifier which
+    // can be enabled from environment variables
     logger = log.New("pkg")
 
     // specify a writer
@@ -49,11 +44,11 @@ func main() {
         modelLogger.Error("Could not open database", "err", err)
     }
 
-    a := "apple"
-    o := "orange"
+    fruit := "apple"
+    languages := []string["go", "javascript"]
     if log.IsDebug() {
         // use key-value pairs after message
-        logger.Debug("OK", "a", a, "o", o)
+        logger.Debug("OK", "fruit", fruit, "languages", languages)
     }
 }
 ```
@@ -74,23 +69,20 @@ This logger package
     enabling small trace data in `Debug` and `Info` statements for some
     period of time.
 
-    ```
-# primitive types
-BenchmarkLogxi         100000     20795 ns/op    3458 B/op     72 allocs/op
-BenchmarkLogrus         20000     64447 ns/op    8691 B/op    180 allocs/op
-BenchmarkLog15          20000     98889 ns/op    8756 B/op    220 allocs/op
+        # primitive types
+        BenchmarkLogxi         100000     18139 ns/op    2438 B/op     64 allocs/op
+        BenchmarkLogrus         30000     43845 ns/op    8696 B/op    180 allocs/op
+        BenchmarkLog15          30000     57332 ns/op    8755 B/op    220 allocs/op
 
-# nested object
-BenchmarkLogxiComplex   20000     75537 ns/op    8900 B/op    200 allocs/op
-BenchmarkLogrusComplex  10000    103580 ns/op   11872 B/op    262 allocs/op
-BenchmarkLog15Complex   10000    157817 ns/op   12259 B/op    294 allocs/op
-
-* BenchmarkLog15Complex doesn't marshal nested object as JSON
-```
+        # nested object
+        BenchmarkLogxiComplex   30000     43242 ns/op    6356 B/op    188 allocs/op
+        BenchmarkLogrusComplex  30000     59905 ns/op   11878 B/op    262 allocs/op
+        BenchmarkLog15Complex   20000     87828 ns/op   12268 B/op    294 allocs/op
 
 *   Is developer friendly in the terminal. The HappyDevFormatter
     is colorful, prints file and line numbers for traces, warnings
-    and errors. Errors print the call stack.
+    and errors. Prints arguments in the order they are coded.
+    Errors print the call stack.
 
     `HappyDevFormatter` is not too concerned with performance
     and delegates to JSONFormatter internally.
@@ -107,16 +99,6 @@ BenchmarkLog15Complex   10000    157817 ns/op   12259 B/op    294 allocs/op
         if log.IsDebug() {
             log.Debug("some ", "key1", expensive())
         }
-
-        if log.IsInfo() {
-            log.Info("some ", "key1", expensive())
-        }
-
-        if log.IsWarn() {
-            log.Warn("some ", "key1", expensive())
-        }
-
-    Error and Fatal do not have guards, they always log.
 
 *   Conforms to a logging interface so it can be replaced.
 
@@ -137,10 +119,13 @@ BenchmarkLog15Complex   10000    157817 ns/op   12259 B/op    294 allocs/op
             // Error, Fatal not needed, those SHOULD always be logged
         }
 
-*   Standardizes on key-value pair argument sequence for machine parsing
+*   Standardizes on key-value pair argument sequence
 
     ```go
 log.Debug("inside Fn()", "key1", value1, "key2", value2)
+
+// instead of this
+log.WithFields(logrus.Fields{"m": "pkg", "key1": value1, "key2": value2}).Debug("inside fn()")
 ```
     logxi logs `FIX_IMBALANCED_PAIRS =>` if key-value pairs are imbalanced
 
@@ -195,12 +180,11 @@ variable. Valid values are `"happy", "text", "JSON"`
 
 The "happy" formatter has more options
 
-*   fit - will try to fit a key-value pair onto the same line. If
+*   pretty - puts each key-value pair indented on its own line
+
+    "happy" default to fitting key-value pair onto the same line. If
     result characters are longer than `maxcol` then the pair will be
     put on the next line and indented
-
-    "happy" defaults to pretty mode where it puts each key-value pair
-    on its own line and indented
 
 *   maxcol - maximum number of columns before forcing a key to be on its
     own line. If you want everything on a single line, set this to high

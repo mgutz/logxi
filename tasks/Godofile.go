@@ -19,13 +19,11 @@ type pair struct {
 
 var stdout io.Writer
 
-//var promptFn = ansi.ColorFunc("cyan+h")
 var promptColor = ansi.ColorCode("cyan+h")
 var commentColor = ansi.ColorCode("yellow+h")
 var titleColor = ansi.ColorCode("green+h")
 var subtitleColor = ansi.ColorCode("black+h")
-var reset = ansi.ColorCode("reset")
-var normal = ansi.ColorCode("")
+var normal = ansi.DefaultFG
 var wd string
 
 func init() {
@@ -49,7 +47,7 @@ func pseudoType(s string, color string) {
 		time.Sleep(50 * time.Millisecond)
 	}
 	if color != "" {
-		fmt.Fprint(stdout, reset)
+		fmt.Fprint(stdout, ansi.Reset)
 	}
 }
 
@@ -106,8 +104,35 @@ func tasks(p *Project) {
 		`, M{"$in": "v1/cmd/demo"})
 	})
 
+	p.Task("etcd-set", func(c *Context) error {
+		kv := c.Args.Leftover()
+		if len(kv) != 2 {
+			return fmt.Errorf("godo etcd-set -- KEY VALUE")
+		}
+
+		return Run(
+			`curl -L http://127.0.0.1:4001/v2/keys/{{.key}} -XPUT -d value="{{.value}}"`,
+			M{"key": kv[0], "value": kv[1]},
+		)
+	})
+
+	p.Task("etcd-del", func(c *Context) error {
+		kv := c.Args.Leftover()
+		if len(kv) != 1 {
+			return fmt.Errorf("godo etcd-del -- KEY")
+		}
+		return Run(
+			`curl -L http://127.0.0.1:4001/v2/keys/{{.key}} -XDELETE`,
+			M{"key": kv[0]},
+		)
+	})
+
 	p.Task("demo", func() {
 		Run("go run main.go", M{"$in": "v1/cmd/demo"})
+	})
+
+	p.Task("demo2", func() {
+		Run("go run main.go", M{"$in": "v1/cmd/demo2"})
 	})
 
 	p.Task("filter", D{"build"}, func() {
@@ -131,15 +156,15 @@ func tasks(p *Project) {
 			},
 			{
 				`enable/disable loggers with level`,
-				`LOGXI=*=ERR,models,server=INF demo`,
+				`LOGXI=*=ERR,models demo`,
 			},
 			{
 				`create custom 256 colors colorscheme, pink==200`,
 				`LOGXI_COLORS=*=black+h,ERR=200+b,key=blue+h demo`,
 			},
 			{
-				`fit more on line, set time format, disable context`,
-				`LOGXI=* LOGXI_FORMAT=fit,maxcol=80,t=04:05.000,context=-1 demo`,
+				`put keys on newline, set time format, less context`,
+				`LOGXI=* LOGXI_FORMAT=pretty,maxcol=80,t=04:05.000,context=0 demo`,
 			},
 			{
 				`logxi defaults to fast, unadorned JSON in production`,
@@ -163,12 +188,7 @@ func tasks(p *Project) {
 			time.Sleep(3500 * time.Millisecond)
 		}
 
-		intro(
-			"log XI demo",
-			"built with godo and LICEcap ...",
-			1*time.Millisecond,
-		)
-
+		clear()
 		Prompt("")
 	})
 
@@ -176,8 +196,8 @@ func tasks(p *Project) {
 		Bash(`cp ~/Desktop/demo.gif images`)
 	})
 
-	p.Task("allocs", func() {
-		Bash(`go test -bench . -benchmem | grep "allocs\|^Bench"`, M{"$in": "v1/bench"})
+	p.Task("bench-allocs", func() {
+		Bash(`go test -bench . -benchmem -run=none | grep "allocs\|^Bench"`, M{"$in": "v1/bench"})
 	}).Description("Runs benchmarks with allocs")
 
 	p.Task("benchjson", func() {

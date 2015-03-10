@@ -43,26 +43,28 @@ var logxiNameLevelMap map[string]int
 
 // logxiFormat is the formatter kind to create
 var logxiFormat string
-var home string
 
-var isTerminal bool
+var colorableStdout = colorable.NewColorableStdout()
 var defaultContextLines = 2
 var defaultFormat string
 var defaultLevel int
 var defaultLogxiEnv string
+var defaultLogxiFormatEnv string
 var defaultMaxCol = 80
-var defaultPretty = true
-var defaultScheme string
+var defaultPretty = false
+var defaultLogxiColorsEnv string
 var defaultTimeFormat string
+var disableCallstack bool
 var disableCheckKeys bool
 var disableColors bool
-var disableCallstack bool
-var timeFormat string
-var colorableStdout = colorable.NewColorableStdout()
-var isPretty = true
+var home string
+var isPretty bool
+var isTerminal bool
 var isWindows = runtime.GOOS == "windows"
-var wd string
 var pkgMutex sync.Mutex
+var pool = NewBufferPool()
+var timeFormat string
+var wd string
 
 // logxi reserved keys
 
@@ -93,11 +95,13 @@ func setDefaults(isTerminal bool) {
 
 	if isTerminal {
 		defaultLogxiEnv = "*=WRN"
+		defaultLogxiFormatEnv = "happy,fit,maxcol=80,t=15:04:05.000000"
 		defaultFormat = FormatHappy
 		defaultLevel = LevelWarn
 		defaultTimeFormat = "15:04:05.000000"
 	} else {
 		defaultLogxiEnv = "*=ERR"
+		defaultLogxiFormatEnv = "JSON,t=2006-01-02T15:04:05-0700"
 		defaultFormat = FormatJSON
 		defaultLevel = LevelError
 		defaultTimeFormat = "2006-01-02T15:04:05-0700"
@@ -107,14 +111,14 @@ func setDefaults(isTerminal bool) {
 		home = os.Getenv("HOMEPATH")
 		// DefaultScheme is a color scheme optimized for dark background
 		// but works well with light backgrounds
-		defaultScheme = "key=cyan,value,misc=blue,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red"
+		defaultLogxiColorsEnv = "key=cyan,value,misc=blue,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red"
 	} else {
 		home = os.Getenv("HOME")
 		term := os.Getenv("TERM")
 		if term == "xterm-256color" {
-			defaultScheme = "key=cyan+h,value,misc=blue,source=88,TRC,DBG,WRN=yellow,INF=green+h,ERR=red+h"
+			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue,source=88,TRC,DBG,WRN=yellow,INF=green+h,ERR=red+h"
 		} else {
-			defaultScheme = "key=cyan+h,value,misc=blue,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red+h"
+			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red+h"
 		}
 	}
 }

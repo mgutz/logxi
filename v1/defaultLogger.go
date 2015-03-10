@@ -52,30 +52,22 @@ func New(name string) Logger {
 
 // Trace logs a debug entry.
 func (l *DefaultLogger) Trace(msg string, args ...interface{}) {
-	if l.level <= LevelTrace {
-		l.Log(LevelTrace, msg, args)
-	}
+	l.Log(LevelTrace, msg, args)
 }
 
 // Debug logs a debug entry.
 func (l *DefaultLogger) Debug(msg string, args ...interface{}) {
-	if l.level <= LevelDebug {
-		l.Log(LevelDebug, msg, args)
-	}
+	l.Log(LevelDebug, msg, args)
 }
 
 // Info logs an info entry.
 func (l *DefaultLogger) Info(msg string, args ...interface{}) {
-	if l.level <= LevelInfo {
-		l.Log(LevelInfo, msg, args)
-	}
+	l.Log(LevelInfo, msg, args)
 }
 
 // Warn logs a warn entry.
 func (l *DefaultLogger) Warn(msg string, args ...interface{}) {
-	if l.level <= LevelWarn {
-		l.Log(LevelWarn, msg, args)
-	}
+	l.Log(LevelWarn, msg, args)
 }
 
 // Error logs an error entry.
@@ -91,27 +83,32 @@ func (l *DefaultLogger) Fatal(msg string, args ...interface{}) {
 
 // Log logs a leveled entry.
 func (l *DefaultLogger) Log(level int, msg string, args []interface{}) {
+	// log if the log level (warn=4) >= level of message (err=3)
+	if l.level < level {
+		return
+	}
 	l.formatter.Format(l.writer, level, msg, args)
 }
 
-// IsDebug determines if this logger logs a debug statement.
+// IsTrace determines if this logger logs a debug statement.
 func (l *DefaultLogger) IsTrace() bool {
-	return l.level <= LevelTrace
+	// DEBUG(7) >= TRACE(10)
+	return l.level >= LevelTrace
 }
 
 // IsDebug determines if this logger logs a debug statement.
 func (l *DefaultLogger) IsDebug() bool {
-	return l.level <= LevelDebug
+	return l.level >= LevelDebug
 }
 
 // IsInfo determines if this logger logs an info statement.
 func (l *DefaultLogger) IsInfo() bool {
-	return l.level <= LevelInfo
+	return l.level >= LevelInfo
 }
 
 // IsWarn determines if this logger logs a warning statement.
 func (l *DefaultLogger) IsWarn() bool {
-	return l.level <= LevelWarn
+	return l.level >= LevelWarn
 }
 
 // SetLevel sets the level of this logger.

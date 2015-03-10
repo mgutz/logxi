@@ -1,7 +1,6 @@
 package log
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -93,15 +92,6 @@ func parseTheme(theme string) *colorScheme {
 	return cs
 }
 
-func keyColor(s string) string {
-	return theme.Key + s + ansi.Reset
-}
-
-// DisableColors disables coloring of log entries.
-func DisableColors(val bool) {
-	disableColors = val
-}
-
 // HappyDevFormatter is the formatter used for terminals. It is
 // colorful, dev friendly and provides meaningful logs when
 // warnings and errors occur.
@@ -111,8 +101,8 @@ func DisableColors(val bool) {
 // then unmarshal JSON. Then it does other stuff like read source files, sort
 // keys all to give a developer more information.
 //
-// SHOULD NOT be used in production for extended period of time. It
-// works fine with remote terminals and binary deployments.
+// SHOULD NOT be used in production for extended period of time. However, it
+// works fine in SSH terminals and binary deployments.
 type HappyDevFormatter struct {
 	name string
 	col  int
@@ -129,7 +119,7 @@ func NewHappyDevFormatter(name string) *HappyDevFormatter {
 	}
 }
 
-func (hd *HappyDevFormatter) writeKey(buf *bytes.Buffer, key string) {
+func (hd *HappyDevFormatter) writeKey(buf bufferWriter, key string) {
 	// assumes this is not the first key
 	hd.writeString(buf, Separator)
 	if key == "" {
@@ -141,9 +131,15 @@ func (hd *HappyDevFormatter) writeKey(buf *bytes.Buffer, key string) {
 	buf.WriteString(ansi.Reset)
 }
 
-func (hd *HappyDevFormatter) offset(buf *bytes.Buffer, color string, key string, value string) {
-	val := strings.Trim(value, "\n ")
-	if (isPretty && key != "") || hd.col+len(key)+1+len(val) >= maxCol {
+func (hd *HappyDevFormatter) set(buf bufferWriter, key string, value interface{}, color string) {
+	var str string
+	if s, ok := value.(string); ok {
+		str = s
+	} else {
+		str = fmt.Sprintf("%v", value)
+	}
+	val := strings.Trim(str, "\n ")
+	if (isPretty && key != "") || hd.col+len(key)+2+len(val) >= maxCol {
 		buf.WriteString("\n")
 		hd.col = 0
 		hd.writeString(buf, indent)
@@ -160,13 +156,13 @@ func (hd *HappyDevFormatter) offset(buf *bytes.Buffer, color string, key string,
 
 // set writes a key-value pair to buf. It eventually calls offset which adds
 // formatting newlines, etc.
-func (hd *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{}, color string) {
-	hd.offset(buf, color, key, fmt.Sprintf("%v", value))
-}
+// func (hd *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{}, color string) {
+// 	hd.offset(buf, color, key, fmt.Sprintf("%v", value))
+// }
 
 // tracks the position of the string so we can break lines cleanly. Do not
 // send ANSI escape sequences, just raw strings
-func (hd *HappyDevFormatter) writeString(buf *bytes.Buffer, s string) {
+func (hd *HappyDevFormatter) writeString(buf bufferWriter, s string) {
 	buf.WriteString(s)
 	hd.col += len(s)
 }
@@ -215,7 +211,8 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 		if len(frames) == 0 {
 			break
 		}
-		var errbuf bytes.Buffer
+		errbuf := pool.Get()
+		defer pool.Put(errbuf)
 		lines := 0
 		for _, frame := range frames {
 			err := frame.readSource(contextLines)
@@ -241,7 +238,7 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 
 // Format a log entry.
 func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
-	var buf bytes.Buffer
+	buf := pool.Get()
 
 	// warn about reserved, bad and complex keys
 	for i := 0; i < len(args); i += 2 {
@@ -274,7 +271,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 
 	// timestamp
 	buf.WriteString(theme.Misc)
-	hd.writeString(&buf, entry[TimeKey].(string))
+	hd.writeString(buf, entry[TimeKey].(string))
 	buf.WriteString(ansi.Reset)
 
 	// emphasize warnings and errors
@@ -284,11 +281,11 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	}
 
 	// DBG, INF ...
-	hd.set(&buf, "", entry[LevelKey].(string), color)
+	hd.set(buf, "", entry[LevelKey].(string), color)
 	// logger name
-	hd.set(&buf, "", entry[NameKey], theme.Misc)
+	hd.set(buf, "", entry[NameKey], theme.Misc)
 	// message from user
-	hd.set(&buf, "", message, color)
+	hd.set(buf, "", message, color)
 
 	// Preserve key order in the sequencethey were added by developer.This
 	// makes it easier for developers to follow the log.
@@ -313,7 +310,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 		} else if isReserved {
 			continue
 		}
-		hd.set(&buf, key, entry[key], theme.Value)
+		hd.set(buf, key, entry[key], theme.Value)
 	}
 
 	addLF := true
@@ -323,7 +320,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 		if level == LevelWarn || level == LevelTrace {
 			// gets rid of "in "
 			idx := strings.IndexRune(context, 'n')
-			hd.set(&buf, "in", context[idx+2:], color)
+			hd.set(buf, "in", context[idx+2:], color)
 		} else {
 			buf.WriteRune('\n')
 			buf.WriteString(color)
@@ -333,7 +330,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 		}
 
 	} else if entry[CallStackKey] != nil {
-		hd.set(&buf, "", entry[CallStackKey], color)
+		hd.set(buf, "", entry[CallStackKey], color)
 	}
 	if addLF {
 		buf.WriteRune('\n')

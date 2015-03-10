@@ -96,19 +96,6 @@ func TestEnvLOGXI_FORMAT(t *testing.T) {
 	setDefaults(isTerminal)
 }
 
-// func TestColors(t *testing.T) {
-// 	testResetEnv()
-// 	var buf bytes.Buffer
-// 	l := NewLogger(&buf, "bench")
-// 	l.SetLevel(LevelDebug)
-// 	l.Debug("just another day", "key")
-// 	l.Debug("and another one", "key")
-// 	l.Debug("and another one", "key1", 1, "key2", 2, 3, "key3", "key4", 4)
-// 	l.Info("something you should know")
-// 	l.Warn("hmm didn't expect that")
-// 	l.Error("oh oh, you're in trouble", "key", 1)
-// }
-
 func TestComplexKeys(t *testing.T) {
 	testResetEnv()
 	var buf bytes.Buffer
@@ -204,12 +191,6 @@ func TestJSONEscapeSequences(t *testing.T) {
 	assert.Equal(t, "esc", obj[key].(string))
 }
 
-func TestParseLogEnvError(t *testing.T) {
-	testResetEnv()
-	os.Setenv("LOGXI", "ERR=red")
-	processLogEnv(readFromEnviron())
-}
-
 func TestKeyNotString(t *testing.T) {
 	testResetEnv()
 	var buf bytes.Buffer
@@ -229,4 +210,36 @@ func TestWarningErrorContext(t *testing.T) {
 	l.Warn("has eys", "key1", 2)
 	l.Error("no keys")
 	l.Error("has keys", "key1", 2)
+}
+
+func TestLevels(t *testing.T) {
+	var buf bytes.Buffer
+	l := NewLogger3(&buf, "bench", NewJSONFormatter("bench"))
+
+	l.SetLevel(LevelFatal)
+	assert.False(t, l.IsWarn())
+	assert.False(t, l.IsInfo())
+	assert.False(t, l.IsTrace())
+	assert.False(t, l.IsDebug())
+
+	l.SetLevel(LevelError)
+	assert.False(t, l.IsWarn())
+
+	l.SetLevel(LevelWarn)
+	assert.True(t, l.IsWarn())
+	assert.False(t, l.IsDebug())
+
+	l.SetLevel(LevelInfo)
+	assert.True(t, l.IsInfo())
+	assert.True(t, l.IsWarn())
+	assert.False(t, l.IsDebug())
+
+	l.SetLevel(LevelDebug)
+	assert.True(t, l.IsDebug())
+	assert.True(t, l.IsInfo())
+	assert.False(t, l.IsTrace())
+
+	l.SetLevel(LevelTrace)
+	assert.True(t, l.IsTrace())
+	assert.True(t, l.IsDebug())
 }
