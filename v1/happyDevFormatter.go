@@ -62,7 +62,8 @@ func parseTheme(theme string) *colorScheme {
 		if c == "" {
 			c = wildcard
 		}
-		//fmt.Printf("plain=%b [%s] %s=%q\n", ansi.Plain, key, style, c)
+		//fmt.Printf("plain=%b [%s] %s=%q\n", ansi.DefaultFG, key, style, c)
+
 		return c
 	}
 	wildcard = color("*")
@@ -202,6 +203,7 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 		if frames == nil {
 			frames = parseDebugStack(string(debug.Stack()), 4, true)
 		}
+
 		if len(frames) == 0 {
 			break
 		}

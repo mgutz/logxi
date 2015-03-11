@@ -169,6 +169,11 @@ func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*frameInfo {
 		}
 
 		colon := strings.Index(sourceLine, ":")
+		slash := strings.Index(sourceLine, "/")
+		if colon < slash {
+			// must be on Windows where paths look like c:/foo/bar.go:lineno
+			colon = strings.Index(sourceLine[slash:], ":") + slash
+		}
 		space := strings.Index(sourceLine, " ")
 		ci.filename = sourceLine[0:colon]
 		numstr := sourceLine[colon+1 : space]
