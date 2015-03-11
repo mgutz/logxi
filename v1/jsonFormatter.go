@@ -18,14 +18,12 @@ type bufferWriter interface {
 
 // JSONFormatter is a fast, efficient JSON formatter optimized for logging.
 //
-// It's faster due to
-//
-// *	log entry keys are not escaped
-//		Who uses complex keys when coding? Checked by HappyDevFormatter in case user does.
-//		Nested object keys are escaped by json.Marshal().
-// *	Primitive types uses strconv
-// *	Logger reserved key values (time, log name, level) require no conversion
-// *	sync.Pool buffer for bytes.Buffer
+// * log entry keys are not escaped
+//   Who uses complex keys when coding? Checked by HappyDevFormatter in case user does.
+//   Nested object keys are escaped by json.Marshal().
+// * Primitive types uses strconv
+// * Logger reserved key values (time, log name, level) require no conversion
+// * sync.Pool buffer for bytes.Buffer
 type JSONFormatter struct {
 	name string
 }
@@ -118,8 +116,6 @@ func (jf *JSONFormatter) set(buf bufferWriter, key string, val interface{}) {
 
 // Format formats log entry as JSON.
 func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
-	//buf := bufio.NewWriter(writer)
-	//buf := bytes.NewBuffer(make([]byte, 256))
 	buf := pool.Get()
 	defer pool.Put(buf)
 

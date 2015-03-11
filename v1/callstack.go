@@ -2,19 +2,14 @@ package log
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/mgutz/ansi"
 )
-
-var rePackageFile = regexp.MustCompile(`logxi/v1/\w+\.go`)
-var rePackageTestFile = regexp.MustCompile(`logxi/v1/\w+_test\.go`)
 
 type sourceLine struct {
 	lineno int
@@ -62,7 +57,9 @@ func (ci *frameInfo) readSource(contextLines int) error {
 }
 
 func (ci *frameInfo) String(color string, sourceColor string) string {
-	var buf bytes.Buffer
+	buf := pool.Get()
+	defer pool.Put(buf)
+
 	if disableCallstack {
 		buf.WriteString(color)
 		buf.WriteString(Separator)
@@ -73,8 +70,8 @@ func (ci *frameInfo) String(color string, sourceColor string) string {
 		return buf.String()
 	}
 
-	// skip anything in the logxi package (except for tests)
-	if !rePackageTestFile.MatchString(ci.filename) && rePackageFile.MatchString(ci.filename) {
+	// skip anything in the logxi package
+	if isLogxiCode(ci.filename) {
 		return ""
 	}
 

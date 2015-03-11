@@ -1,6 +1,9 @@
 package log
 
-import "strings"
+import (
+	"path/filepath"
+	"strings"
+)
 
 func expandTabs(s string, tabLen int) string {
 	if s == "" {
@@ -39,4 +42,12 @@ func indexOfNonSpace(s string) int {
 		}
 	}
 	return -1
+}
+
+var inLogxiPath = filepath.Join("mgutz", "logxi", "v"+strings.Split(Version, ".")[0])
+
+func isLogxiCode(filename string) bool {
+	// need to see errors in tests
+	return strings.HasSuffix(filepath.Dir(filename), inLogxiPath) &&
+		!strings.HasSuffix(filename, "_test.go")
 }

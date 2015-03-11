@@ -154,14 +154,8 @@ func (hd *HappyDevFormatter) set(buf bufferWriter, key string, value interface{}
 	}
 }
 
-// set writes a key-value pair to buf. It eventually calls offset which adds
-// formatting newlines, etc.
-// func (hd *HappyDevFormatter) set(buf *bytes.Buffer, key string, value interface{}, color string) {
-// 	hd.offset(buf, color, key, fmt.Sprintf("%v", value))
-// }
-
-// tracks the position of the string so we can break lines cleanly. Do not
-// send ANSI escape sequences, just raw strings
+// Write a string and tracks the position of the string so we can break lines
+// cleanly. Do not send ANSI escape sequences, just raw strings
 func (hd *HappyDevFormatter) writeString(buf bufferWriter, s string) {
 	buf.WriteString(s)
 	hd.col += len(s)
@@ -239,6 +233,7 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 // Format a log entry.
 func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
 	buf := pool.Get()
+	defer pool.Put(buf)
 
 	// warn about reserved, bad and complex keys
 	for i := 0; i < len(args); i += 2 {
