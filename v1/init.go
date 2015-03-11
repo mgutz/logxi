@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"runtime"
 	"strconv"
@@ -44,7 +45,7 @@ var logxiNameLevelMap map[string]int
 // logxiFormat is the formatter kind to create
 var logxiFormat string
 
-var colorableStdout = colorable.NewColorableStdout()
+var colorableStdout io.Writer = os.Stdout
 var defaultContextLines = 2
 var defaultFormat string
 var defaultLevel int
@@ -107,11 +108,17 @@ func setDefaults(isTerminal bool) {
 		defaultTimeFormat = "2006-01-02T15:04:05-0700"
 		disableColors = true
 	}
+
 	if isWindows {
 		home = os.Getenv("HOMEPATH")
+		if os.Getenv("ConEmuANSI") == "ON" {
+			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue+h,source=yellow,TRC,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
+		} else {
+			colorableStdout = colorable.NewColorableStdout()
+			defaultLogxiColorsEnv = "ERR=red,misc=cyan,key=cyan"
+		}
 		// DefaultScheme is a color scheme optimized for dark background
 		// but works well with light backgrounds
-		defaultLogxiColorsEnv = "key=cyan,value,misc=blue,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red"
 	} else {
 		home = os.Getenv("HOME")
 		term := os.Getenv("TERM")

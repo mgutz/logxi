@@ -198,12 +198,8 @@ The "happy" formatter has more options
 The color scheme may be set with `LOGXI_COLORS` environment variable. For
 example, the default dark scheme is emulated like this
 
-    # on non-Windows
+    # on non-Windows, see Windows support below
     export LOGXI_COLORS=key=cyan+h,value,misc=blue+h,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red+h
-    yourapp
-
-    # on windows, stick to basic colors, styles liked bold, etc will not work
-    SET LOGXI_COLORS=key=cyan,value,misc=blue,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red
     yourapp
 
     # color only errors
@@ -225,6 +221,13 @@ Keys
 *   value - value color unless WRN or ERR
 *   misc - time and log name color
 *   source - source context color (excluding error line)
+
+#### Windows
+
+Use [ConEmu-Maximus5](https://github.com/Maximus5/ConEmu).
+Read this page about [256 colors](https://code.google.com/p/conemu-maximus5/wiki/Xterm256Colors).
+
+Colors in PowerShell and Command Prompt _work_ but not very pretty.
 
 ## Extending
 
