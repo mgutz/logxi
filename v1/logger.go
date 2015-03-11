@@ -76,7 +76,7 @@ const (
 	LevelWarn = 4
 
 	// LevelNotice is normal but significant condition.
-	//LevelNotice = 5
+	LevelNotice = 5
 
 	// LevelInfo is info level
 	LevelInfo = 6

@@ -2,19 +2,14 @@ package log
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/mgutz/ansi"
 )
-
-var rePackageFile = regexp.MustCompile(`logxi/v1/\w+\.go`)
-var rePackageTestFile = regexp.MustCompile(`logxi/v1/\w+_test\.go`)
 
 type sourceLine struct {
 	lineno int
@@ -62,7 +57,9 @@ func (ci *frameInfo) readSource(contextLines int) error {
 }
 
 func (ci *frameInfo) String(color string, sourceColor string) string {
-	var buf bytes.Buffer
+	buf := pool.Get()
+	defer pool.Put(buf)
+
 	if disableCallstack {
 		buf.WriteString(color)
 		buf.WriteString(Separator)
@@ -73,8 +70,8 @@ func (ci *frameInfo) String(color string, sourceColor string) string {
 		return buf.String()
 	}
 
-	// skip anything in the logxi package (except for tests)
-	if !rePackageTestFile.MatchString(ci.filename) && rePackageFile.MatchString(ci.filename) {
+	// skip anything in the logxi package
+	if isLogxiCode(ci.filename) {
 		return ""
 	}
 
@@ -172,6 +169,11 @@ func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*frameInfo {
 		}
 
 		colon := strings.Index(sourceLine, ":")
+		slash := strings.Index(sourceLine, "/")
+		if colon < slash {
+			// must be on Windows where paths look like c:/foo/bar.go:lineno
+			colon = strings.Index(sourceLine[slash:], ":") + slash
+		}
 		space := strings.Index(sourceLine, " ")
 		ci.filename = sourceLine[0:colon]
 		numstr := sourceLine[colon+1 : space]

@@ -139,14 +139,6 @@ func isReservedKey(k interface{}) (bool, error) {
 }
 
 func init() {
-	isTerminal = isatty.IsTerminal(os.Stdout.Fd())
-	setDefaults(isTerminal)
-
-	RegisterFormatFactory(FormatHappy, formatFactory)
-	RegisterFormatFactory(FormatText, formatFactory)
-	RegisterFormatFactory(FormatJSON, formatFactory)
-	ProcessEnv(readFromEnviron())
-
 	// the internal logger to report errors
 	if isTerminal {
 		InternalLog = NewLogger3(os.Stdout, "__logxi", NewTextFormatter("__logxi"))
@@ -154,6 +146,14 @@ func init() {
 		InternalLog = NewLogger3(os.Stdout, "__logxi", NewJSONFormatter("__logxi"))
 	}
 	InternalLog.SetLevel(LevelError)
+
+	isTerminal = isatty.IsTerminal(os.Stdout.Fd())
+	setDefaults(isTerminal)
+
+	RegisterFormatFactory(FormatHappy, formatFactory)
+	RegisterFormatFactory(FormatText, formatFactory)
+	RegisterFormatFactory(FormatJSON, formatFactory)
+	ProcessEnv(readFromEnviron())
 
 	// package logger for users
 	DefaultLog = New("~")
