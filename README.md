@@ -107,8 +107,8 @@ This logger package
             Debug(msg string, args ...interface{})
             Info(msg string, args ...interface{})
             Warn(msg string, args ...interface{})
-            Error(msg string, args ...interface{})
-            Fatal(msg string, args ...interface{})
+            Error(msg string, args ...interface{}) error
+            Fatal(msg string, args ...interface{}) error
             Log(level int, msg string, args []interface{})
 
             SetLevel(int)
@@ -128,6 +128,14 @@ log.Debug("inside Fn()", "key1", value1, "key2", value2)
 log.WithFields(logrus.Fields{"m": "pkg", "key1": value1, "key2": value2}).Debug("inside fn()")
 ```
     logxi logs `FIX_IMBALANCED_PAIRS =>` if key-value pairs are imbalanced
+
+    `log.Error` is a special case and returns an error:
+
+    ```go
+return log.Error(msg)               //=> fmt.Errorf(msg)
+return log.Error(msg, err)          //=> err; prepends "err" key
+return log.Error(msg, "err", err)   //=> err
+```
 
 *   Supports Color Schemes (256 colors)
 

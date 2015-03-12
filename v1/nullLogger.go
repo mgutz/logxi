@@ -23,7 +23,8 @@ func (l *NullLogger) Warn(msg string, args ...interface{}) {
 }
 
 // Error logs an error entry.
-func (l *NullLogger) Error(msg string, args ...interface{}) {
+func (l *NullLogger) Error(msg string, args ...interface{}) error {
+	return nil
 }
 
 // Fatal logs a fatal entry then panics.

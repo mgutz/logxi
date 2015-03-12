@@ -1,6 +1,9 @@
 package log
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 // DefaultLogger is the default logger for this package.
 type DefaultLogger struct {
@@ -70,15 +73,50 @@ func (l *DefaultLogger) Warn(msg string, args ...interface{}) {
 	l.Log(LevelWarn, msg, args)
 }
 
+func (l *DefaultLogger) extractError(level int, msg string, args []interface{}) error {
+	defer l.Log(level, msg, args)
+
+	lenArgs := len(args)
+	if lenArgs == 1 {
+		if err, ok := args[0].(error); ok {
+			args = append(args, 0)
+			copy(args[1:], args[0:])
+			args[0] = "err"
+			return err
+		}
+	} else if lenArgs == 2 {
+		if err, ok := args[1].(error); ok {
+			return err
+		}
+	}
+	return fmt.Errorf(msg)
+}
+
 // Error logs an error entry.
-func (l *DefaultLogger) Error(msg string, args ...interface{}) {
-	l.Log(LevelError, msg, args)
+func (l *DefaultLogger) Error(msg string, args ...interface{}) error {
+	return l.extractError(LevelError, msg, args)
+	// defer l.Log(LevelError, msg, args)
+
+	// lenArgs := len(args)
+	// if lenArgs == 1 {
+	// 	if err, ok := args[0].(error); ok {
+	// 		args = append(args, 0)
+	// 		copy(args[1:], args[0:])
+	// 		args[0] = "err"
+	// 		return err
+	// 	}
+	// } else if lenArgs == 2 {
+	// 	if err, ok := args[1].(error); ok {
+	// 		return err
+	// 	}
+	// }
+	// return fmt.Errorf(msg)
 }
 
 // Fatal logs a fatal entry then panics.
 func (l *DefaultLogger) Fatal(msg string, args ...interface{}) {
-	l.Log(LevelFatal, msg, args)
-	panic("Exit due to fatal error: ")
+	l.extractError(LevelFatal, msg, args)
+	defer panic("Exit due to fatal error: ")
 }
 
 // Log logs a leveled entry.
