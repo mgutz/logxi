@@ -133,7 +133,6 @@ log.WithFields(logrus.Fields{"m": "pkg", "key1": value1, "key2": value2}).Debug(
 
     ```go
 return log.Error(msg)               //=> fmt.Errorf(msg)
-return log.Error(msg, err)          //=> err; prepends "err" key
 return log.Error(msg, "err", err)   //=> err
 ```
 
