@@ -12,10 +12,11 @@ import (
 
 // colorScheme defines a color theme for HappyDevFormatter
 type colorScheme struct {
-	Key    string
-	Value  string
-	Misc   string
-	Source string
+	Key     string
+	Message string
+	Value   string
+	Misc    string
+	Source  string
 
 	Trace string
 	Debug string
@@ -73,6 +74,8 @@ func parseTheme(theme string) *colorScheme {
 		cs.Value = wildcard
 		cs.Misc = wildcard
 		cs.Source = wildcard
+		cs.Message = wildcard
+
 		cs.Trace = wildcard
 		cs.Debug = wildcard
 		cs.Warn = wildcard
@@ -84,6 +87,7 @@ func parseTheme(theme string) *colorScheme {
 	cs.Value = color("value")
 	cs.Misc = color("misc")
 	cs.Source = color("source")
+	cs.Message = color("message")
 
 	cs.Trace = color("TRC")
 	cs.Debug = color("DBG")
@@ -237,6 +241,12 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	buf := pool.Get()
 	defer pool.Put(buf)
 
+	if len(args) == 1 {
+		args = append(args, 0)
+		copy(args[1:], args[0:])
+		args[0] = singleArgKey
+	}
+
 	// warn about reserved, bad and complex keys
 	for i := 0; i < len(args); i += 2 {
 		isReserved, err := isReservedKey(args[i])
@@ -282,7 +292,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	// logger name
 	hd.set(buf, "", entry[NameKey], theme.Misc)
 	// message from user
-	hd.set(buf, "", message, color)
+	hd.set(buf, "", message, theme.Message)
 
 	// Preserve key order in the sequencethey were added by developer.This
 	// makes it easier for developers to follow the log.

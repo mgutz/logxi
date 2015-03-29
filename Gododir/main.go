@@ -9,7 +9,7 @@ import (
 
 	"github.com/mattn/go-colorable"
 	"github.com/mgutz/ansi"
-	. "gopkg.in/godo.v1"
+	do "github.com/mgutz/godo/v2"
 )
 
 type pair struct {
@@ -32,7 +32,7 @@ func init() {
 }
 
 func clear() {
-	Bash("clear")
+	do.Bash("clear")
 	// leave a single line at top so the window
 	// overlay doesn't have to be exact
 	fmt.Fprintln(stdout, "")
@@ -75,7 +75,7 @@ func typeCommand(description, commandStr string) {
 	pseudoType("> ", promptColor)
 	pseudoType(commandStr, normal)
 	time.Sleep(200 * time.Millisecond)
-	fmt.Fprintln(stdout, "\n")
+	fmt.Fprintln(stdout, "")
 }
 
 var version = "v1"
@@ -87,60 +87,60 @@ func absv(p string) string {
 	return filepath.Join(wd, version, p)
 }
 
-func tasks(p *Project) {
-	p.Task("bench", func() {
-		Run("LOGXI=* go test -bench . -benchmem", M{"$in": "v1/bench"})
+func tasks(p *do.Project) {
+	p.Task("bench", nil, func(c *do.Context) {
+		c.Run("LOGXI=* go test -bench . -benchmem", do.M{"$in": "v1/bench"})
 	})
 
-	p.Task("build", func() {
-		Run("go build", M{"$in": "v1/cmd/demo"})
+	p.Task("build", nil, func(c *do.Context) {
+		c.Run("go build", do.M{"$in": "v1/cmd/demo"})
 	})
 
-	p.Task("linux-build", func() {
-		Bash(`
+	p.Task("linux-build", nil, func(c *do.Context) {
+		c.Bash(`
 			set -e
 			GOOS=linux GOARCH=amd64 go build
 			scp -F ~/projects/provision/matcherino/ssh.vagrant.config demo devmaster1:~/.
-		`, M{"$in": "v1/cmd/demo"})
+		`, do.M{"$in": "v1/cmd/demo"})
 	})
 
-	p.Task("etcd-set", func(c *Context) error {
-		kv := c.Args.Leftover()
+	p.Task("etcd-set", nil, func(c *do.Context) {
+		kv := c.Args.NonFlags()
 		if len(kv) != 2 {
-			return fmt.Errorf("godo etcd-set -- KEY VALUE")
+			do.Halt(fmt.Errorf("godo etcd-set -- KEY VALUE"))
 		}
 
-		return Run(
+		c.Run(
 			`curl -L http://127.0.0.1:4001/v2/keys/{{.key}} -XPUT -d value="{{.value}}"`,
-			M{"key": kv[0], "value": kv[1]},
+			do.M{"key": kv[0], "value": kv[1]},
 		)
 	})
 
-	p.Task("etcd-del", func(c *Context) error {
+	p.Task("etcd-del", nil, func(c *do.Context) {
 		kv := c.Args.Leftover()
 		if len(kv) != 1 {
-			return fmt.Errorf("godo etcd-del -- KEY")
+			do.Halt(fmt.Errorf("godo etcd-del -- KEY"))
 		}
-		return Run(
+		c.Run(
 			`curl -L http://127.0.0.1:4001/v2/keys/{{.key}} -XDELETE`,
-			M{"key": kv[0]},
+			do.M{"key": kv[0]},
 		)
 	})
 
-	p.Task("demo", func() {
-		Run("go run main.go", M{"$in": "v1/cmd/demo"})
+	p.Task("demo", nil, func(c *do.Context) {
+		c.Run("go run main.go", do.M{"$in": "v1/cmd/demo"})
 	})
 
-	p.Task("demo2", func() {
-		Run("go run main.go", M{"$in": "v1/cmd/demo2"})
+	p.Task("demo2", nil, func(c *do.Context) {
+		c.Run("go run main.go", do.M{"$in": "v1/cmd/demo2"})
 	})
 
-	p.Task("filter", D{"build"}, func() {
-		Run("go build", M{"$in": "v1/cmd/filter"})
-		Bash("LOGXI=* ../demo/demo | ./filter", M{"$in": "v1/cmd/filter"})
+	p.Task("filter", do.S{"build"}, func(c *do.Context) {
+		c.Run("go build", do.M{"$in": "v1/cmd/filter"})
+		c.Bash("LOGXI=* ../demo/demo | ./filter", do.M{"$in": "v1/cmd/filter"})
 	})
 
-	p.Task("gifcast", D{"build"}, func() {
+	p.Task("gifcast", do.S{"build"}, func(*do.Context) {
 		commands := []pair{
 			{
 				`create a simple app demo`,
@@ -174,7 +174,7 @@ func tasks(p *Project) {
 
 		// setup time for ecorder, user presses enter when ready
 		clear()
-		Prompt("")
+		do.Prompt("")
 
 		intro(
 			"log XI",
@@ -184,37 +184,36 @@ func tasks(p *Project) {
 
 		for _, cmd := range commands {
 			typeCommand(cmd.description, cmd.command)
-			Bash(cmd.command, M{"$in": "v1/cmd/demo"})
+			do.Bash(cmd.command, do.M{"$in": "v1/cmd/demo"})
 			time.Sleep(3500 * time.Millisecond)
 		}
 
 		clear()
-		Prompt("")
+		do.Prompt("")
 	})
 
-	p.Task("demo-gif", func() {
-		Bash(`cp ~/Desktop/demo.gif images`)
+	p.Task("demo-gif", nil, func(c *do.Context) {
+		c.Bash(`cp ~/Desktop/demo.gif images`)
 	})
 
-	p.Task("bench-allocs", func() {
-		Bash(`go test -bench . -benchmem -run=none | grep "allocs\|^Bench"`, M{"$in": "v1/bench"})
+	p.Task("bench-allocs", nil, func(c *do.Context) {
+		c.Bash(`go test -bench . -benchmem -run=none | grep "allocs\|^Bench"`, do.M{"$in": "v1/bench"})
 	}).Description("Runs benchmarks with allocs")
 
-	p.Task("benchjson", func() {
-		Bash("go test -bench=BenchmarkLoggerJSON -benchmem", M{"$in": "v1/bench"})
+	p.Task("benchjson", nil, func(c *do.Context) {
+		c.Bash("go test -bench=BenchmarkLoggerJSON -benchmem", do.M{"$in": "v1/bench"})
 	})
 
-	p.Task("test", func() {
-		Run("LOGXI=* go test", M{"$in": "v1"})
+	p.Task("test", nil, func(c *do.Context) {
+		c.Run("LOGXI=* go test", do.M{"$in": "v1"})
 		//Run("LOGXI=* go test -run=TestColors", M{"$in": "v1"})
 	})
 
-	p.Task("isolate", D{"build"}, func() error {
-		return Bash("LOGXI=* LOGXI_FORMAT=fit,maxcol=80,t=04:05.000,context=2 demo", M{"$in": "v1/cmd/demo"})
-		//Run("LOGXI=* go test -run=TestWarningErrorContext", M{"$in": "v1"})
+	p.Task("isolate", do.S{"build"}, func(c *do.Context) {
+		c.Bash("LOGXI=* LOGXI_FORMAT=fit,maxcol=80,t=04:05.000,context=2 demo", do.M{"$in": "v1/cmd/demo"})
 	})
 
-	p.Task("install", func() error {
+	p.Task("install", nil, func(c *do.Context) {
 		packages := []string{
 			"github.com/mattn/go-colorable",
 			"github.com/mattn/go-isatty",
@@ -226,16 +225,12 @@ func tasks(p *Project) {
 			"gopkg.in/inconshreveable/log15.v2",
 		}
 		for _, pkg := range packages {
-			err := Run("go get -u " + pkg)
-			if err != nil {
-				return err
-			}
+			c.Run("go get -u " + pkg)
 		}
-		return nil
 	}).Description("Installs dependencies")
 
 }
 
 func main() {
-	Godo(tasks)
+	do.Godo(tasks)
 }

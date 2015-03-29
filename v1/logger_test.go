@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -130,12 +131,12 @@ func TestJSONImbalanced(t *testing.T) {
 	var buf bytes.Buffer
 	l := NewLogger3(&buf, "bench", NewJSONFormatter("bench"))
 	l.SetLevel(LevelDebug)
-	l.Error("hello", "foo")
+	l.Error("hello", "foo", "bar", "bah")
 
 	var obj map[string]interface{}
 	err := json.Unmarshal(buf.Bytes(), &obj)
 	assert.NoError(t, err)
-	assert.Exactly(t, []interface{}{"foo"}, obj[warnImbalancedKey])
+	assert.Exactly(t, []interface{}{"foo", "bar", "bah"}, obj[warnImbalancedKey])
 	assert.Equal(t, "hello", obj[MessageKey].(string))
 }
 
@@ -242,4 +243,27 @@ func TestLevels(t *testing.T) {
 	l.SetLevel(LevelTrace)
 	assert.True(t, l.IsTrace())
 	assert.True(t, l.IsDebug())
+}
+
+func TestAllowSingleParam(t *testing.T) {
+	var buf bytes.Buffer
+	l := NewLogger3(&buf, "wrnerr", NewTextFormatter("wrnerr"))
+	l.SetLevel(LevelDebug)
+	l.Info("info", 1)
+	assert.True(t, strings.HasSuffix(buf.String(), singleArgKey+"=1\n"))
+
+	buf.Reset()
+	l = NewLogger3(&buf, "wrnerr", NewHappyDevFormatter("wrnerr"))
+	l.SetLevel(LevelDebug)
+	l.Info("info", 1)
+	assert.True(t, strings.HasSuffix(buf.String(), "_: \x1b[0m1\n"))
+
+	var obj map[string]interface{}
+	buf.Reset()
+	l = NewLogger3(&buf, "wrnerr", NewJSONFormatter("wrnerr"))
+	l.SetLevel(LevelDebug)
+	l.Info("info", 1)
+	err := json.Unmarshal(buf.Bytes(), &obj)
+	assert.NoError(t, err)
+	assert.Equal(t, float64(1), obj["_"])
 }

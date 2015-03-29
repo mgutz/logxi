@@ -75,7 +75,9 @@ func (tf *TextFormatter) Format(writer io.Writer, level int, msg string, args []
 	buf.WriteString(msg)
 	var lenArgs = len(args)
 	if lenArgs > 0 {
-		if lenArgs%2 == 0 {
+		if lenArgs == 1 {
+			tf.set(buf, singleArgKey, args[0])
+		} else if lenArgs%2 == 0 {
 			for i := 0; i < lenArgs; i += 2 {
 				if key, ok := args[i].(string); ok {
 					if key == "" {

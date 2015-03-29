@@ -15,6 +15,7 @@ import (
 // scream so user fixes it
 const warnImbalancedKey = "FIX_IMBALANCED_PAIRS"
 const warnImbalancedPairs = warnImbalancedKey + " => "
+const singleArgKey = "_"
 
 func badKeyAtIndex(i int) string {
 	return "BAD_KEY_AT_INDEX_" + strconv.Itoa(i)
@@ -96,7 +97,7 @@ func setDefaults(isTerminal bool) {
 
 	if isTerminal {
 		defaultLogxiEnv = "*=WRN"
-		defaultLogxiFormatEnv = "happy,fit,maxcol=80,t=15:04:05.000000"
+		defaultLogxiFormatEnv = "happy,fit,maxcol=80,t=15:04:05.000000,context=-1"
 		defaultFormat = FormatHappy
 		defaultLevel = LevelWarn
 		defaultTimeFormat = "15:04:05.000000"
@@ -123,7 +124,7 @@ func setDefaults(isTerminal bool) {
 		home = os.Getenv("HOME")
 		term := os.Getenv("TERM")
 		if term == "xterm-256color" {
-			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue,source=88,TRC,DBG,WRN=yellow,INF=green+h,ERR=red+h"
+			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue,source=88,TRC,DBG,WRN=yellow,INF=green+h,ERR=red+h,message=magenta+h"
 		} else {
 			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red+h"
 		}

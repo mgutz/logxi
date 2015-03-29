@@ -224,6 +224,7 @@ Keys
 *   WRN - warn color
 *   INF - info color
 *   ERR - error color
+*   message - message color
 *   key - key color
 *   value - value color unless WRN or ERR
 *   misc - time and log name color
