@@ -108,7 +108,7 @@ This logger package
             Info(msg string, args ...interface{})
             Warn(msg string, args ...interface{})
             Error(msg string, args ...interface{}) error
-            Fatal(msg string, args ...interface{}) error
+            Fatal(msg string, args ...interface{})
             Log(level int, msg string, args []interface{})
 
             SetLevel(int)
