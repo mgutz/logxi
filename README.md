@@ -45,7 +45,7 @@ func main() {
     }
 
     fruit := "apple"
-    languages := []string["go", "javascript"]
+    languages := []string{"go", "javascript"}
     if log.IsDebug() {
         // use key-value pairs after message
         logger.Debug("OK", "fruit", fruit, "languages", languages)
