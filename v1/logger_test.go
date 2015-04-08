@@ -250,7 +250,7 @@ func TestAllowSingleParam(t *testing.T) {
 	l := NewLogger3(&buf, "wrnerr", NewTextFormatter("wrnerr"))
 	l.SetLevel(LevelDebug)
 	l.Info("info", 1)
-	assert.True(t, strings.HasSuffix(buf.String(), singleArgKey+"=1\n"))
+	assert.True(t, strings.HasSuffix(buf.String(), singleArgKey+": 1\n"))
 
 	buf.Reset()
 	l = NewLogger3(&buf, "wrnerr", NewHappyDevFormatter("wrnerr"))

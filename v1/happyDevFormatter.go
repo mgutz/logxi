@@ -25,8 +25,6 @@ type colorScheme struct {
 	Error string
 }
 
-const assignmentChar = ": "
-
 var indent = "  "
 var maxCol = defaultMaxCol
 var theme *colorScheme
@@ -132,7 +130,7 @@ func (hd *HappyDevFormatter) writeKey(buf bufferWriter, key string) {
 	}
 	buf.WriteString(theme.Key)
 	hd.writeString(buf, key)
-	hd.writeString(buf, assignmentChar)
+	hd.writeString(buf, AssignmentChar)
 	buf.WriteString(ansi.Reset)
 }
 
@@ -201,6 +199,7 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 	case LevelError, LevelFatal:
 		color = theme.Error
 		if disableCallstack || contextLines == -1 {
+			context = trimDebugStack(string(debug.Stack()))
 			break
 		}
 		frames := parseLogxiStack(entry, 4, true)

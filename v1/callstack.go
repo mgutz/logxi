@@ -192,6 +192,47 @@ func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*frameInfo {
 	return frames
 }
 
+// parseDebugStack parases a stack created by debug.Stack()
+//
+// This is what the string looks like
+// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:45 (0x5fa70)
+// 	(*JSONFormatter).writeError: jf.writeString(buf, err.Error()+"\n"+string(debug.Stack()))
+// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:82 (0x5fdc3)
+// 	(*JSONFormatter).appendValue: jf.writeError(buf, err)
+// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:109 (0x605ca)
+// 	(*JSONFormatter).set: jf.appendValue(buf, val)
+// ...
+// /Users/mgutz/goroot/src/runtime/asm_amd64.s:2232 (0x38bf1)
+// 	goexit:
+func trimDebugStack(stack string) string {
+	buf := pool.Get()
+	defer pool.Put(buf)
+	lines := strings.Split(stack, "\n")
+	for i := 0; i < len(lines); i += 2 {
+		sourceLine := lines[i]
+		if sourceLine == "" {
+			break
+		}
+
+		colon := strings.Index(sourceLine, ":")
+		slash := strings.Index(sourceLine, "/")
+		if colon < slash {
+			// must be on Windows where paths look like c:/foo/bar.go:lineno
+			colon = strings.Index(sourceLine[slash:], ":") + slash
+		}
+		filename := sourceLine[0:colon]
+		// skip anything in the logxi package
+		if isLogxiCode(filename) {
+			continue
+		}
+		buf.WriteString(sourceLine)
+		buf.WriteRune('\n')
+		buf.WriteString(lines[i+1])
+		buf.WriteRune('\n')
+	}
+	return buf.String()
+}
+
 func parseLogxiStack(entry map[string]interface{}, skip int, ignoreRuntime bool) []*frameInfo {
 	kv := entry[CallStackKey]
 	if kv == nil {

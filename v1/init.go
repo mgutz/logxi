@@ -40,6 +40,16 @@ func (lm *loggerMap) set(name string, logger Logger) {
 	lm.loggers[name] = logger
 }
 
+// The assignment character between key-value pairs
+var AssignmentChar = ": "
+
+// Separator is the separator to use between key value pairs
+//var Separator = "{~}"
+var Separator = " "
+
+const ltsvAssignmentChar = ":"
+const ltsvSeparator = "\t"
+
 // logxiEnabledMap maps log name patterns to levels
 var logxiNameLevelMap map[string]int
 
@@ -67,6 +77,8 @@ var pkgMutex sync.Mutex
 var pool = NewBufferPool()
 var timeFormat string
 var wd string
+var pid = os.Getpid()
+var pidStr = strconv.Itoa(os.Getpid())
 
 // logxi reserved keys
 
@@ -78,6 +90,9 @@ const MessageKey = "_m"
 
 // NameKey is the index key for name
 const NameKey = "_n"
+
+// PIDKey is the PID key
+const PIDKey = "_p"
 
 // TimeKey is the index key for time
 const TimeKey = "_t"

@@ -180,7 +180,7 @@ in production.
 ### Format
 
 The format may be set via `LOGXI_FORMAT` environment
-variable. Valid values are `"happy", "text", "JSON"`
+variable. Valid values are `"happy", "text", "JSON", "LTSV"`
 
     # Use JSON in production with custom time
     LOGXI_FORMAT=JSON,t=2006-01-02T15:04:05.000000-0700 yourapp

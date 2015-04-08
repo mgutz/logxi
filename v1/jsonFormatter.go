@@ -122,6 +122,9 @@ func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []
 	buf.WriteString(`{"_t":"`)
 	buf.WriteString(time.Now().Format(timeFormat))
 
+	buf.WriteString(`", "_p":"`)
+	buf.WriteString(pidStr)
+
 	buf.WriteString(`", "_l":"`)
 	buf.WriteString(LevelMap[level])
 

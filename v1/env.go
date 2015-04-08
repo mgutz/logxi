@@ -70,8 +70,11 @@ func ProcessLogxiFormatEnv(env string) {
 			} else {
 				contextLines = defaultContextLines
 			}
+		case "LTSV":
+			formatterFormat = "text"
+			AssignmentChar = ltsvAssignmentChar
+			Separator = ltsvSeparator
 		}
-
 	}
 	if formatterFormat == "" || formatterCreators[formatterFormat] == nil {
 		formatterFormat = defaultFormat

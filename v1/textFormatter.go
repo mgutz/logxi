@@ -7,10 +7,6 @@ import (
 	"time"
 )
 
-// Separator is the separator to use between key value pairs
-//var Separator = "{~}"
-var Separator = " "
-
 // Formatter records log entries.
 type Formatter interface {
 	Format(writer io.Writer, level int, msg string, args []interface{})
@@ -21,24 +17,35 @@ type Formatter interface {
 type TextFormatter struct {
 	name         string
 	itoaLevelMap map[int]string
+	timeLabel    string
 }
 
 // NewTextFormatter returns a new instance of TextFormatter. SetName
 // must be called befored using it.
 func NewTextFormatter(name string) *TextFormatter {
+	timeLabel := TimeKey + AssignmentChar
+	levelLabel := Separator + LevelKey + AssignmentChar
+	messageLabel := Separator + MessageKey + AssignmentChar
+	nameLabel := Separator + NameKey + AssignmentChar
+	pidLabel := Separator + PIDKey + AssignmentChar
+
 	var buildKV = func(level string) string {
 		buf := pool.Get()
 		defer pool.Put(buf)
-		buf.WriteString(Separator)
-		buf.WriteString("_n=")
+
+		buf.WriteString(pidLabel)
+		buf.WriteString(pidStr)
+
+		//buf.WriteString(Separator)
+		buf.WriteString(nameLabel)
 		buf.WriteString(name)
 
-		buf.WriteString(Separator)
-		buf.WriteString("_l=")
+		//buf.WriteString(Separator)
+		buf.WriteString(levelLabel)
 		buf.WriteString(level)
 
-		buf.WriteString(Separator)
-		buf.WriteString("_m=")
+		//buf.WriteString(Separator)
+		buf.WriteString(messageLabel)
 
 		return buf.String()
 	}
@@ -49,13 +56,13 @@ func NewTextFormatter(name string) *TextFormatter {
 		LevelError: buildKV(LevelMap[LevelError]),
 		LevelFatal: buildKV(LevelMap[LevelFatal]),
 	}
-	return &TextFormatter{itoaLevelMap: itoaLevelMap, name: name}
+	return &TextFormatter{itoaLevelMap: itoaLevelMap, name: name, timeLabel: timeLabel}
 }
 
 func (tf *TextFormatter) set(buf bufferWriter, key string, val interface{}) {
 	buf.WriteString(Separator)
 	buf.WriteString(key)
-	buf.WriteRune('=')
+	buf.WriteString(AssignmentChar)
 	if err, ok := val.(error); ok {
 		buf.WriteString(err.Error())
 		buf.WriteRune('\n')
@@ -69,7 +76,7 @@ func (tf *TextFormatter) set(buf bufferWriter, key string, val interface{}) {
 func (tf *TextFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
 	buf := pool.Get()
 	defer pool.Put(buf)
-	buf.WriteString("_t=")
+	buf.WriteString(tf.timeLabel)
 	buf.WriteString(time.Now().Format(timeFormat))
 	buf.WriteString(tf.itoaLevelMap[level])
 	buf.WriteString(msg)
