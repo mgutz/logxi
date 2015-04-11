@@ -269,7 +269,7 @@ yourapp | rotatelogs yourapp 86400
 
 ```
 # install godo task runner
-go get -u gopkg.in/godo.v1/cmd/godo
+go get -u gopkg.in/godo.v2/cmd/godo
 
 # install dependencies
 godo install -v
