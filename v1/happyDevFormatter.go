@@ -277,19 +277,19 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 
 	// timestamp
 	buf.WriteString(theme.Misc)
-	hd.writeString(buf, entry[TimeKey].(string))
+	hd.writeString(buf, entry[KeyMap.Time].(string))
 	buf.WriteString(ansi.Reset)
 
 	// emphasize warnings and errors
 	message, context, color := hd.getLevelContext(level, entry)
 	if message == "" {
-		message = entry[MessageKey].(string)
+		message = entry[KeyMap.Message].(string)
 	}
 
 	// DBG, INF ...
-	hd.set(buf, "", entry[LevelKey].(string), color)
+	hd.set(buf, "", entry[KeyMap.Level].(string), color)
 	// logger name
-	hd.set(buf, "", entry[NameKey], theme.Misc)
+	hd.set(buf, "", entry[KeyMap.Name], theme.Misc)
 	// message from user
 	hd.set(buf, "", message, theme.Message)
 
@@ -335,8 +335,8 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 			buf.WriteString(ansi.Reset)
 		}
 
-	} else if entry[CallStackKey] != nil {
-		hd.set(buf, "", entry[CallStackKey], color)
+	} else if entry[KeyMap.CallStack] != nil {
+		hd.set(buf, "", entry[KeyMap.CallStack], color)
 	}
 	if addLF {
 		buf.WriteRune('\n')

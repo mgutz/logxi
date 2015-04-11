@@ -19,7 +19,7 @@ func NewLogger(writer io.Writer, name string) Logger {
 	if err != nil {
 		panic("Could not create formatter")
 	}
-	return NewLogger3(writer, name, formatter)
+	return NewLogger3(NewConcurrentWriter(writer), name, formatter)
 }
 
 // NewLogger3 creates a new logger with a writer, name and formatter.
@@ -35,7 +35,7 @@ func NewLogger3(writer io.Writer, name string, formatter Formatter) Logger {
 
 	log := &DefaultLogger{
 		formatter: formatter,
-		writer:    writer,
+		writer:    NewConcurrentWriter(writer),
 		name:      name,
 		level:     level,
 	}

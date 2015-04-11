@@ -234,7 +234,7 @@ func trimDebugStack(stack string) string {
 }
 
 func parseLogxiStack(entry map[string]interface{}, skip int, ignoreRuntime bool) []*frameInfo {
-	kv := entry[CallStackKey]
+	kv := entry[KeyMap.CallStack]
 	if kv == nil {
 		return nil
 	}

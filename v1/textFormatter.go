@@ -23,11 +23,11 @@ type TextFormatter struct {
 // NewTextFormatter returns a new instance of TextFormatter. SetName
 // must be called befored using it.
 func NewTextFormatter(name string) *TextFormatter {
-	timeLabel := TimeKey + AssignmentChar
-	levelLabel := Separator + LevelKey + AssignmentChar
-	messageLabel := Separator + MessageKey + AssignmentChar
-	nameLabel := Separator + NameKey + AssignmentChar
-	pidLabel := Separator + PIDKey + AssignmentChar
+	timeLabel := KeyMap.Time + AssignmentChar
+	levelLabel := Separator + KeyMap.Level + AssignmentChar
+	messageLabel := Separator + KeyMap.Message + AssignmentChar
+	nameLabel := Separator + KeyMap.Name + AssignmentChar
+	pidLabel := Separator + KeyMap.PID + AssignmentChar
 
 	var buildKV = func(level string) string {
 		buf := pool.Get()

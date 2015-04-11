@@ -15,6 +15,11 @@ logger built for speed and happy development.
     number and callstack.
 *   Efficient. Has level guards to avoid cost of building complex arguments.
 
+
+### Requirements
+
+    Go 1.3+
+
 ### Installation
 
     go get -u github.com/mgutz/logxi/v1
@@ -70,14 +75,14 @@ This logger package
     period of time.
 
         # primitive types
-        BenchmarkLogxi         100000     18139 ns/op    2438 B/op     64 allocs/op
-        BenchmarkLogrus         30000     43845 ns/op    8696 B/op    180 allocs/op
-        BenchmarkLog15          30000     57332 ns/op    8755 B/op    220 allocs/op
+        BenchmarkLogxi         100000     19625 ns/op    2477 B/op     66 allocs/op
+        BenchmarkLogrus         30000     47508 ns/op    8992 B/op    196 allocs/op
+        BenchmarkLog15          20000     62788 ns/op    9243 B/op    236 allocs/op
 
         # nested object
-        BenchmarkLogxiComplex   30000     43242 ns/op    6356 B/op    188 allocs/op
-        BenchmarkLogrusComplex  30000     59905 ns/op   11878 B/op    262 allocs/op
-        BenchmarkLog15Complex   20000     87828 ns/op   12268 B/op    294 allocs/op
+        BenchmarkLogxiComplex   30000     45539 ns/op    6437 B/op    190 allocs/op
+        BenchmarkLogrusComplex  20000     66251 ns/op   12234 B/op    278 allocs/op
+        BenchmarkLog15Complex   20000     93914 ns/op   13162 B/op    311 allocs/op
 
 *   Is developer friendly in the terminal. The HappyDevFormatter
     is colorful, prints file and line numbers for traces, warnings
@@ -199,6 +204,9 @@ The "happy" formatter has more options
 
 *   context - the number of context lines to print on source. Set to -1
     to see only file:lineno. Default is 2.
+
+
+
 
 ### Color Schemes
 

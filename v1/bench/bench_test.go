@@ -2,7 +2,6 @@ package bench
 
 import (
 	"encoding/json"
-	"fmt"
 	L "log"
 	"os"
 	"testing"
@@ -25,13 +24,15 @@ var testObject = M{
 	},
 }
 
+var pid = os.Getpid()
+
 func toJSON(m map[string]interface{}) string {
 	b, _ := json.Marshal(m)
 	return string(b)
 }
 
 func BenchmarkLog(b *testing.B) {
-	fmt.Println("")
+	//fmt.Println("")
 	l := L.New(os.Stdout, "bench ", L.LstdFlags)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -51,7 +52,7 @@ func BenchmarkLog(b *testing.B) {
 }
 
 func BenchmarkLogComplex(b *testing.B) {
-	fmt.Println("")
+	//fmt.Println("")
 	l := L.New(os.Stdout, "bench ", L.LstdFlags)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -71,7 +72,7 @@ func BenchmarkLogComplex(b *testing.B) {
 }
 
 func BenchmarkLogxi(b *testing.B) {
-	fmt.Println("")
+	//fmt.Println("")
 	l := log.NewLogger3(os.Stdout, "bench", log.NewJSONFormatter("bench"))
 	l.SetLevel(log.LevelDebug)
 
@@ -86,7 +87,7 @@ func BenchmarkLogxi(b *testing.B) {
 }
 
 func BenchmarkLogxiComplex(b *testing.B) {
-	fmt.Println("")
+	//fmt.Println("")
 	l := log.NewLogger3(os.Stdout, "bench", log.NewJSONFormatter("bench"))
 	l.SetLevel(log.LevelDebug)
 
@@ -102,38 +103,38 @@ func BenchmarkLogxiComplex(b *testing.B) {
 }
 
 func BenchmarkLogrus(b *testing.B) {
-	fmt.Println("")
+	//fmt.Println("")
 	l := logrus.New()
 	l.Formatter = &logrus.JSONFormatter{}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		l.WithFields(logrus.Fields{"m": "bench", "key": 1, "key2": "string", "key3": false}).Debug("debug")
-		l.WithFields(logrus.Fields{"m": "bench", "key": 1, "key2": "string", "key3": false}).Info("info")
-		l.WithFields(logrus.Fields{"m": "bench", "key": 1, "key2": "string", "key3": false}).Warn("warn")
-		l.WithFields(logrus.Fields{"m": "bench", "key": 1, "key2": "string", "key3": false}).Error("error")
+		l.WithFields(logrus.Fields{"_n": "bench", "_p": pid, "key": 1, "key2": "string", "key3": false}).Debug("debug")
+		l.WithFields(logrus.Fields{"_n": "bench", "_p": pid, "key": 1, "key2": "string", "key3": false}).Info("info")
+		l.WithFields(logrus.Fields{"_n": "bench", "_p": pid, "key": 1, "key2": "string", "key3": false}).Warn("warn")
+		l.WithFields(logrus.Fields{"_n": "bench", "_p": pid, "key": 1, "key2": "string", "key3": false}).Error("error")
 	}
 	b.StopTimer()
 }
 
 func BenchmarkLogrusComplex(b *testing.B) {
-	fmt.Println("")
+	//fmt.Println("")
 	l := logrus.New()
 	l.Formatter = &logrus.JSONFormatter{}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		l.WithFields(logrus.Fields{"m": "bench", "key": 1, "obj": testObject}).Debug("debug")
-		l.WithFields(logrus.Fields{"m": "bench", "key": 1, "obj": testObject}).Info("info")
-		l.WithFields(logrus.Fields{"m": "bench", "key": 1, "obj": testObject}).Warn("warn")
-		l.WithFields(logrus.Fields{"m": "bench", "key": 1, "obj": testObject}).Error("error")
+		l.WithFields(logrus.Fields{"_n": "bench", "_p": pid, "key": 1, "obj": testObject}).Debug("debug")
+		l.WithFields(logrus.Fields{"_n": "bench", "_p": pid, "key": 1, "obj": testObject}).Info("info")
+		l.WithFields(logrus.Fields{"_n": "bench", "_p": pid, "key": 1, "obj": testObject}).Warn("warn")
+		l.WithFields(logrus.Fields{"_n": "bench", "_p": pid, "key": 1, "obj": testObject}).Error("error")
 	}
 	b.StopTimer()
 }
 
 func BenchmarkLog15(b *testing.B) {
-	fmt.Println("")
-	l := log15.New(log15.Ctx{"m": "bench"})
+	//fmt.Println("")
+	l := log15.New(log15.Ctx{"_n": "bench", "_p": pid})
 	l.SetHandler(log15.StreamHandler(os.Stdout, log15.JsonFormat()))
 
 	b.ResetTimer()
@@ -148,8 +149,8 @@ func BenchmarkLog15(b *testing.B) {
 }
 
 func BenchmarkLog15Complex(b *testing.B) {
-	fmt.Println("")
-	l := log15.New(log15.Ctx{"m": "bench"})
+	//fmt.Println("")
+	l := log15.New(log15.Ctx{"_n": "bench", "_p": pid})
 	l.SetHandler(log15.StreamHandler(os.Stdout, log15.JsonFormat()))
 
 	b.ResetTimer()

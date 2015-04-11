@@ -45,7 +45,7 @@ func (jf *JSONFormatter) writeString(buf bufferWriter, s string) {
 
 func (jf *JSONFormatter) writeError(buf bufferWriter, err error) {
 	jf.writeString(buf, err.Error())
-	jf.set(buf, CallStackKey, string(debug.Stack()))
+	jf.set(buf, KeyMap.CallStack, string(debug.Stack()))
 	return
 }
 
@@ -119,19 +119,37 @@ func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []
 	buf := pool.Get()
 	defer pool.Put(buf)
 
-	buf.WriteString(`{"_t":"`)
+	const lead = `", "`
+	const colon = `":"`
+
+	//buf.WriteString(`{"_t":"`)
+	buf.WriteString(`{"`)
+	buf.WriteString(KeyMap.Time)
+	buf.WriteString(`":"`)
 	buf.WriteString(time.Now().Format(timeFormat))
 
-	buf.WriteString(`", "_p":"`)
+	//buf.WriteString(`", "_p":"`)
+	buf.WriteString(`", "`)
+	buf.WriteString(KeyMap.PID)
+	buf.WriteString(`":"`)
 	buf.WriteString(pidStr)
 
-	buf.WriteString(`", "_l":"`)
+	//buf.WriteString(`", "_l":"`)
+	buf.WriteString(`", "`)
+	buf.WriteString(KeyMap.Level)
+	buf.WriteString(`":"`)
 	buf.WriteString(LevelMap[level])
 
-	buf.WriteString(`", "_n":"`)
+	//buf.WriteString(`", "_n":"`)
+	buf.WriteString(`", "`)
+	buf.WriteString(KeyMap.Name)
+	buf.WriteString(`":"`)
 	buf.WriteString(jf.name)
 
-	buf.WriteString(`", "_m":`)
+	//buf.WriteString(`", "_m":`)
+	buf.WriteString(`", "`)
+	buf.WriteString(KeyMap.Message)
+	buf.WriteString(`":`)
 	jf.appendValue(buf, msg)
 
 	var lenArgs = len(args)

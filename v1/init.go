@@ -83,24 +83,44 @@ var pidStr = strconv.Itoa(os.Getpid())
 // logxi reserved keys
 
 // LevelKey is the index key for level
-const LevelKey = "_l"
+//const LevelKey = "_l"
 
 // MessageKey is the index key for message
-const MessageKey = "_m"
+//const MessageKey = "_m"
 
 // NameKey is the index key for name
-const NameKey = "_n"
+//const NameKey = "_n"
 
 // PIDKey is the PID key
-const PIDKey = "_p"
+//const PIDKey = "_p"
 
 // TimeKey is the index key for time
-const TimeKey = "_t"
+//const TimeKey = "_t"
 
 // CallStackKey is the indexkey for callstack
-const CallStackKey = "_c"
+//const CallStackKey = "_c"
 
-var logxiKeys = []string{LevelKey, MessageKey, NameKey, TimeKey, CallStackKey}
+// KeyMapping is the key map used to print built-in log entry fields.
+type KeyMapping struct {
+	Level     string
+	Message   string
+	Name      string
+	PID       string
+	Time      string
+	CallStack string
+}
+
+// KeyMap is the key map to use when printing log statements.
+var KeyMap = &KeyMapping{
+	Level:     "_l",
+	Message:   "_m",
+	Name:      "_n",
+	PID:       "_p",
+	Time:      "_t",
+	CallStack: "_c",
+}
+
+var logxiKeys []string
 
 func setDefaults(isTerminal bool) {
 	var err error
@@ -109,6 +129,8 @@ func setDefaults(isTerminal bool) {
 	if err != nil {
 		InternalLog.Error("Could not get working directory")
 	}
+
+	logxiKeys = []string{KeyMap.Level, KeyMap.Message, KeyMap.Name, KeyMap.Time, KeyMap.CallStack, KeyMap.PID}
 
 	if isTerminal {
 		defaultLogxiEnv = "*=WRN"
