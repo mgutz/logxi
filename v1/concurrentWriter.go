@@ -19,6 +19,7 @@ func NewConcurrentWriter(writer io.Writer) io.Writer {
 func (cw *ConcurrentWriter) Write(p []byte) (n int, err error) {
 	cw.Lock()
 	defer cw.Unlock()
-	// this is basically the same logic as in go's log.Output()
+	// This is basically the same logic as in go's log.Output() which
+	// doesn't look at the returned number of bytes returned
 	return cw.writer.Write(p)
 }

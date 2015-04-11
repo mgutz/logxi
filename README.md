@@ -41,8 +41,9 @@ func main() {
     // can be enabled from environment variables
     logger = log.New("pkg")
 
-    // specify a writer
-    modelLogger = log.NewLogger(os.Stdout, "models")
+    // specify a writer, use NewConcurrentWriter if it is not concurrent
+    // safe
+    modelLogger = log.NewLogger(log.NewConcurrentWriter(os.Stdout), "models")
 
     db, err := sql.Open("postgres", "dbname=testdb")
     if err != nil {
@@ -75,14 +76,14 @@ This logger package
     period of time.
 
         # primitive types
-        BenchmarkLogxi         100000     19625 ns/op    2477 B/op     66 allocs/op
-        BenchmarkLogrus         30000     47508 ns/op    8992 B/op    196 allocs/op
-        BenchmarkLog15          20000     62788 ns/op    9243 B/op    236 allocs/op
+        BenchmarkLogxi          100000    20021 ns/op   2477 B/op    66 allocs/op
+        BenchmarkLogrus          30000    46372 ns/op   8991 B/op   196 allocs/op
+        BenchmarkLog15           20000    62974 ns/op   9244 B/op   236 allocs/op
 
         # nested object
-        BenchmarkLogxiComplex   30000     45539 ns/op    6437 B/op    190 allocs/op
-        BenchmarkLogrusComplex  20000     66251 ns/op   12234 B/op    278 allocs/op
-        BenchmarkLog15Complex   20000     93914 ns/op   13162 B/op    311 allocs/op
+        BenchmarkLogxiComplex    30000    44448 ns/op   6416 B/op   190 allocs/op
+        BenchmarkLogrusComplex   20000    65006 ns/op  12231 B/op   278 allocs/op
+        BenchmarkLog15Complex    20000    92880 ns/op  13172 B/op   311 allocs/op
 
 *   Is developer friendly in the terminal. The HappyDevFormatter
     is colorful, prints file and line numbers for traces, warnings
@@ -277,8 +278,8 @@ godo install -v
 # run test
 godo test
 
-# run bench with allocs (requires manual cleanup)
-godo allocs
+# run bench with allocs (requires manual cleanup of output)
+godo bench-allocs
 ```
 
 ## License

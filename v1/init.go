@@ -56,7 +56,7 @@ var logxiNameLevelMap map[string]int
 // logxiFormat is the formatter kind to create
 var logxiFormat string
 
-var colorableStdout io.Writer = os.Stdout
+var colorableStdout io.Writer
 var defaultContextLines = 2
 var defaultFormat string
 var defaultLevel int
@@ -152,7 +152,7 @@ func setDefaults(isTerminal bool) {
 		if os.Getenv("ConEmuANSI") == "ON" {
 			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue+h,source=yellow,TRC,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
 		} else {
-			colorableStdout = colorable.NewColorableStdout()
+			colorableStdout = NewConcurrentWriter(colorable.NewColorableStdout())
 			defaultLogxiColorsEnv = "ERR=red,misc=cyan,key=cyan"
 		}
 		// DefaultScheme is a color scheme optimized for dark background
@@ -184,6 +184,8 @@ func isReservedKey(k interface{}) (bool, error) {
 }
 
 func init() {
+	colorableStdout = NewConcurrentWriter(os.Stdout)
+
 	// the internal logger to report errors
 	if isTerminal {
 		InternalLog = NewLogger3(os.Stdout, "__logxi", NewTextFormatter("__logxi"))

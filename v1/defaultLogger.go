@@ -13,16 +13,18 @@ type DefaultLogger struct {
 	formatter Formatter
 }
 
-// NewLogger creates a new default logger.
+// NewLogger creates a new default logger. If writer is not concurrent
+// safe, wrap it with NewConcurrentWriter.
 func NewLogger(writer io.Writer, name string) Logger {
 	formatter, err := createFormatter(name, logxiFormat)
 	if err != nil {
 		panic("Could not create formatter")
 	}
-	return NewLogger3(NewConcurrentWriter(writer), name, formatter)
+	return NewLogger3(writer, name, formatter)
 }
 
-// NewLogger3 creates a new logger with a writer, name and formatter.
+// NewLogger3 creates a new logger with a writer, name and formatter. If writer is not concurrent
+// safe, wrap it with NewConcurrentWriter.
 func NewLogger3(writer io.Writer, name string, formatter Formatter) Logger {
 	var level int
 	if name != "__logxi" {
@@ -35,7 +37,7 @@ func NewLogger3(writer io.Writer, name string, formatter Formatter) Logger {
 
 	log := &DefaultLogger{
 		formatter: formatter,
-		writer:    NewConcurrentWriter(writer),
+		writer:    writer,
 		name:      name,
 		level:     level,
 	}
