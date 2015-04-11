@@ -9,7 +9,7 @@ import (
 
 	"github.com/mattn/go-colorable"
 	"github.com/mgutz/ansi"
-	do "github.com/mgutz/godo/v2"
+	do "gopkg.in/godo.v2"
 )
 
 type pair struct {
