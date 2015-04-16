@@ -63,7 +63,7 @@ logxi defaults to showing warnings and above. To view all logs
 
     LOGXI=* go run main.go
 
-## Higlights
+## Highlights
 
 This logger package
 
@@ -205,8 +205,6 @@ The "happy" formatter has more options
 
 *   context - the number of context lines to print on source. Set to -1
     to see only file:lineno. Default is 2.
-
-
 
 
 ### Color Schemes
