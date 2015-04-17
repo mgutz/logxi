@@ -99,24 +99,21 @@ func ProcessLogxiEnv(env string) {
 		logxiNameLevelMap["*"] = defaultLevel
 	}
 	for key, value := range m {
-		// * => defaults to DBG. If someone took the time to
-		// enable it ad-hoc, it probably means they are debugging
 		if strings.HasPrefix(key, "-") {
+			// LOGXI=*,-foo => disable foo
 			logxiNameLevelMap[key[1:]] = LevelOff
-			delete(logxiNameLevelMap, key)
-			key = key[1:]
-			continue
 		} else if value == "" {
+			// LOGXI=* => default to all
 			logxiNameLevelMap[key] = LevelAll
-			continue
+		} else {
+			// LOGXI=*=ERR => use user-specified level
+			level := LevelAtoi[value]
+			if level == 0 {
+				InternalLog.Error("Unknown level in LOGXI environment variable", "key", key, "value", value, "LOGXI", env)
+				level = defaultLevel
+			}
+			logxiNameLevelMap[key] = level
 		}
-
-		level := LevelAtoi[value]
-		if level == 0 {
-			InternalLog.Error("Unknown level in LOGXI environment variable", "key", key, "value", value, "LOGXI", env)
-			level = defaultLevel
-		}
-		logxiNameLevelMap[key] = level
 	}
 
 	// must always have global default, otherwise errs may get eaten up
