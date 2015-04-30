@@ -24,6 +24,18 @@ func badKeyAtIndex(i int) string {
 // DefaultLogLog is the default log for this package.
 var DefaultLog Logger
 
+// Silence supresses logging and is useful to supress output in
+// in unit tests.
+//
+// Example
+// logxi.Silence(true)
+// defer logxi.Silence(false)
+func Silence(quiet bool) {
+	silent = quiet
+}
+
+var silent bool
+
 // internalLog is the logger used by logxi itself
 var InternalLog Logger
 
@@ -79,26 +91,6 @@ var timeFormat string
 var wd string
 var pid = os.Getpid()
 var pidStr = strconv.Itoa(os.Getpid())
-
-// logxi reserved keys
-
-// LevelKey is the index key for level
-//const LevelKey = "_l"
-
-// MessageKey is the index key for message
-//const MessageKey = "_m"
-
-// NameKey is the index key for name
-//const NameKey = "_n"
-
-// PIDKey is the PID key
-//const PIDKey = "_p"
-
-// TimeKey is the index key for time
-//const TimeKey = "_t"
-
-// CallStackKey is the indexkey for callstack
-//const CallStackKey = "_c"
 
 // KeyMapping is the key map used to print built-in log entry fields.
 type KeyMapping struct {

@@ -100,7 +100,7 @@ func (l *DefaultLogger) Fatal(msg string, args ...interface{}) {
 // Log logs a leveled entry.
 func (l *DefaultLogger) Log(level int, msg string, args []interface{}) {
 	// log if the log level (warn=4) >= level of message (err=3)
-	if l.level < level {
+	if l.level < level || silent {
 		return
 	}
 	l.formatter.Format(l.writer, level, msg, args)
