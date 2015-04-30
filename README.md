@@ -87,7 +87,7 @@ This logger package
 
 *   Is developer friendly in the terminal. The HappyDevFormatter
     is colorful, prints file and line numbers for traces, warnings
-    and errors. Prints arguments in the order they are coded.
+    and errors. Arguments are printed in the order they are coded.
     Errors print the call stack.
 
     `HappyDevFormatter` is not too concerned with performance
@@ -155,6 +155,18 @@ return log.Error(msg, "err", err)   //=> err
 
         # emphasize errors with pink = 200 on 256 colors table
         LOGXI_COLORS="ERR=200" yourapp
+
+*   Is suppressable in unit tests
+
+    ```go
+func TestErrNotFound() {
+    log.Suppress(true)
+    defer log.Suppress(false)
+    ...
+}
+```
+
+
 
 ## Configuration
 

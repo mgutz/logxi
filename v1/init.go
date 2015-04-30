@@ -24,13 +24,13 @@ func badKeyAtIndex(i int) string {
 // DefaultLogLog is the default log for this package.
 var DefaultLog Logger
 
-// Silence supresses logging and is useful to supress output in
+// Suppress supresses logging and is useful to supress output in
 // in unit tests.
 //
 // Example
-// logxi.Silence(true)
-// defer logxi.Silence(false)
-func Silence(quiet bool) {
+// log.Suppress(true)
+// defer log.suppress(false)
+func Suppress(quiet bool) {
 	silent = quiet
 }
 
