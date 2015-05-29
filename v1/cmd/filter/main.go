@@ -14,9 +14,9 @@ func sendExternal(obj map[string]interface{}) {
 	// normally you would send this to an external service like InfluxDB
 	// or some logging framework. Let's filter out some data.
 	fmt.Printf("Time: %s Level: %s Message: %s\n",
-		obj[log.TimeKey],
-		obj[log.LevelKey],
-		obj[log.MessageKey],
+		obj[log.KeyMap.Time],
+		obj[log.KeyMap.Level],
+		obj[log.KeyMap.Message],
 	)
 }
 
