@@ -71,8 +71,19 @@ func (l *DefaultLogger) Info(msg string, args ...interface{}) {
 }
 
 // Warn logs a warn entry.
-func (l *DefaultLogger) Warn(msg string, args ...interface{}) {
-	l.Log(LevelWarn, msg, args)
+func (l *DefaultLogger) Warn(msg string, args ...interface{}) error {
+	if l.IsWarn() {
+		defer l.Log(LevelWarn, msg, args)
+
+		for _, arg := range args {
+			if err, ok := arg.(error); ok {
+				return err
+			}
+		}
+
+		return nil
+	}
+	return nil
 }
 
 func (l *DefaultLogger) extractLogError(level int, msg string, args []interface{}) error {

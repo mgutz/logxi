@@ -112,7 +112,7 @@ This logger package
             Trace(msg string, args ...interface{})
             Debug(msg string, args ...interface{})
             Info(msg string, args ...interface{})
-            Warn(msg string, args ...interface{})
+            Warn(msg string, args ...interface{}) error
             Error(msg string, args ...interface{}) error
             Fatal(msg string, args ...interface{})
             Log(level int, msg string, args []interface{})
@@ -135,7 +135,7 @@ log.WithFields(logrus.Fields{"m": "pkg", "key1": value1, "key2": value2}).Debug(
 ```
     logxi logs `FIX_IMBALANCED_PAIRS =>` if key-value pairs are imbalanced
 
-    `log.Error` is a special case and returns an error:
+    `log.Warn and log.Error` are special cases and return error:
 
     ```go
 return log.Error(msg)               //=> fmt.Errorf(msg)
