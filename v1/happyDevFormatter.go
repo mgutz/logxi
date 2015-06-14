@@ -192,12 +192,26 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 		color = theme.Debug
 	case LevelInfo:
 		color = theme.Info
-	case LevelWarn:
-		color = theme.Warn
-		context = hd.getContext(color)
-		context += "\n"
-	case LevelError, LevelFatal:
-		color = theme.Error
+	// case LevelWarn:
+	// 	color = theme.Warn
+	// 	context = hd.getContext(color)
+	// 	context += "\n"
+	case LevelWarn, LevelError, LevelFatal:
+
+		// warnings return an error but if it does not have an error
+		// then print line info only
+		if level == LevelWarn {
+			color = theme.Warn
+			kv := entry[KeyMap.CallStack]
+			if kv == nil {
+				context = hd.getContext(color)
+				context += "\n"
+				break
+			}
+		} else {
+			color = theme.Error
+		}
+
 		if disableCallstack || contextLines == -1 {
 			context = trimDebugStack(string(debug.Stack()))
 			break
@@ -220,7 +234,7 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 				errbuf.Reset()
 				break
 			}
-			ctx := frame.String(theme.Error, theme.Source)
+			ctx := frame.String(color, theme.Source)
 			if ctx == "" {
 				continue
 			}
@@ -320,10 +334,12 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	}
 
 	addLF := true
+	hasCallStack := entry[KeyMap.CallStack] != nil
 	// WRN,ERR file, line number context
+
 	if context != "" {
 		// warnings and traces are single line, space can be optimized
-		if level == LevelWarn || level == LevelTrace {
+		if level == LevelTrace || (level == LevelWarn && !hasCallStack) {
 			// gets rid of "in "
 			idx := strings.IndexRune(context, 'n')
 			hd.set(buf, "in", context[idx+2:], color)
@@ -335,7 +351,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 			buf.WriteString(ansi.Reset)
 		}
 
-	} else if entry[KeyMap.CallStack] != nil {
+	} else if hasCallStack {
 		hd.set(buf, "", entry[KeyMap.CallStack], color)
 	}
 	if addLF {

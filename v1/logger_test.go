@@ -3,6 +3,7 @@ package log
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
 	"strings"
 	"testing"
@@ -266,4 +267,22 @@ func TestAllowSingleParam(t *testing.T) {
 	err := json.Unmarshal(buf.Bytes(), &obj)
 	assert.NoError(t, err)
 	assert.Equal(t, float64(1), obj["_"])
+}
+
+func TestErrorOnWarn(t *testing.T) {
+	testResetEnv()
+	// os.Setenv("LOGXI_FORMAT", "context=2")
+	// processEnv()
+	var buf bytes.Buffer
+	l := NewLogger3(&buf, "wrnerr", NewHappyDevFormatter("wrnerr"))
+	l.SetLevel(LevelWarn)
+
+	ErrorDummy := errors.New("dummy error")
+
+	err := l.Warn("warn with error", "err", ErrorDummy)
+	assert.Error(t, err)
+	assert.Equal(t, "dummy error", err.Error())
+	err = l.Warn("warn with no error", "one", 1)
+	assert.NoError(t, err)
+	//l.Error("error with err", "err", ErrorDummy)
 }

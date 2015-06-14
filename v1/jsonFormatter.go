@@ -122,31 +122,26 @@ func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []
 	const lead = `", "`
 	const colon = `":"`
 
-	//buf.WriteString(`{"_t":"`)
 	buf.WriteString(`{"`)
 	buf.WriteString(KeyMap.Time)
 	buf.WriteString(`":"`)
 	buf.WriteString(time.Now().Format(timeFormat))
 
-	//buf.WriteString(`", "_p":"`)
 	buf.WriteString(`", "`)
 	buf.WriteString(KeyMap.PID)
 	buf.WriteString(`":"`)
 	buf.WriteString(pidStr)
 
-	//buf.WriteString(`", "_l":"`)
 	buf.WriteString(`", "`)
 	buf.WriteString(KeyMap.Level)
 	buf.WriteString(`":"`)
 	buf.WriteString(LevelMap[level])
 
-	//buf.WriteString(`", "_n":"`)
 	buf.WriteString(`", "`)
 	buf.WriteString(KeyMap.Name)
 	buf.WriteString(`":"`)
 	buf.WriteString(jf.name)
 
-	//buf.WriteString(`", "_m":`)
 	buf.WriteString(`", "`)
 	buf.WriteString(KeyMap.Message)
 	buf.WriteString(`":`)
@@ -179,8 +174,8 @@ func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []
 }
 
 // LogEntry returns the JSON log entry object built by Format(). Used by
-// HappyDevFormatter to ensure any data logged while developing will properly
-// log in production.
+// HappyDevFormatter to ensure any data logged while developing properly
+// logs in production.
 func (jf *JSONFormatter) LogEntry(level int, msg string, args []interface{}) map[string]interface{} {
 	buf := pool.Get()
 	defer pool.Put(buf)

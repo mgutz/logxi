@@ -19,7 +19,8 @@ func (l *NullLogger) Info(msg string, args ...interface{}) {
 }
 
 // Warn logs a warn entry.
-func (l *NullLogger) Warn(msg string, args ...interface{}) {
+func (l *NullLogger) Warn(msg string, args ...interface{}) error {
+	return nil
 }
 
 // Error logs an error entry.
