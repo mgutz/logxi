@@ -156,8 +156,14 @@ func (ci *frameInfo) String(color string, sourceColor string) string {
 // /Users/mgutz/goroot/src/runtime/asm_amd64.s:2232 (0x38bf1)
 // 	goexit:
 func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*frameInfo {
-	lines := strings.Split(stack, "\n")
 	frames := []*frameInfo{}
+	// BUG temporarily disable since there is a bug with embedded newlines
+	if true {
+		return frames
+	}
+
+	lines := strings.Split(stack, "\n")
+
 	for i := skip * 2; i < len(lines); i += 2 {
 		ci := &frameInfo{}
 		sourceLine := lines[i]
@@ -176,6 +182,12 @@ func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*frameInfo {
 		}
 		space := strings.Index(sourceLine, " ")
 		ci.filename = sourceLine[0:colon]
+
+		// BUG with callstack where the error message has embedded newlines
+		// if colon > space {
+		// 	fmt.Println("lines", lines)
+		// }
+		// fmt.Println("SOURCELINE", sourceLine, "len", len(sourceLine), "COLON", colon, "SPACE", space)
 		numstr := sourceLine[colon+1 : space]
 		lineno, err := strconv.Atoi(numstr)
 		if err != nil {
