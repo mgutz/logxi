@@ -138,6 +138,8 @@ func (hd *HappyDevFormatter) set(buf bufferWriter, key string, value interface{}
 	var str string
 	if s, ok := value.(string); ok {
 		str = s
+	} else if s, ok := value.(fmt.Stringer); ok {
+		str = s.String()
 	} else {
 		str = fmt.Sprintf("%v", value)
 	}

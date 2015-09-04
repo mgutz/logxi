@@ -81,6 +81,8 @@ func (jf *JSONFormatter) appendValue(buf bufferWriter, val interface{}) {
 		buf.WriteString(strconv.FormatFloat(value.Float(), 'g', -1, 64))
 
 	default:
+		var err error
+
 		// always show error stack even at cost of some performance. there's
 		// nothing worse than looking at production logs without a clue
 		if err, ok := val.(error); ok {
@@ -88,12 +90,23 @@ func (jf *JSONFormatter) appendValue(buf bufferWriter, val interface{}) {
 			return
 		}
 
-		b, err := json.Marshal(val)
+		var b []byte
+		if stringer, ok := val.(fmt.Stringer); ok {
+			b, err = json.Marshal(stringer.String())
+		} else {
+			b, err = json.Marshal(val)
+		}
+
 		if err != nil {
 			InternalLog.Error("Could not json.Marshal value: ", "formatter", "JSONFormatter", "err", err.Error())
-			// must always log, use sprintf to get a string
-			s := fmt.Sprintf("%#v", val)
-			b, err = json.Marshal(s)
+			if s, ok := val.(string); ok {
+				b, err = json.Marshal(s)
+			} else if s, ok := val.(fmt.Stringer); ok {
+				b, err = json.Marshal(s.String())
+			} else {
+				b, err = json.Marshal(fmt.Sprintf("%#v", val))
+			}
+
 			if err != nil {
 				// should never get here, but JSONFormatter should never panic
 				msg := "Could not Sprintf value"
@@ -183,7 +196,7 @@ func (jf *JSONFormatter) LogEntry(level int, msg string, args []interface{}) map
 	var entry map[string]interface{}
 	err := json.Unmarshal(buf.Bytes(), &entry)
 	if err != nil {
-		panic("Unable to unmarhsal entry from JSONFormatter: " + err.Error())
+		panic("Unable to unmarhsal entry from JSONFormatter: " + err.Error() + " \"" + string(buf.Bytes()) + "\"")
 	}
 	return entry
 }

@@ -286,3 +286,36 @@ func TestErrorOnWarn(t *testing.T) {
 	assert.NoError(t, err)
 	//l.Error("error with err", "err", ErrorDummy)
 }
+
+type CheckStringer struct {
+	s string
+}
+
+func (cs CheckStringer) String() string {
+	return "bbb"
+}
+
+func TestStringer(t *testing.T) {
+	f := CheckStringer{s: "aaa"}
+
+	var buf bytes.Buffer
+	l := NewLogger3(&buf, "cs1", NewTextFormatter("stringer-text"))
+	l.SetLevel(LevelDebug)
+	l.Info("info", "f", f)
+	assert.True(t, strings.Contains(buf.String(), "bbb"))
+
+	buf.Reset()
+	l = NewLogger3(&buf, "cs2", NewHappyDevFormatter("stringer-happy"))
+	l.SetLevel(LevelDebug)
+	l.Info("info", "f", f)
+	assert.True(t, strings.Contains(buf.String(), "bbb"))
+
+	var obj map[string]interface{}
+	buf.Reset()
+	l = NewLogger3(&buf, "cs3", NewJSONFormatter("stringer-json"))
+	l.SetLevel(LevelDebug)
+	l.Info("info", "f", f)
+	err := json.Unmarshal(buf.Bytes(), &obj)
+	assert.NoError(t, err)
+	assert.Equal(t, "bbb", obj["f"])
+}
