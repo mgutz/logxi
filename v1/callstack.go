@@ -139,7 +139,9 @@ func (ci *frameInfo) String(color string, sourceColor string) string {
 	}
 	// get rid of last \n
 	buf.Truncate(buf.Len() - 1)
-	buf.WriteString(ansi.Reset)
+	if !disableColors {
+		buf.WriteString(ansi.Reset)
+	}
 	return buf.String()
 }
 

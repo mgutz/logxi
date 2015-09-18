@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -16,6 +17,7 @@ func processEnv() {
 }
 
 func testResetEnv() {
+	disableColors = false
 	testBuf.Reset()
 	os.Clearenv()
 	processEnv()
@@ -93,6 +95,27 @@ func TestEnvLOGXI_FORMAT(t *testing.T) {
 	setDefaults(false)
 	processEnv()
 	assert.Equal(FormatJSON, logxiFormat, "Mismatches defaults to FormatJSON non terminal")
+
+	isTerminal = oldIsTerminal
+	setDefaults(isTerminal)
+}
+
+func TestEnvLOGXI_COLORS(t *testing.T) {
+	oldIsTerminal := isTerminal
+
+	os.Setenv("LOGXI_COLORS", "*=off")
+	setDefaults(true)
+	processEnv()
+
+	var buf bytes.Buffer
+	l := NewLogger3(&buf, "telc", NewHappyDevFormatter("logxi-colors"))
+	l.SetLevel(LevelDebug)
+	l.Info("info")
+
+	r := regexp.MustCompile(`^\d{2}:\d{2}:\d{2}\.\d{6} INF logxi-colors info`)
+	assert.True(t, r.Match(buf.Bytes()))
+
+	setDefaults(true)
 
 	isTerminal = oldIsTerminal
 	setDefaults(isTerminal)

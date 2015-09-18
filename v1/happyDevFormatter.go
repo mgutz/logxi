@@ -56,6 +56,9 @@ func parseTheme(theme string) *colorScheme {
 	var wildcard string
 
 	var color = func(key string) string {
+		if disableColors {
+			return ""
+		}
 		style := m[key]
 		c := ansi.ColorCode(style)
 		if c == "" {
@@ -131,7 +134,9 @@ func (hd *HappyDevFormatter) writeKey(buf bufferWriter, key string) {
 	buf.WriteString(theme.Key)
 	hd.writeString(buf, key)
 	hd.writeString(buf, AssignmentChar)
-	buf.WriteString(ansi.Reset)
+	if !disableColors {
+		buf.WriteString(ansi.Reset)
+	}
 }
 
 func (hd *HappyDevFormatter) set(buf bufferWriter, key string, value interface{}, color string) {
@@ -154,7 +159,7 @@ func (hd *HappyDevFormatter) set(buf bufferWriter, key string, value interface{}
 		buf.WriteString(color)
 	}
 	hd.writeString(buf, val)
-	if color != "" {
+	if color != "" && !disableColors {
 		buf.WriteString(ansi.Reset)
 	}
 }
@@ -294,7 +299,9 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	// timestamp
 	buf.WriteString(theme.Misc)
 	hd.writeString(buf, entry[KeyMap.Time].(string))
-	buf.WriteString(ansi.Reset)
+	if !disableColors {
+		buf.WriteString(ansi.Reset)
+	}
 
 	// emphasize warnings and errors
 	message, context, color := hd.getLevelContext(level, entry)
@@ -347,12 +354,15 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 			hd.set(buf, "in", context[idx+2:], color)
 		} else {
 			buf.WriteRune('\n')
-			buf.WriteString(color)
+			if !disableColors {
+				buf.WriteString(color)
+			}
 			addLF = context[len(context)-1:len(context)] != "\n"
 			buf.WriteString(context)
-			buf.WriteString(ansi.Reset)
+			if !disableColors {
+				buf.WriteString(ansi.Reset)
+			}
 		}
-
 	} else if hasCallStack {
 		hd.set(buf, "", entry[KeyMap.CallStack], color)
 	}

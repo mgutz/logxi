@@ -158,6 +158,9 @@ func ProcessLogxiColorsEnv(env string) {
 	colors := env
 	if colors == "" {
 		colors = defaultLogxiColorsEnv
+	} else if colors == "*=off" {
+		// disable all colors
+		disableColors = true
 	}
 	theme = parseTheme(colors)
 }
