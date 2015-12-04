@@ -52,7 +52,7 @@ func NewLogger3(writer io.Writer, name string, formatter Formatter) Logger {
 
 // New creates a colorable default logger.
 func New(name string) Logger {
-	return NewLogger(colorableStdout, name)
+	return NewLogger(colorableStderr, name)
 }
 
 // Trace logs a debug entry.

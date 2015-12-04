@@ -68,7 +68,7 @@ var logxiNameLevelMap map[string]int
 // logxiFormat is the formatter kind to create
 var logxiFormat string
 
-var colorableStdout io.Writer
+var colorableStderr io.Writer
 var defaultContextLines = 2
 var defaultFormat string
 var defaultLevel int
@@ -144,7 +144,7 @@ func setDefaults(isTerminal bool) {
 		if os.Getenv("ConEmuANSI") == "ON" {
 			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue+h,source=yellow,TRC,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
 		} else {
-			colorableStdout = NewConcurrentWriter(colorable.NewColorableStdout())
+			colorableStderr = NewConcurrentWriter(colorable.NewColorableStderr())
 			defaultLogxiColorsEnv = "ERR=red,misc=cyan,key=cyan"
 		}
 		// DefaultScheme is a color scheme optimized for dark background
@@ -176,15 +176,15 @@ func isReservedKey(k interface{}) (bool, error) {
 }
 
 func init() {
-	colorableStdout = NewConcurrentWriter(os.Stdout)
+	colorableStderr = NewConcurrentWriter(os.Stderr)
 
-	isTerminal = isatty.IsTerminal(os.Stdout.Fd())
+	isTerminal = isatty.IsTerminal(os.Stderr.Fd())
 
 	// the internal logger to report errors
 	if isTerminal {
-		InternalLog = NewLogger3(NewConcurrentWriter(os.Stdout), "__logxi", NewTextFormatter("__logxi"))
+		InternalLog = NewLogger3(NewConcurrentWriter(os.Stderr), "__logxi", NewTextFormatter("__logxi"))
 	} else {
-		InternalLog = NewLogger3(NewConcurrentWriter(os.Stdout), "__logxi", NewJSONFormatter("__logxi"))
+		InternalLog = NewLogger3(NewConcurrentWriter(os.Stderr), "__logxi", NewJSONFormatter("__logxi"))
 	}
 	InternalLog.SetLevel(LevelError)
 
