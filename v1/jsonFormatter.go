@@ -58,6 +58,10 @@ func (jf *JSONFormatter) appendValue(buf bufferWriter, val interface{}) {
 	value := reflect.ValueOf(val)
 	kind := value.Kind()
 	if kind == reflect.Ptr {
+		if value.IsNil() {
+			buf.WriteString("null")
+			return
+		}
 		value = value.Elem()
 		kind = value.Kind()
 	}
