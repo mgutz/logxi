@@ -342,3 +342,18 @@ func TestStringer(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "bbb", obj["f"])
 }
+
+// When log functions cast pointers to interface{}.
+// Say p is a pointer set to nil:
+//
+//     interface{}(p) == nil  // this is false
+//
+// Casting it to interface{} makes it trickier to test whether its nil.
+func TestStringerNullPointers(t *testing.T) {
+	var f *CheckStringer
+	var buf bytes.Buffer
+	l := NewLogger3(&buf, "cs1", NewJSONFormatter("stringer-json"))
+	l.SetLevel(LevelDebug)
+	l.Info("info", "f", f)
+	assert.Contains(t, buf.String(), "null")
+}
