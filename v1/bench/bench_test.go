@@ -7,8 +7,7 @@ import (
 	"testing"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/mgutz/logxi/v1"
-	"gopkg.in/inconshreveable/log15.v2"
+	"github.com/serussell/logxi/v1"
 )
 
 type M map[string]interface{}
