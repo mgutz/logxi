@@ -55,9 +55,20 @@ func (jf *JSONFormatter) appendValue(buf bufferWriter, val interface{}) {
 		return
 	}
 
+	// always show error stack even at cost of some performance. there's
+	// nothing worse than looking at production logs without a clue
+	if err, ok := val.(error); ok {
+		jf.writeError(buf, err)
+		return
+	}
+
 	value := reflect.ValueOf(val)
 	kind := value.Kind()
 	if kind == reflect.Ptr {
+		if value.IsNil() {
+			buf.WriteString("null")
+			return
+		}
 		value = value.Elem()
 		kind = value.Kind()
 	}
@@ -82,14 +93,6 @@ func (jf *JSONFormatter) appendValue(buf bufferWriter, val interface{}) {
 
 	default:
 		var err error
-
-		// always show error stack even at cost of some performance. there's
-		// nothing worse than looking at production logs without a clue
-		if err, ok := val.(error); ok {
-			jf.writeError(buf, err)
-			return
-		}
-
 		var b []byte
 		if stringer, ok := val.(fmt.Stringer); ok {
 			b, err = json.Marshal(stringer.String())
