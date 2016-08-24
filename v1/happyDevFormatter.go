@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"runtime/debug"
 	"strings"
 
 	"github.com/mgutz/ansi"
@@ -111,7 +110,6 @@ func parseTheme(theme string) *colorScheme {
 // works fine in SSH terminals and binary deployments.
 type HappyDevFormatter struct {
 	name string
-	col  int
 	// always use the production formatter
 	jsonFormatter *JSONFormatter
 }
@@ -125,21 +123,21 @@ func NewHappyDevFormatter(name string) *HappyDevFormatter {
 	}
 }
 
-func (hd *HappyDevFormatter) writeKey(buf bufferWriter, key string) {
+func (hd *HappyDevFormatter) writeKey(buf bufferWriter, key string, col *int) {
 	// assumes this is not the first key
-	hd.writeString(buf, Separator)
+	hd.writeString(buf, Separator, col)
 	if key == "" {
 		return
 	}
 	buf.WriteString(theme.Key)
-	hd.writeString(buf, key)
-	hd.writeString(buf, AssignmentChar)
+	hd.writeString(buf, key, col)
+	hd.writeString(buf, AssignmentChar, col)
 	if !disableColors {
 		buf.WriteString(ansi.Reset)
 	}
 }
 
-func (hd *HappyDevFormatter) set(buf bufferWriter, key string, value interface{}, color string) {
+func (hd *HappyDevFormatter) set(buf bufferWriter, key string, value interface{}, color string, col *int) {
 	var str string
 	if s, ok := value.(string); ok {
 		str = s
@@ -149,16 +147,16 @@ func (hd *HappyDevFormatter) set(buf bufferWriter, key string, value interface{}
 		str = fmt.Sprintf("%v", value)
 	}
 	val := strings.Trim(str, "\n ")
-	if (isPretty && key != "") || hd.col+len(key)+2+len(val) >= maxCol {
+	if (isPretty && key != "") || *col+len(key)+2+len(val) >= maxCol {
 		buf.WriteString("\n")
-		hd.col = 0
-		hd.writeString(buf, indent)
+		*col = 0
+		hd.writeString(buf, indent, col)
 	}
-	hd.writeKey(buf, key)
+	hd.writeKey(buf, key, col)
 	if color != "" {
 		buf.WriteString(color)
 	}
-	hd.writeString(buf, val)
+	hd.writeString(buf, val, col)
 	if color != "" && !disableColors {
 		buf.WriteString(ansi.Reset)
 	}
@@ -166,16 +164,16 @@ func (hd *HappyDevFormatter) set(buf bufferWriter, key string, value interface{}
 
 // Write a string and tracks the position of the string so we can break lines
 // cleanly. Do not send ANSI escape sequences, just raw strings
-func (hd *HappyDevFormatter) writeString(buf bufferWriter, s string) {
+func (hd *HappyDevFormatter) writeString(buf bufferWriter, s string, col *int) {
 	buf.WriteString(s)
-	hd.col += len(s)
+	*col += len(s)
 }
 
 func (hd *HappyDevFormatter) getContext(color string) string {
 	if disableCallstack {
 		return ""
 	}
-	frames := parseDebugStack(string(debug.Stack()), 5, true)
+	frames := stackFrames(7, true)
 	if len(frames) == 0 {
 		return ""
 	}
@@ -220,17 +218,15 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 		}
 
 		if disableCallstack || contextLines == -1 {
-			context = trimDebugStack(string(debug.Stack()))
+			context = trimmedStackTrace()
 			break
 		}
-		frames := parseLogxiStack(entry, 4, true)
-		if frames == nil {
-			frames = parseDebugStack(string(debug.Stack()), 4, true)
-		}
 
+		frames := stackFrames(6, true)
 		if len(frames) == 0 {
 			break
 		}
+
 		errbuf := pool.Get()
 		defer pool.Put(errbuf)
 		lines := 0
@@ -294,11 +290,11 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	entry := hd.jsonFormatter.LogEntry(level, msg, args)
 
 	// reset the column tracker used for fancy formatting
-	hd.col = 0
+	col := 0
 
 	// timestamp
 	buf.WriteString(theme.Misc)
-	hd.writeString(buf, entry[KeyMap.Time].(string))
+	hd.writeString(buf, entry[KeyMap.Time].(string), &col)
 	if !disableColors {
 		buf.WriteString(ansi.Reset)
 	}
@@ -310,11 +306,11 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	}
 
 	// DBG, INF ...
-	hd.set(buf, "", entry[KeyMap.Level].(string), color)
+	hd.set(buf, "", entry[KeyMap.Level].(string), color, &col)
 	// logger name
-	hd.set(buf, "", entry[KeyMap.Name], theme.Misc)
+	hd.set(buf, "", entry[KeyMap.Name], theme.Misc, &col)
 	// message from user
-	hd.set(buf, "", message, theme.Message)
+	hd.set(buf, "", message, theme.Message, &col)
 
 	// Preserve key order in the sequencethey were added by developer.This
 	// makes it easier for developers to follow the log.
@@ -339,7 +335,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 		} else if isReserved {
 			continue
 		}
-		hd.set(buf, key, entry[key], theme.Value)
+		hd.set(buf, key, entry[key], theme.Value, &col)
 	}
 
 	addLF := true
@@ -351,7 +347,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 		if level == LevelTrace || (level == LevelWarn && !hasCallStack) {
 			// gets rid of "in "
 			idx := strings.IndexRune(context, 'n')
-			hd.set(buf, "in", context[idx+2:], color)
+			hd.set(buf, "in", context[idx+2:], theme.Value, &col)
 		} else {
 			buf.WriteRune('\n')
 			if !disableColors {
@@ -364,7 +360,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 			}
 		}
 	} else if hasCallStack {
-		hd.set(buf, "", entry[KeyMap.CallStack], color)
+		hd.set(buf, "", entry[KeyMap.CallStack], color, &col)
 	}
 	if addLF {
 		buf.WriteRune('\n')
