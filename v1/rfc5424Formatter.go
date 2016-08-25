@@ -62,7 +62,9 @@ func (tf *RFC5424Formatter) Format(writer io.Writer, level int, msg string, args
 	buf.WriteString(tf.name)
 	buf.WriteString(" ")
 	buf.WriteString(pidStr)
-	buf.WriteString(" - ")
+	buf.WriteString(" ")
+	buf.WriteString(LevelMap[level])
+	buf.WriteString(" ")
 
 	var lenArgs = len(args)
 	if lenArgs > 0 {

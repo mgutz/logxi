@@ -1,5 +1,5 @@
 
-![demo](https://github.com/mgutz/logxi/raw/master/images/demo.gif)
+![demo](https://github.com/serussell/logxi/raw/master/images/demo.gif)
 
 # logxi
 
@@ -22,12 +22,12 @@ logger built for speed and happy development.
 
 ### Installation
 
-    go get -u github.com/mgutz/logxi/v1
+    go get -u github.com/serussell/logxi/v1
 
 ### Getting Started
 
 ```go
-import "github.com/mgutz/logxi/v1"
+import "github.com/serussell/logxi/v1"
 
 // create package variable for Logger interface
 var logger log.Logger
