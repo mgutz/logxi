@@ -6,6 +6,7 @@ import (
 	"io"
 	"runtime/debug"
 	"strings"
+	"sync"
 
 	"github.com/mgutz/ansi"
 )
@@ -114,6 +115,7 @@ type HappyDevFormatter struct {
 	col  int
 	// always use the production formatter
 	jsonFormatter *JSONFormatter
+	sync.Mutex
 }
 
 // NewHappyDevFormatter returns a new instance of HappyDevFormatter.
@@ -288,6 +290,11 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 			}
 		}
 	}
+
+	// There is only one exported method from the HappyDevFormatter so we lock inside this outer method
+	// and let the internal methods run without needing locking etc
+	hd.Lock()
+	defer hd.Unlock()
 
 	// use the production JSON formatter to format the log first. This
 	// ensures JSON will marshal/unmarshal correctly in production.
