@@ -210,7 +210,7 @@ func tasks(p *do.Project) {
 	})
 
 	p.Task("isolate", do.S{"build"}, func(c *do.Context) {
-		c.Bash("LOGXI=* LOGXI_FORMAT=fit,maxcol=80,t=04:05.000,context=2 demo", do.M{"$in": "v1/cmd/demo"})
+		c.Bash("LOGXI=* LOGXI_FORMAT=maxcol=80,t=04:05.000,context=2 demo", do.M{"$in": "v1/cmd/demo"})
 	})
 
 	p.Task("install", nil, func(c *do.Context) {

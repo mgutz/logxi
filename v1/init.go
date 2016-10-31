@@ -126,7 +126,7 @@ func setDefaults(isTerminal bool) {
 
 	if isTerminal {
 		defaultLogxiEnv = "*=WRN"
-		defaultLogxiFormatEnv = "happy,fit,maxcol=80,t=15:04:05.000000,context=-1"
+		defaultLogxiFormatEnv = "happy,maxcol=80,t=15:04:05.000000,context=-1"
 		defaultFormat = FormatHappy
 		defaultLevel = LevelWarn
 		defaultTimeFormat = "15:04:05.000000"

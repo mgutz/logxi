@@ -161,6 +161,8 @@ func ProcessLogxiColorsEnv(env string) {
 	} else if colors == "*=off" {
 		// disable all colors
 		disableColors = true
+	} else {
+		disableColors = false //overriding value set when isTerminal is false
 	}
 	theme = parseTheme(colors)
 }
