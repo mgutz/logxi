@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -20,6 +21,7 @@ type frameInfo struct {
 	filename     string
 	lineno       int
 	method       string
+	pc           uintptr
 	context      []*sourceLine
 	contextLines int
 }
@@ -97,7 +99,7 @@ func (ci *frameInfo) String(color string, sourceColor string) string {
 	buf.WriteString(strconv.Itoa(ci.lineno))
 	buf.WriteString(")")
 
-	if ci.contextLines == -1 {
+	if contextLines == -1 {
 		return buf.String()
 	}
 	buf.WriteString("\n")
@@ -118,17 +120,26 @@ func (ci *frameInfo) String(color string, sourceColor string) string {
 	}
 
 	for _, li := range ci.context {
+		if !disableColors {
+			// need to reset here.  If source is set to default color, then the message
+			// color will bleed over into the source context lines
+			buf.WriteString(ansi.Reset)
+		}
 		var format string
 		format = fmt.Sprintf("%%s%%%dd:  %%s\n", linenoWidth)
 
 		if li.lineno == ci.lineno {
-			buf.WriteString(color)
-			if ci.contextLines > 2 {
+			if !disableColors {
+				buf.WriteString(color)
+			}
+			if contextLines > 0 {
 				format = fmt.Sprintf("%%s=> %%%dd:  %%s\n", linenoWidth)
 			}
 		} else {
-			buf.WriteString(sourceColor)
-			if ci.contextLines > 2 {
+			if !disableColors {
+				buf.WriteString(sourceColor)
+			}
+			if contextLines > 0 {
 				// account for "=> "
 				format = fmt.Sprintf("%%s%%%dd:  %%s\n", linenoWidth+3)
 			}
@@ -145,117 +156,53 @@ func (ci *frameInfo) String(color string, sourceColor string) string {
 	return buf.String()
 }
 
-// parseDebugStack parases a stack created by debug.Stack()
-//
-// This is what the string looks like
-// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:45 (0x5fa70)
-// 	(*JSONFormatter).writeError: jf.writeString(buf, err.Error()+"\n"+string(debug.Stack()))
-// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:82 (0x5fdc3)
-// 	(*JSONFormatter).appendValue: jf.writeError(buf, err)
-// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:109 (0x605ca)
-// 	(*JSONFormatter).set: jf.appendValue(buf, val)
-// ...
-// /Users/mgutz/goroot/src/runtime/asm_amd64.s:2232 (0x38bf1)
-// 	goexit:
-func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*frameInfo {
+// Generates a stack from runtime.Callers()
+func stackFrames(skip int, ignoreRuntime bool) []*frameInfo {
 	frames := []*frameInfo{}
-	// BUG temporarily disable since there is a bug with embedded newlines
-	if true {
-		return frames
-	}
+	size := 20
+	pcs := make([]uintptr, size)
+	// always skip the first frame, since it's runtime.Callers itself
+	pcs = pcs[:runtime.Callers(1+skip, pcs)]
 
-	lines := strings.Split(stack, "\n")
-
-	for i := skip * 2; i < len(lines); i += 2 {
-		ci := &frameInfo{}
-		sourceLine := lines[i]
-		if sourceLine == "" {
-			break
-		}
-		if ignoreRuntime && strings.Contains(sourceLine, filepath.Join("src", "runtime")) {
+	for _, pc := range pcs {
+		fn := runtime.FuncForPC(pc)
+		name := fn.Name()
+		file, line := fn.FileLine(pc - 1)
+		if ignoreRuntime && strings.Contains(file, filepath.Join("src", "runtime")) {
 			break
 		}
 
-		colon := strings.Index(sourceLine, ":")
-		slash := strings.Index(sourceLine, "/")
-		if colon < slash {
-			// must be on Windows where paths look like c:/foo/bar.go:lineno
-			colon = strings.Index(sourceLine[slash:], ":") + slash
+		ci := &frameInfo{
+			filename: file,
+			lineno:   line,
+			method:   name,
+			pc:       pc,
 		}
-		space := strings.Index(sourceLine, " ")
-		ci.filename = sourceLine[0:colon]
 
-		// BUG with callstack where the error message has embedded newlines
-		// if colon > space {
-		// 	fmt.Println("lines", lines)
-		// }
-		// fmt.Println("SOURCELINE", sourceLine, "len", len(sourceLine), "COLON", colon, "SPACE", space)
-		numstr := sourceLine[colon+1 : space]
-		lineno, err := strconv.Atoi(numstr)
-		if err != nil {
-			InternalLog.Warn("Could not parse line number", "sourceLine", sourceLine, "numstr", numstr)
-			continue
-		}
-		ci.lineno = lineno
-
-		methodLine := lines[i+1]
-		colon = strings.Index(methodLine, ":")
-		ci.method = strings.Trim(methodLine[0:colon], "\t ")
 		frames = append(frames, ci)
 	}
 	return frames
 }
 
-// parseDebugStack parases a stack created by debug.Stack()
-//
-// This is what the string looks like
-// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:45 (0x5fa70)
-// 	(*JSONFormatter).writeError: jf.writeString(buf, err.Error()+"\n"+string(debug.Stack()))
-// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:82 (0x5fdc3)
-// 	(*JSONFormatter).appendValue: jf.writeError(buf, err)
-// /Users/mgutz/go/src/github.com/mgutz/logxi/v1/jsonFormatter.go:109 (0x605ca)
-// 	(*JSONFormatter).set: jf.appendValue(buf, val)
-// ...
-// /Users/mgutz/goroot/src/runtime/asm_amd64.s:2232 (0x38bf1)
-// 	goexit:
-func trimDebugStack(stack string) string {
+// Returns debug stack excluding logxi frames
+func trimmedStackTrace() string {
 	buf := pool.Get()
 	defer pool.Put(buf)
-	lines := strings.Split(stack, "\n")
-	for i := 0; i < len(lines); i += 2 {
-		sourceLine := lines[i]
-		if sourceLine == "" {
-			break
-		}
-
-		colon := strings.Index(sourceLine, ":")
-		slash := strings.Index(sourceLine, "/")
-		if colon < slash {
-			// must be on Windows where paths look like c:/foo/bar.go:lineno
-			colon = strings.Index(sourceLine[slash:], ":") + slash
-		}
-		filename := sourceLine[0:colon]
+	frames := stackFrames(0, false)
+	for _, frame := range frames {
 		// skip anything in the logxi package
-		if isLogxiCode(filename) {
+		if isLogxiCode(frame.filename) {
 			continue
 		}
-		buf.WriteString(sourceLine)
-		buf.WriteRune('\n')
-		buf.WriteString(lines[i+1])
-		buf.WriteRune('\n')
+
+		fmt.Fprintf(buf, "%s:%d (0x%x)\n", frame.filename, frame.lineno, frame.pc)
+
+		err := frame.readSource(0)
+		if err != nil || len(frame.context) < 1 {
+			continue
+		}
+
+		fmt.Fprintf(buf, "\t%s: %s\n", frame.method, frame.context[0].line)
 	}
 	return buf.String()
-}
-
-func parseLogxiStack(entry map[string]interface{}, skip int, ignoreRuntime bool) []*frameInfo {
-	kv := entry[KeyMap.CallStack]
-	if kv == nil {
-		return nil
-	}
-
-	var frames []*frameInfo
-	if stack, ok := kv.(string); ok {
-		frames = parseDebugStack(stack, skip, ignoreRuntime)
-	}
-	return frames
 }
