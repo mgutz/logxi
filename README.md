@@ -9,7 +9,7 @@ logger built for speed and happy development.
 *   Simpler. Sane no-configuration defaults out of the box.
 *   Faster. See benchmarks vs logrus and log15.
 *   Structured. Key-value pairs are enforced. Logs JSON in production.
-*   Configurable. Enable/disalbe Loggers and levels via env vars.
+*   Configurable. Enable/disable Loggers and levels via env vars.
 *   Friendlier. Happy, colorful and developer friendly logger in terminal.
 *   Helpul. Traces, warnings and errors are emphasized with file, line
     number and callstack.
