@@ -72,6 +72,29 @@ func (jf *JSONFormatter) appendValue(buf bufferWriter, val interface{}) {
 		value = value.Elem()
 		kind = value.Kind()
 	}
+
+	if stringer, ok := val.(fmt.Stringer); ok {
+		b, err := json.Marshal(stringer.String())
+		if err != nil {
+			// Try other value types first, error handling happens in the
+			// default case below.
+		} else {
+			buf.Write(b)
+			return
+		}
+	}
+
+	if _, ok := val.(json.Marshaler); ok {
+		b, err := json.Marshal(val)
+		if err != nil {
+			// Try other value types first, error handling happens in the
+			// default case below.
+		} else {
+			buf.Write(b)
+			return
+		}
+	}
+
 	switch kind {
 	case reflect.Bool:
 		if value.Bool() {
