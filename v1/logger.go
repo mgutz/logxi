@@ -100,6 +100,8 @@ const FormatText = "text"
 // FormatJSON uses JSONFormatter
 const FormatJSON = "JSON"
 
+const FormatLTSV = "LTSV"
+
 // FormatEnv selects formatter based on LOGXI_FORMAT environment variable
 const FormatEnv = ""
 

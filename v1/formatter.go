@@ -45,6 +45,8 @@ func formatFactory(name string, kind string) (Formatter, error) {
 		formatter = NewTextFormatter(name)
 	case FormatJSON:
 		formatter = NewJSONFormatter(name)
+	case FormatLTSV:
+		formatter = NewLTSVFormatter(name)
 	}
 	return formatter, err
 }
