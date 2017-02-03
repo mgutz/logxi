@@ -231,8 +231,8 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 		if len(frames) == 0 {
 			break
 		}
-		errbuf := pool.Get()
-		defer pool.Put(errbuf)
+		errbuf := pool.get()
+		defer pool.put(errbuf)
 		lines := 0
 		for _, frame := range frames {
 			err := frame.readSource(contextLines)
@@ -258,8 +258,8 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 
 // Format a log entry.
 func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
-	buf := pool.Get()
-	defer pool.Put(buf)
+	buf := pool.get()
+	defer pool.put(buf)
 
 	if len(args) == 1 {
 		args = append(args, 0)

@@ -21,7 +21,7 @@ func badKeyAtIndex(i int) string {
 	return "BAD_KEY_AT_INDEX_" + strconv.Itoa(i)
 }
 
-// DefaultLogLog is the default log for this package.
+// DefaultLog is the default log for this package.
 var DefaultLog Logger
 
 // Suppress supresses logging and is useful to supress output in
@@ -36,7 +36,7 @@ func Suppress(quiet bool) {
 
 var silent bool
 
-// internalLog is the logger used by logxi itself
+// InternalLog is the logger used by logxi itself
 var InternalLog Logger
 
 type loggerMap struct {
@@ -52,7 +52,7 @@ func (lm *loggerMap) set(name string, logger Logger) {
 	lm.loggers[name] = logger
 }
 
-// The assignment character between key-value pairs
+// AssignmentChar is the character between key-value pairs
 var AssignmentChar = ": "
 
 // Separator is the separator to use between key value pairs
@@ -86,7 +86,7 @@ var isPretty bool
 var isTerminal bool
 var isWindows = runtime.GOOS == "windows"
 var pkgMutex sync.Mutex
-var pool = NewBufferPool()
+var pool = newBufferPool()
 var timeFormat string
 var wd string
 var pid = os.Getpid()

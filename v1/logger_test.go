@@ -357,3 +357,29 @@ func TestStringerNullPointers(t *testing.T) {
 	l.Info("info", "f", f)
 	assert.Contains(t, buf.String(), "null")
 }
+
+// When log functions cast pointers to interface{}.
+// Say p is a pointer set to nil:
+//
+//     interface{}(p) == nil  // this is false
+//
+// Casting it to interface{} makes it trickier to test whether its nil.
+func TestIssue55NullWhenLogIsDisabled(t *testing.T) {
+	testSetEnv("LOGXI", "dat*=OFF")
+	var buf bytes.Buffer
+	l := NewLogger3(&buf, "55", NewHappyDevFormatter("55"))
+	err := l.Error("should return an error")
+	if err == nil {
+		t.Error("should return an error")
+	}
+	err = l.Warn("should return an error on warning")
+	if err == nil {
+		t.Error("should return an error on warning")
+	}
+}
+
+func testSetEnv(key, value string) {
+	testResetEnv()
+	os.Setenv("LOGXI", "dat*=OFF")
+	processEnv()
+}

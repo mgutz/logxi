@@ -30,8 +30,8 @@ func NewTextFormatter(name string) *TextFormatter {
 	pidLabel := Separator + KeyMap.PID + AssignmentChar
 
 	var buildKV = func(level string) string {
-		buf := pool.Get()
-		defer pool.Put(buf)
+		buf := pool.get()
+		defer pool.put(buf)
 
 		buf.WriteString(pidLabel)
 		buf.WriteString(pidStr)
@@ -74,8 +74,8 @@ func (tf *TextFormatter) set(buf bufferWriter, key string, val interface{}) {
 
 // Format records a log entry.
 func (tf *TextFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
-	buf := pool.Get()
-	defer pool.Put(buf)
+	buf := pool.get()
+	defer pool.put(buf)
 	buf.WriteString(tf.timeLabel)
 	buf.WriteString(time.Now().Format(timeFormat))
 	buf.WriteString(tf.itoaLevelMap[level])

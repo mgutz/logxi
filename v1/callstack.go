@@ -57,8 +57,8 @@ func (ci *frameInfo) readSource(contextLines int) error {
 }
 
 func (ci *frameInfo) String(color string, sourceColor string) string {
-	buf := pool.Get()
-	defer pool.Put(buf)
+	buf := pool.get()
+	defer pool.put(buf)
 
 	if disableCallstack {
 		buf.WriteString(color)
@@ -219,8 +219,8 @@ func parseDebugStack(stack string, skip int, ignoreRuntime bool) []*frameInfo {
 // /Users/mgutz/goroot/src/runtime/asm_amd64.s:2232 (0x38bf1)
 // 	goexit:
 func trimDebugStack(stack string) string {
-	buf := pool.Get()
-	defer pool.Put(buf)
+	buf := pool.get()
+	defer pool.put(buf)
 	lines := strings.Split(stack, "\n")
 	for i := 0; i < len(lines); i += 2 {
 		sourceLine := lines[i]

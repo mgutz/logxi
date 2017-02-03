@@ -5,12 +5,12 @@ import (
 	"sync"
 )
 
-type BufferPool struct {
+type bufferPool struct {
 	sync.Pool
 }
 
-func NewBufferPool() *BufferPool {
-	return &BufferPool{
+func newBufferPool() *bufferPool {
+	return &bufferPool{
 		Pool: sync.Pool{New: func() interface{} {
 			b := bytes.NewBuffer(make([]byte, 128))
 			b.Reset()
@@ -19,11 +19,11 @@ func NewBufferPool() *BufferPool {
 	}
 }
 
-func (bp *BufferPool) Get() *bytes.Buffer {
+func (bp *bufferPool) get() *bytes.Buffer {
 	return bp.Pool.Get().(*bytes.Buffer)
 }
 
-func (bp *BufferPool) Put(b *bytes.Buffer) {
+func (bp *bufferPool) put(b *bytes.Buffer) {
 	b.Reset()
 	bp.Pool.Put(b)
 }

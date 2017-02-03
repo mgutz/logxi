@@ -10,8 +10,8 @@ func expandTabs(s string, tabLen int) string {
 		return s
 	}
 	parts := strings.Split(s, "\t")
-	buf := pool.Get()
-	defer pool.Put(buf)
+	buf := pool.get()
+	defer pool.put(buf)
 	for _, part := range parts {
 		buf.WriteString(part)
 		buf.WriteString(strings.Repeat(" ", tabLen-len(part)%tabLen))

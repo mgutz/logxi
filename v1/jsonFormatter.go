@@ -132,8 +132,8 @@ func (jf *JSONFormatter) set(buf bufferWriter, key string, val interface{}) {
 
 // Format formats log entry as JSON.
 func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
-	buf := pool.Get()
-	defer pool.Put(buf)
+	buf := pool.get()
+	defer pool.put(buf)
 
 	const lead = `", "`
 	const colon = `":"`
@@ -193,8 +193,8 @@ func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []
 // HappyDevFormatter to ensure any data logged while developing properly
 // logs in production.
 func (jf *JSONFormatter) LogEntry(level int, msg string, args []interface{}) map[string]interface{} {
-	buf := pool.Get()
-	defer pool.Put(buf)
+	buf := pool.get()
+	defer pool.put(buf)
 	jf.Format(buf, level, msg, args)
 	var entry map[string]interface{}
 	err := json.Unmarshal(buf.Bytes(), &entry)
