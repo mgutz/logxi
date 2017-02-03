@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"runtime/debug"
 	"strings"
 
 	"github.com/mgutz/ansi"
@@ -175,7 +174,7 @@ func (hd *HappyDevFormatter) getContext(color string) string {
 	if disableCallstack {
 		return ""
 	}
-	frames := parseDebugStack(string(debug.Stack()), 5, true)
+	frames := stackFrames(7, true)
 	if len(frames) == 0 {
 		return ""
 	}
@@ -220,17 +219,15 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 		}
 
 		if disableCallstack || contextLines == -1 {
-			context = trimDebugStack(string(debug.Stack()))
+			context = trimmedStackTrace()
 			break
 		}
-		frames := parseLogxiStack(entry, 4, true)
-		if frames == nil {
-			frames = parseDebugStack(string(debug.Stack()), 4, true)
-		}
 
+		frames := stackFrames(6, true)
 		if len(frames) == 0 {
 			break
 		}
+
 		errbuf := pool.Get()
 		defer pool.Put(errbuf)
 		lines := 0
@@ -351,7 +348,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 		if level == LevelTrace || (level == LevelWarn && !hasCallStack) {
 			// gets rid of "in "
 			idx := strings.IndexRune(context, 'n')
-			hd.set(buf, "in", context[idx+2:], color)
+			hd.set(buf, "in", context[idx+2:], theme.Value)
 		} else {
 			buf.WriteRune('\n')
 			if !disableColors {
