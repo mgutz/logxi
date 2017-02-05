@@ -1,4 +1,6 @@
 godobin*
-v1/cmd/demo/demo
-v1/cmd/filter/filter
+cmd/demo/demo
+cmd/filter/filter
 *.exe
+.vscode
+vendor/

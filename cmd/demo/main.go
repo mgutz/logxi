@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mgutz/logxi/v1"
+	"github.com/mgutz/logxi"
 )
 
 var errConfig = fmt.Errorf("file not found")
 var dsn = "dbname=testdb"
-var logger log.Logger
+var logger logxi.Logger
 var hostname string
 var configFile = "config.json"
 
@@ -23,9 +23,9 @@ func loadConfig() {
 
 func main() {
 	// create loggers
-	log.Trace("creating loggers")
-	logger = log.New("server")
-	modelsLogger := log.New("models")
+	logxi.Trace("creating loggers")
+	logger = logxi.New("server")
+	modelsLogger := logxi.New("models")
 
 	logger.Debug("Process", "hostname", hostname, "pid", os.Getpid())
 	modelsLogger.Info("Connecting to database...")

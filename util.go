@@ -1,4 +1,4 @@
-package log
+package logxi
 
 import (
 	"path/filepath"
@@ -44,10 +44,13 @@ func indexOfNonSpace(s string) int {
 	return -1
 }
 
-var inLogxiPath = filepath.Join("mgutz", "logxi", "v"+strings.Split(Version, ".")[0])
+var inLogxiPath = filepath.Join("github.com", "mgutz", "logxi")
+var inRuntimePath = filepath.Join("go", "src", "runtime")
 
-func isLogxiCode(filename string) bool {
+func isIgnored(filename string) bool {
+	dirname := filepath.Dir(filename)
 	// need to see errors in tests
-	return strings.HasSuffix(filepath.Dir(filename), inLogxiPath) &&
-		!strings.HasSuffix(filename, "_test.go")
+	ignored := (strings.HasSuffix(dirname, inLogxiPath) && !strings.HasSuffix(filename, "_test.go")) ||
+		strings.HasSuffix(dirname, inRuntimePath)
+	return ignored
 }

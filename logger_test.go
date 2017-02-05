@@ -1,4 +1,4 @@
-package log
+package logxi
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mgutz/ansi"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -280,7 +281,8 @@ func TestAllowSingleParam(t *testing.T) {
 	l = NewLogger3(&buf, "wrnerr", NewHappyDevFormatter("wrnerr"))
 	l.SetLevel(LevelDebug)
 	l.Info("info", 1)
-	assert.True(t, strings.HasSuffix(buf.String(), "_: \x1b[0m1\n"))
+
+	assert.True(t, strings.HasSuffix(buf.String(), "_: 1"+ansi.Reset+"\n"))
 
 	var obj map[string]interface{}
 	buf.Reset()

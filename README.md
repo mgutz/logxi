@@ -1,7 +1,9 @@
 
 ![demo](https://github.com/mgutz/logxi/raw/master/images/demo.gif)
 
-# logxi
+# logxi v2
+
+WIP
 
 log XI is a structured [12-factor app](http://12factor.net/logs)
 logger built for speed and happy development.
@@ -9,7 +11,7 @@ logger built for speed and happy development.
 *   Simpler. Sane no-configuration defaults out of the box.
 *   Faster. See benchmarks vs logrus and log15.
 *   Structured. Key-value pairs are enforced. Logs JSON in production.
-*   Configurable. Enable/disalbe Loggers and levels via env vars.
+*   Configurable. Enable/disable Loggers and levels via env vars.
 *   Friendlier. Happy, colorful and developer friendly logger in terminal.
 *   Helpul. Traces, warnings and errors are emphasized with file, line
     number and callstack.
@@ -27,23 +29,23 @@ logger built for speed and happy development.
 ### Getting Started
 
 ```go
-import "github.com/mgutz/logxi/v1"
+import "github.com/mgutz/logxi"
 
 // create package variable for Logger interface
-var logger log.Logger
+var logger logxi.Logger
 
 func main() {
     // use default logger
     who := "mario"
-    log.Info("Hello", "who", who)
+    logxi.Info("Hello", "who", who)
 
     // create a logger with a unique identifier which
     // can be enabled from environment variables
-    logger = log.New("pkg")
+    logger = logxi.New("pkg")
 
     // specify a writer, use NewConcurrentWriter if it is not concurrent
     // safe
-    modelLogger = log.NewLogger(log.NewConcurrentWriter(os.Stdout), "models")
+    modelLogger = logxi.NewLogger(logxi.NewConcurrentWriter(os.Stdout), "models")
 
     db, err := sql.Open("postgres", "dbname=testdb")
     if err != nil {
@@ -52,7 +54,7 @@ func main() {
 
     fruit := "apple"
     languages := []string{"go", "javascript"}
-    if log.IsDebug() {
+    if logxi.IsDebug() {
         // use key-value pairs after message
         logger.Debug("OK", "fruit", fruit, "languages", languages)
     }
@@ -102,8 +104,8 @@ This logger package
 *   Has level guards to avoid the cost of building arguments. Get in the
     habit of using guards.
 
-        if log.IsDebug() {
-            log.Debug("some ", "key1", expensive())
+        if logxi.IsDebug() {
+            logxi.Debug("some ", "key1", expensive())
         }
 
 *   Conforms to a logging interface so it can be replaced.
@@ -128,25 +130,25 @@ This logger package
 *   Standardizes on key-value pair argument sequence
 
     ```go
-log.Debug("inside Fn()", "key1", value1, "key2", value2)
+logxi.Debug("inside Fn()", "key1", value1, "key2", value2)
 
 // instead of this
-log.WithFields(logrus.Fields{"m": "pkg", "key1": value1, "key2": value2}).Debug("inside fn()")
+logxi.WithFields(logrus.Fields{"m": "pkg", "key1": value1, "key2": value2}).Debug("inside fn()")
 ```
     logxi logs `FIX_IMBALANCED_PAIRS =>` if key-value pairs are imbalanced
 
-    `log.Warn and log.Error` are special cases and return error:
+    `logxi.Warn and logxi.Error` are special cases and return error:
 
     ```go
-return log.Error(msg)               //=> fmt.Errorf(msg)
-return log.Error(msg, "err", err)   //=> err
+return logxi.Error(msg)               //=> fmt.Errorf(msg)
+return logxi.Error(msg, "err", err)   //=> err
 ```
 
 *   Supports Color Schemes (256 colors)
 
-    `log.New` creates a logger that supports color schemes
+    `logxi.New` creates a logger that supports color schemes
 
-        logger := log.New("mylog")
+        logger := logxi.New("mylog")
 
     To customize scheme
 
@@ -160,8 +162,8 @@ return log.Error(msg, "err", err)   //=> err
 
     ```go
 func TestErrNotFound() {
-    log.Suppress(true)
-    defer log.Suppress(false)
+    logxi.Suppress(true)
+    defer logxi.Suppress(false)
     ...
 }
 ```

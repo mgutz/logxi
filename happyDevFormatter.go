@@ -1,10 +1,9 @@
-package log
+package logxi
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"runtime/debug"
 	"strings"
 
 	"github.com/mgutz/ansi"
@@ -64,8 +63,6 @@ func parseTheme(theme string) *colorScheme {
 		if c == "" {
 			c = wildcard
 		}
-		//fmt.Printf("plain=%b [%s] %s=%q\n", ansi.DefaultFG, key, style, c)
-
 		return c
 	}
 	wildcard = color("*")
@@ -110,8 +107,6 @@ func parseTheme(theme string) *colorScheme {
 // SHOULD NOT be used in production for extended period of time. However, it
 // works fine in SSH terminals and binary deployments.
 type HappyDevFormatter struct {
-	name string
-	col  int
 	// always use the production formatter
 	jsonFormatter *JSONFormatter
 }
@@ -120,26 +115,25 @@ type HappyDevFormatter struct {
 func NewHappyDevFormatter(name string) *HappyDevFormatter {
 	jf := NewJSONFormatter(name)
 	return &HappyDevFormatter{
-		name:          name,
 		jsonFormatter: jf,
 	}
 }
 
-func (hd *HappyDevFormatter) writeKey(buf bufferWriter, key string) {
+func (hd *HappyDevFormatter) writeKey(buf bufferWriter, key string, col int) int {
 	// assumes this is not the first key
-	hd.writeString(buf, Separator)
+	col = hd.writeString(buf, Separator, col)
 	if key == "" {
-		return
+		return col
 	}
-	buf.WriteString(theme.Key)
-	hd.writeString(buf, key)
-	hd.writeString(buf, AssignmentChar)
-	if !disableColors {
-		buf.WriteString(ansi.Reset)
-	}
+	writeColor(buf, theme.Key)
+	col = hd.writeString(buf, key, col)
+	col = hd.writeString(buf, AssignmentChar, col)
+	// no need to write reset here, key is ALWAYS followed by value
+	//writeColor(buf, ansi.Reset)
+	return col
 }
 
-func (hd *HappyDevFormatter) set(buf bufferWriter, key string, value interface{}, color string) {
+func (hd *HappyDevFormatter) set(buf bufferWriter, key string, value interface{}, color string, col int) int {
 	var str string
 	if s, ok := value.(string); ok {
 		str = s
@@ -149,69 +143,68 @@ func (hd *HappyDevFormatter) set(buf bufferWriter, key string, value interface{}
 		str = fmt.Sprintf("%v", value)
 	}
 	val := strings.Trim(str, "\n ")
-	if (isPretty && key != "") || hd.col+len(key)+2+len(val) >= maxCol {
+	if (isPretty && key != "") || col+len(key)+2+len(val) >= maxCol {
 		buf.WriteString("\n")
-		hd.col = 0
-		hd.writeString(buf, indent)
+		col = 0
+		col = hd.writeString(buf, indent, col)
 	}
-	hd.writeKey(buf, key)
-	if color != "" {
-		buf.WriteString(color)
-	}
-	hd.writeString(buf, val)
-	if color != "" && !disableColors {
-		buf.WriteString(ansi.Reset)
-	}
+	col = hd.writeKey(buf, key, col)
+	col = hd.writeColoredString(buf, val, color, col)
+	return col
 }
 
 // Write a string and tracks the position of the string so we can break lines
 // cleanly. Do not send ANSI escape sequences, just raw strings
-func (hd *HappyDevFormatter) writeString(buf bufferWriter, s string) {
+func (hd *HappyDevFormatter) writeString(buf bufferWriter, s string, col int) int {
 	buf.WriteString(s)
-	hd.col += len(s)
+	return col + len(s)
 }
 
-func (hd *HappyDevFormatter) getContext(color string) string {
+func (hd *HappyDevFormatter) writeColoredString(buf bufferWriter, s string, color string, col int) int {
+	writeColor(buf, color)
+	buf.WriteString(s)
+	writeColor(buf, ansi.Reset)
+	return col + len(s)
+}
+
+func (hd *HappyDevFormatter) sourceContext(color string, skip int) string {
 	if disableCallstack {
 		return ""
 	}
-	frames := parseDebugStack(string(debug.Stack()), 5, true)
+
+	buf := pool.Get()
+	defer pool.Put(buf)
+
+	frames := callstack(skip)
+	// ignored runtime
+	//frames := parseDebugStack(string(debug.Stack()), 5, true)
 	if len(frames) == 0 {
 		return ""
 	}
 	for _, frame := range frames {
 		context := frame.String(color, theme.Source)
 		if context != "" {
-			return context
+			buf.WriteString(context)
+			buf.WriteString("\n")
 		}
 	}
-	return ""
+	return buf.String()
 }
 
-func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interface{}) (message string, context string, color string) {
-
+func (hd *HappyDevFormatter) levelSourceContext(level int, entry map[string]interface{}) (message string, context string, color string) {
 	switch level {
-	case LevelTrace:
-		color = theme.Trace
-		context = hd.getContext(color)
-		context += "\n"
-	case LevelDebug:
-		color = theme.Debug
+	default:
+		panic("should never get here")
 	case LevelInfo:
 		color = theme.Info
-	// case LevelWarn:
-	// 	color = theme.Warn
-	// 	context = hd.getContext(color)
-	// 	context += "\n"
 	case LevelWarn, LevelError, LevelFatal:
-
 		// warnings return an error but if it does not have an error
 		// then print line info only
 		if level == LevelWarn {
 			color = theme.Warn
 			kv := entry[KeyMap.CallStack]
 			if kv == nil {
-				context = hd.getContext(color)
+				context = hd.sourceContext(color, 5)
 				context += "\n"
 				break
 			}
@@ -219,39 +212,13 @@ func (hd *HappyDevFormatter) getLevelContext(level int, entry map[string]interfa
 			color = theme.Error
 		}
 
-		if disableCallstack || contextLines == -1 {
-			context = trimDebugStack(string(debug.Stack()))
-			break
-		}
-		frames := parseLogxiStack(entry, 4, true)
-		if frames == nil {
-			frames = parseDebugStack(string(debug.Stack()), 4, true)
-		}
-
-		if len(frames) == 0 {
-			break
-		}
-		errbuf := pool.Get()
-		defer pool.Put(errbuf)
-		lines := 0
-		for _, frame := range frames {
-			err := frame.readSource(contextLines)
-			if err != nil {
-				// by setting to empty, the original stack is used
-				errbuf.Reset()
-				break
-			}
-			ctx := frame.String(color, theme.Source)
-			if ctx == "" {
-				continue
-			}
-			errbuf.WriteString(ctx)
-			errbuf.WriteRune('\n')
-			lines++
-		}
-		context = errbuf.String()
-	default:
-		panic("should never get here")
+		context = hd.sourceContext(color, 5)
+	case LevelTrace:
+		color = theme.Trace
+		context = hd.sourceContext(color, 5)
+		context += "\n"
+	case LevelDebug:
+		color = theme.Debug
 	}
 	return message, context, color
 }
@@ -294,29 +261,26 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	entry := hd.jsonFormatter.LogEntry(level, msg, args)
 
 	// reset the column tracker used for fancy formatting
-	hd.col = 0
+	col := 0
 
 	// timestamp
-	buf.WriteString(theme.Misc)
-	hd.writeString(buf, entry[KeyMap.Time].(string))
-	if !disableColors {
-		buf.WriteString(ansi.Reset)
-	}
+	col = hd.writeColoredString(buf, entry[KeyMap.Time].(string), theme.Misc, col)
 
 	// emphasize warnings and errors
-	message, context, color := hd.getLevelContext(level, entry)
+	message, context, color := hd.levelSourceContext(level, entry)
 	if message == "" {
 		message = entry[KeyMap.Message].(string)
 	}
 
 	// DBG, INF ...
-	hd.set(buf, "", entry[KeyMap.Level].(string), color)
-	// logger name
-	hd.set(buf, "", entry[KeyMap.Name], theme.Misc)
-	// message from user
-	hd.set(buf, "", message, theme.Message)
+	col = hd.set(buf, "", entry[KeyMap.Level].(string), color, col)
 
-	// Preserve key order in the sequencethey were added by developer.This
+	// logger name
+	col = hd.set(buf, "", entry[KeyMap.Name], theme.Misc, col)
+	// message from user
+	col = hd.set(buf, "", message, theme.Message, col)
+
+	// Preserve key order in the sequence they were declared. This
 	// makes it easier for developers to follow the log.
 	order := []string{}
 	lenArgs := len(args)
@@ -339,7 +303,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 		} else if isReserved {
 			continue
 		}
-		hd.set(buf, key, entry[key], theme.Value)
+		col = hd.set(buf, key, entry[key], theme.Value, col)
 	}
 
 	addLF := true
@@ -351,23 +315,26 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 		if level == LevelTrace || (level == LevelWarn && !hasCallStack) {
 			// gets rid of "in "
 			idx := strings.IndexRune(context, 'n')
-			hd.set(buf, "in", context[idx+2:], color)
+			col = hd.set(buf, "in", context[idx+2:], color, col)
 		} else {
 			buf.WriteRune('\n')
-			if !disableColors {
-				buf.WriteString(color)
-			}
 			addLF = context[len(context)-1:len(context)] != "\n"
+			writeColor(buf, color)
 			buf.WriteString(context)
-			if !disableColors {
-				buf.WriteString(ansi.Reset)
-			}
+			writeColor(buf, ansi.Reset)
 		}
 	} else if hasCallStack {
-		hd.set(buf, "", entry[KeyMap.CallStack], color)
+		col = hd.set(buf, "", entry[KeyMap.CallStack], color, col)
 	}
 	if addLF {
 		buf.WriteRune('\n')
 	}
 	buf.WriteTo(writer)
+}
+
+func writeColor(buf bufferWriter, code string) {
+	if code == "" || disableColors {
+		return
+	}
+	buf.WriteString(code)
 }

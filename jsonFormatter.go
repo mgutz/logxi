@@ -1,17 +1,18 @@
-package log
+package logxi
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
 	"reflect"
-	"runtime/debug"
 	"strconv"
 	"time"
+	"unicode/utf8"
 )
 
 type bufferWriter interface {
 	Write(p []byte) (nn int, err error)
+	WriteByte(byte) error
 	WriteRune(r rune) (n int, err error)
 	WriteString(s string) (n int, err error)
 }
@@ -45,13 +46,25 @@ func (jf *JSONFormatter) writeString(buf bufferWriter, s string) {
 
 func (jf *JSONFormatter) writeError(buf bufferWriter, err error) {
 	jf.writeString(buf, err.Error())
-	jf.set(buf, KeyMap.CallStack, string(debug.Stack()))
+	stack := callstack(7)
+	b, err := json.Marshal(stack)
+	if err != nil {
+		InternalLog.Error("Could not json.Marshal callstack.", "callstack", stack)
+		buf.WriteString(`"Could not marshal this key's string"`)
+		return
+	}
+	jf.set(buf, KeyMap.CallStack, b)
 	return
 }
 
 func (jf *JSONFormatter) appendValue(buf bufferWriter, val interface{}) {
 	if val == nil {
 		buf.WriteString("null")
+		return
+	}
+
+	if b, ok := val.([]byte); ok {
+		buf.Write(b)
 		return
 	}
 
@@ -73,12 +86,16 @@ func (jf *JSONFormatter) appendValue(buf bufferWriter, val interface{}) {
 		kind = value.Kind()
 	}
 	switch kind {
+	case reflect.String:
+		appendString(buf, value.String())
+
 	case reflect.Bool:
 		if value.Bool() {
 			buf.WriteString("true")
 		} else {
 			buf.WriteString("false")
 		}
+
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		buf.WriteString(strconv.FormatInt(value.Int(), 10))
 
@@ -102,14 +119,7 @@ func (jf *JSONFormatter) appendValue(buf bufferWriter, val interface{}) {
 
 		if err != nil {
 			InternalLog.Error("Could not json.Marshal value: ", "formatter", "JSONFormatter", "err", err.Error())
-			if s, ok := val.(string); ok {
-				b, err = json.Marshal(s)
-			} else if s, ok := val.(fmt.Stringer); ok {
-				b, err = json.Marshal(s.String())
-			} else {
-				b, err = json.Marshal(fmt.Sprintf("%#v", val))
-			}
-
+			b, err = json.Marshal(fmt.Sprintf("%#v", val))
 			if err != nil {
 				// should never get here, but JSONFormatter should never panic
 				msg := "Could not Sprintf value"
@@ -199,7 +209,56 @@ func (jf *JSONFormatter) LogEntry(level int, msg string, args []interface{}) map
 	var entry map[string]interface{}
 	err := json.Unmarshal(buf.Bytes(), &entry)
 	if err != nil {
-		panic("Unable to unmarhsal entry from JSONFormatter: " + err.Error() + " \"" + string(buf.Bytes()) + "\"")
+		panic("Unable to unmarshal entry from JSONFormatter: " + err.Error() + " \"" + string(buf.Bytes()) + "\"")
 	}
 	return entry
+}
+
+const _hex = "0123456789abcdef"
+
+// CREDIT TO https://raw.githubusercontent.com/uber-go/zap/master/json_encoder.go
+
+// safeAddString JSON-escapes a string and appends it to the internal buffer.
+// Unlike the standard library's escaping function, it doesn't attempt to
+// protect the user from browser vulnerabilities or JSONP-related problems.
+func appendString(buf bufferWriter, s string) {
+	buf.WriteRune('"')
+	for i := 0; i < len(s); {
+		if b := s[i]; b < utf8.RuneSelf {
+			i++
+			if 0x20 <= b && b != '\\' && b != '"' {
+				buf.WriteByte(b)
+				continue
+			}
+			switch b {
+			case '\\', '"':
+				buf.WriteRune('\\')
+				buf.WriteByte(b)
+			case '\n':
+				buf.WriteRune('\\')
+				buf.WriteRune('n')
+			case '\r':
+				buf.WriteRune('\\')
+				buf.WriteRune('r')
+			case '\t':
+				buf.WriteRune('\\')
+				buf.WriteRune('t')
+			default:
+				// Encode bytes < 0x20, except for the escape sequences above.
+				buf.WriteString(`\u00`)
+				buf.WriteByte(_hex[b>>4])
+				buf.WriteByte(_hex[b&0xF])
+			}
+			continue
+		}
+		c, size := utf8.DecodeRuneInString(s[i:])
+		if c == utf8.RuneError && size == 1 {
+			buf.WriteString(`\ufffd`)
+			i++
+			continue
+		}
+		buf.WriteString(s[i : i+size])
+		i += size
+	}
+	buf.WriteRune('"')
 }

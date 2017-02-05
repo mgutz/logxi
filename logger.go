@@ -1,4 +1,4 @@
-package log
+package logxi
 
 /*
 http://en.wikipedia.org/wiki/Syslog
@@ -113,7 +113,7 @@ var LevelMap = map[int]string{
 	LevelTrace: "TRC",
 }
 
-// LevelMap maps int enums to string level.
+// LevelAtoi maps int enums to string level.
 var LevelAtoi = map[string]int{
 	"OFF": LevelOff,
 	"FTL": LevelFatal,

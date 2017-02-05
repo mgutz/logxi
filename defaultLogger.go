@@ -1,4 +1,4 @@
-package log
+package logxi
 
 import (
 	"fmt"
@@ -80,7 +80,6 @@ func (l *DefaultLogger) Warn(msg string, args ...interface{}) error {
 				return err
 			}
 		}
-
 		return nil
 	}
 	return nil

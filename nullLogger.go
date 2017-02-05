@@ -1,4 +1,4 @@
-package log
+package logxi
 
 // NullLog is a noop logger. Think of it as /dev/null.
 var NullLog = &NullLogger{}

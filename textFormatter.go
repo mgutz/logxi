@@ -1,9 +1,8 @@
-package log
+package logxi
 
 import (
 	"fmt"
 	"io"
-	"runtime/debug"
 	"time"
 )
 
@@ -66,7 +65,7 @@ func (tf *TextFormatter) set(buf bufferWriter, key string, val interface{}) {
 	if err, ok := val.(error); ok {
 		buf.WriteString(err.Error())
 		buf.WriteRune('\n')
-		buf.WriteString(string(debug.Stack()))
+		buf.WriteString(fmt.Sprintf("%#v", callstack(5)))
 		return
 	}
 	buf.WriteString(fmt.Sprintf("%v", val))

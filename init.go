@@ -1,4 +1,4 @@
-package log
+package logxi
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/mattn/go-colorable"
 	"github.com/mattn/go-isatty"
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 // scream so user fixes it
@@ -21,7 +22,7 @@ func badKeyAtIndex(i int) string {
 	return "BAD_KEY_AT_INDEX_" + strconv.Itoa(i)
 }
 
-// DefaultLogLog is the default log for this package.
+// DefaultLog is the default log for this package.
 var DefaultLog Logger
 
 // Suppress supresses logging and is useful to supress output in
@@ -36,7 +37,7 @@ func Suppress(quiet bool) {
 
 var silent bool
 
-// internalLog is the logger used by logxi itself
+// InternalLog is the logger used by logxi itself
 var InternalLog Logger
 
 type loggerMap struct {
@@ -52,7 +53,7 @@ func (lm *loggerMap) set(name string, logger Logger) {
 	lm.loggers[name] = logger
 }
 
-// The assignment character between key-value pairs
+// AssignmentChar is the assignment character between key-value pairs
 var AssignmentChar = ": "
 
 // Separator is the separator to use between key value pairs
@@ -139,8 +140,12 @@ func setDefaults(isTerminal bool) {
 		disableColors = true
 	}
 
+	home, err = homedir.Dir()
+	if err != nil {
+		panic(err)
+	}
+
 	if isWindows {
-		home = os.Getenv("HOMEPATH")
 		if os.Getenv("ConEmuANSI") == "ON" {
 			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue+h,source=yellow,TRC,DBG,WRN=yellow+h,INF=green+h,ERR=red+h"
 		} else {
@@ -150,7 +155,6 @@ func setDefaults(isTerminal bool) {
 		// DefaultScheme is a color scheme optimized for dark background
 		// but works well with light backgrounds
 	} else {
-		home = os.Getenv("HOME")
 		term := os.Getenv("TERM")
 		if term == "xterm-256color" {
 			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue,source=88,TRC,DBG,WRN=yellow,INF=green+h,ERR=red+h,message=magenta+h"
@@ -195,6 +199,6 @@ func init() {
 	RegisterFormatFactory(FormatJSON, formatFactory)
 	ProcessEnv(readFromEnviron())
 
-	// package logger for users
+	// default package logger
 	DefaultLog = New("~")
 }

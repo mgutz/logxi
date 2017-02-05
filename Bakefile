@@ -1,0 +1,6 @@
+#. Replaces text in files
+function replace-text {
+	# excludes ./vendor
+	find . -path ./vendor -prune -o -name "*.go" -print | xargs sed -i 's|package log|package logxi|g'
+}
+

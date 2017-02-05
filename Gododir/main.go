@@ -78,7 +78,7 @@ func typeCommand(description, commandStr string) {
 	fmt.Fprintln(stdout, "")
 }
 
-var version = "v1"
+var version = "v2"
 
 func relv(p string) string {
 	return filepath.Join(version, p)
@@ -89,11 +89,11 @@ func absv(p string) string {
 
 func tasks(p *do.Project) {
 	p.Task("bench", nil, func(c *do.Context) {
-		c.Run("LOGXI=* go test -bench . -benchmem", do.M{"$in": "v1/bench"})
+		c.Run("LOGXI=* go test -bench . -benchmem", do.M{"$in": "bench"})
 	})
 
 	p.Task("build", nil, func(c *do.Context) {
-		c.Run("go build", do.M{"$in": "v1/cmd/demo"})
+		c.Run("go build", do.M{"$in": "cmd/demo"})
 	})
 
 	p.Task("linux-build", nil, func(c *do.Context) {
@@ -101,7 +101,7 @@ func tasks(p *do.Project) {
 			set -e
 			GOOS=linux GOARCH=amd64 go build
 			scp -F ~/projects/provision/matcherino/ssh.vagrant.config demo devmaster1:~/.
-		`, do.M{"$in": "v1/cmd/demo"})
+		`, do.M{"$in": "cmd/demo"})
 	})
 
 	p.Task("etcd-set", nil, func(c *do.Context) {
@@ -128,16 +128,16 @@ func tasks(p *do.Project) {
 	})
 
 	p.Task("demo", nil, func(c *do.Context) {
-		c.Run("go run main.go", do.M{"$in": "v1/cmd/demo"})
+		c.Run("go run main.go", do.M{"$in": "cmd/demo"})
 	})
 
 	p.Task("demo2", nil, func(c *do.Context) {
-		c.Run("go run main.go", do.M{"$in": "v1/cmd/demo2"})
+		c.Run("go run main.go", do.M{"$in": "cmd/demo2"})
 	})
 
 	p.Task("filter", do.S{"build"}, func(c *do.Context) {
-		c.Run("go build", do.M{"$in": "v1/cmd/filter"})
-		c.Bash("LOGXI=* ../demo/demo | ./filter", do.M{"$in": "v1/cmd/filter"})
+		c.Run("go build", do.M{"$in": "cmd/filter"})
+		c.Bash("LOGXI=* ../demo/demo | ./filter", do.M{"$in": "cmd/filter"})
 	})
 
 	p.Task("gifcast", do.S{"build"}, func(*do.Context) {
@@ -184,7 +184,7 @@ func tasks(p *do.Project) {
 
 		for _, cmd := range commands {
 			typeCommand(cmd.description, cmd.command)
-			do.Bash(cmd.command, do.M{"$in": "v1/cmd/demo"})
+			do.Bash(cmd.command, do.M{"$in": "cmd/demo"})
 			time.Sleep(3500 * time.Millisecond)
 		}
 
@@ -197,20 +197,20 @@ func tasks(p *do.Project) {
 	})
 
 	p.Task("bench-allocs", nil, func(c *do.Context) {
-		c.Bash(`go test -bench . -benchmem -run=none | grep "allocs\|^Bench"`, do.M{"$in": "v1/bench"})
+		c.Bash(`go test -bench . -benchmem -run=none | grep "allocs/\|^Bench"`, do.M{"$in": "bench"})
 	}).Description("Runs benchmarks with allocs")
 
 	p.Task("benchjson", nil, func(c *do.Context) {
-		c.Bash("go test -bench=BenchmarkLoggerJSON -benchmem", do.M{"$in": "v1/bench"})
+		c.Bash("go test -bench=BenchmarkLoggerJSON -benchmem", do.M{"$in": "bench"})
 	})
 
 	p.Task("test", nil, func(c *do.Context) {
-		c.Run("LOGXI=* go test", do.M{"$in": "v1"})
+		c.Run("LOGXI=* go test")
 		//Run("LOGXI=* go test -run=TestColors", M{"$in": "v1"})
 	})
 
 	p.Task("isolate", do.S{"build"}, func(c *do.Context) {
-		c.Bash("LOGXI=* LOGXI_FORMAT=fit,maxcol=80,t=04:05.000,context=2 demo", do.M{"$in": "v1/cmd/demo"})
+		c.Bash("LOGXI=* LOGXI_FORMAT=fit,maxcol=80,t=04:05.000,context=2 demo", do.M{"$in": "cmd/demo"})
 	})
 
 	p.Task("install", nil, func(c *do.Context) {

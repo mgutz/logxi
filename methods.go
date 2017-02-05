@@ -1,4 +1,4 @@
-package log
+package logxi
 
 // Trace logs a trace statement. On terminals file and line number are logged.
 func Trace(msg string, args ...interface{}) {

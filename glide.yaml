@@ -1,0 +1,23 @@
+package: github.com/mgutz/logxi
+import:
+- package: github.com/mattn/go-colorable
+  version: v0.0.6
+- package: github.com/mattn/go-isatty
+  version: v0.0.1
+- package: github.com/mgutz/ansi
+- package: gopkg.in/godo.v2
+  version: v2.0.9
+- package: github.com/immortal/logrotate
+  version: ~0.2.0
+- package: github.com/go-stack/stack
+  version: v1.5.2
+- package: github.com/mitchellh/go-homedir
+testImport:
+- package: github.com/Sirupsen/logrus
+  version: v0.10.0
+- package: github.com/stretchr/testify
+  version: v1.1.4
+  subpackages:
+  - assert
+- package: gopkg.in/inconshreveable/log15.v2
+  version: v2.11

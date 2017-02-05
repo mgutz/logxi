@@ -1,4 +1,4 @@
-package log
+package logxi
 
 var formatterCreators = map[string]CreateFormatterFunc{}
 
