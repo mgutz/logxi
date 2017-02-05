@@ -128,8 +128,7 @@ func (hd *HappyDevFormatter) writeKey(buf bufferWriter, key string, col int) int
 	writeColor(buf, theme.Key)
 	col = hd.writeString(buf, key, col)
 	col = hd.writeString(buf, AssignmentChar, col)
-	// no need to write reset here, key is ALWAYS followed by value
-	//writeColor(buf, ansi.Reset)
+	writeColor(buf, ansi.Reset)
 	return col
 }
 

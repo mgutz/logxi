@@ -157,9 +157,9 @@ func setDefaults(isTerminal bool) {
 	} else {
 		term := os.Getenv("TERM")
 		if term == "xterm-256color" {
-			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue,source=88,TRC,DBG,WRN=yellow,INF=green+h,ERR=red+h,message=magenta+h"
+			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue,source=black+h,TRC,DBG,WRN=yellow,INF=green+h,ERR=red+h,message=magenta+h"
 		} else {
-			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue,source=magenta,TRC,DBG,WRN=yellow,INF=green,ERR=red+h"
+			defaultLogxiColorsEnv = "key=cyan+h,value,misc=blue,source,TRC,DBG,WRN=yellow,INF=green,ERR=red+h"
 		}
 	}
 }

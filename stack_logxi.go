@@ -83,6 +83,8 @@ func (f Frame) String(color string, sourceColor string) string {
 	// trim spaces at start of source code based on common spaces
 	var skipSpaces = 1000
 
+	const showArrowThreshold = 0
+
 	sourceContext, err := readSourceContext(file, line)
 	if err != nil {
 		InternalLog.Warn("Could not get source context", "path", file)
@@ -105,12 +107,12 @@ func (f Frame) String(color string, sourceColor string) string {
 
 		if li.line == line {
 			buf.WriteString(color)
-			if contextLines > 2 {
+			if contextLines > showArrowThreshold {
 				format = fmt.Sprintf("%%s=> %%%dd:  %%s\n", linenoWidth)
 			}
 		} else {
 			buf.WriteString(sourceColor)
-			if contextLines > 2 {
+			if contextLines > showArrowThreshold {
 				// account for "=> "
 				format = fmt.Sprintf("%%s%%%dd:  %%s\n", linenoWidth+3)
 			}
