@@ -1,31 +1,0 @@
---- FAIL: TestEnvLOGXI (0.00s)
-	assertions.go:235:                         	Error Trace:	logger_test.go:33
-			Error:		Not equal: 4 (expected)
-			        != 3 (actual)
-			Messages:	Unset LOGXI defaults to *:WRN with TTY
-		
-	assertions.go:241:                         	Error Trace:	logger_test.go:47
-			Error:		Not equal: 4 (expected)
-			        != 3 (actual)
-		
---- FAIL: TestComplexKeys (0.00s)
-	assertions.go:241:                         	Error Trace:	logger_test.go:131
-			Error:		func (assert.PanicTestFunc)(0x48d460) should panic
-				Panic value:	<nil>
-		
-	assertions.go:241:                         	Error Trace:	logger_test.go:135
-			Error:		func (assert.PanicTestFunc)(0x48d5e0) should panic
-				Panic value:	<nil>
-		
->>>>>>>>>>>>>>>>>>>>>>>>>>>>ERR [34m2017-02-05T07:12:36-0800[0m [32mINF[0m [34mwrnerr[0m info[0m [96m_: [0m1[0m
-
---- FAIL: TestAllowSingleParam (0.00s)
-	assertions.go:241:                         	Error Trace:	logger_test.go:285
-			Error:		Should be true
-		
-FAIL
-exit status 1
-FAIL	github.com/mgutz/logxi	0.006s
-[1;31mERR[0m [1;31m"test": exit status 1
-line=0
-[0m

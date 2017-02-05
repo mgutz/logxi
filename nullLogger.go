@@ -1,5 +1,7 @@
 package logxi
 
+import "github.com/pkg/errors"
+
 // NullLog is a noop logger. Think of it as /dev/null.
 var NullLog = &NullLogger{}
 
@@ -20,12 +22,22 @@ func (l *NullLogger) Info(msg string, args ...interface{}) {
 
 // Warn logs a warn entry.
 func (l *NullLogger) Warn(msg string, args ...interface{}) error {
+	for _, arg := range args {
+		if err, ok := arg.(error); ok {
+			return errors.Wrap(err, msg)
+		}
+	}
 	return nil
 }
 
 // Error logs an error entry.
 func (l *NullLogger) Error(msg string, args ...interface{}) error {
-	return nil
+	for _, arg := range args {
+		if err, ok := arg.(error); ok {
+			return errors.Wrap(err, msg)
+		}
+	}
+	return errors.New(msg)
 }
 
 // Fatal logs a fatal entry then panics.

@@ -127,6 +127,15 @@ func (f Frame) String(color string, sourceColor string) string {
 	return buf.String()
 }
 
+func callstack(skip int) StackTrace {
+	return callers().StackTrace()[skip:]
+}
+
+type sourceLine struct {
+	line int
+	text string
+}
+
 func readSourceContext(file string, line int) ([]sourceLine, error) {
 	if line == 0 || disableCallstack {
 		return nil, nil

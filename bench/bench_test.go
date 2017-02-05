@@ -9,6 +9,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/mgutz/logxi"
+	"github.com/uber-go/zap"
 	"gopkg.in/inconshreveable/log15.v2"
 )
 
@@ -78,7 +79,6 @@ func BenchmarkLogComplex(b *testing.B) {
 }
 
 func BenchmarkLogxi(b *testing.B) {
-	//fmt.Println("")
 	stdout := logxi.NewConcurrentWriter(writer)
 	l := logxi.NewLogger3(stdout, "bench", logxi.NewJSONFormatter("bench"))
 	l.SetLevel(logxi.LevelDebug)
@@ -169,6 +169,37 @@ func BenchmarkLog15Complex(b *testing.B) {
 		l.Info("info", "key", 1, "obj", testObject)
 		l.Warn("warn", "key", 1, "obj", testObject)
 		l.Error("error", "key", 1, "obj", testObject)
+	}
+	b.StopTimer()
+}
+
+func BenchmarkZap(b *testing.B) {
+	l := zap.New(
+		zap.NewJSONEncoder(),
+		zap.DiscardOutput,
+	)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		l.Debug("debug", zap.Int64("key", 1), zap.String("key2", "string"), zap.Bool("key3", false))
+		l.Info("info", zap.Int64("key", 1), zap.String("key2", "string"), zap.Bool("key3", false))
+		l.Warn("warn", zap.Int64("key", 1), zap.String("key2", "string"), zap.Bool("key3", false))
+		l.Error("error", zap.Int64("key", 1), zap.String("key2", "string"), zap.Bool("key3", false))
+	}
+	b.StopTimer()
+}
+
+func BenchmarkZapComplex(b *testing.B) {
+	l := zap.New(
+		zap.NewJSONEncoder(),
+		zap.DiscardOutput,
+	)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		l.Debug("debug", zap.Int64("key", 1), zap.Object("obj", testObject))
+		l.Info("info", zap.Int64("key", 1), zap.Object("obj", testObject))
+		l.Warn("warn", zap.Int64("key", 1), zap.Object("obj", testObject))
+		l.Error("error", zap.Int64("key", 1), zap.Object("obj", testObject))
 	}
 	b.StopTimer()
 }

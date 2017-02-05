@@ -24,7 +24,7 @@ logger built for speed and happy development.
 
 ### Installation
 
-    go get -u github.com/mgutz/logxi/v1
+    go get -u github.com/mgutz/logxi
 
 ### Getting Started
 
@@ -127,7 +127,7 @@ This logger package
             // Error, Fatal not needed, those SHOULD always be logged
         }
 
-*   Standardizes on key-value pair argument sequence
+*   Standardizes on key-value pair argument sequence for structured logging
 
     ```go
 logxi.Debug("inside Fn()", "key1", value1, "key2", value2)

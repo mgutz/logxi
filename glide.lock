@@ -1,5 +1,5 @@
-hash: 768ae1c8d8c1af3820f94df3366c2736ecbf0de01de66fbce4108931f6464772
-updated: 2017-02-05T06:17:23.565226405-08:00
+hash: 70a4f2920ec7d31fbdf9560d5d8f3ec565a74a9c338361859b6556687325969e
+updated: 2017-02-05T11:51:10.112990152-08:00
 imports:
 - name: github.com/go-stack/stack
   version: 100eb0c0a9c5b306ca2fb4f165df21d80ada4b82
@@ -25,6 +25,12 @@ imports:
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/nozzle/throttler
   version: d9b45f19996c645d38c9266d1f5cf1990e930119
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: github.com/uber-go/zap
+  version: a5783ee4b216a927da8f839c45cfbf9d694e1467
+  subpackages:
+  - '...'
 - name: golang.org/x/crypto
   version: 5bcd134fee4dd1475da17714aac19c0aa0142e2f
   subpackages:
@@ -55,6 +61,8 @@ testImports:
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
+- name: github.com/uber-go/atomic
+  version: 3b8db5e93c4c02efbc313e17b2e796b0914a01fb
 - name: gopkg.in/inconshreveable/log15.v2
   version: b105bd37f74e5d9dc7b6ad7806715c7a2b83fd3f
   subpackages:
