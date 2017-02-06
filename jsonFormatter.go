@@ -3,7 +3,6 @@ package logxi
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"reflect"
 	"strconv"
 	"time"
@@ -46,7 +45,7 @@ func (jf *JSONFormatter) writeString(buf bufferWriter, s string) {
 
 func (jf *JSONFormatter) writeError(buf bufferWriter, err error) {
 	jf.writeString(buf, err.Error())
-	stack := callstack(7)
+	stack := callstack(7, -1, false)
 	b, err := json.Marshal(stack)
 	if err != nil {
 		InternalLog.Error("Could not json.Marshal callstack.", "callstack", stack)
@@ -141,7 +140,7 @@ func (jf *JSONFormatter) set(buf bufferWriter, key string, val interface{}) {
 }
 
 // Format formats log entry as JSON.
-func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
+func (jf *JSONFormatter) Format(level int, msg string, args []interface{}, startFrame int) ([]byte, error) {
 	buf := pool.Get()
 	defer pool.Put(buf)
 
@@ -196,20 +195,22 @@ func (jf *JSONFormatter) Format(writer io.Writer, level int, msg string, args []
 		}
 	}
 	buf.WriteString("}\n")
-	buf.WriteTo(writer)
+
+	return buf.Bytes(), nil
 }
 
 // LogEntry returns the JSON log entry object built by Format(). Used by
 // HappyDevFormatter to ensure any data logged while developing properly
 // logs in production.
 func (jf *JSONFormatter) LogEntry(level int, msg string, args []interface{}) map[string]interface{} {
-	buf := pool.Get()
-	defer pool.Put(buf)
-	jf.Format(buf, level, msg, args)
-	var entry map[string]interface{}
-	err := json.Unmarshal(buf.Bytes(), &entry)
+	b, err := jf.Format(level, msg, args, 0)
 	if err != nil {
-		panic("Unable to unmarshal entry from JSONFormatter: " + err.Error() + " \"" + string(buf.Bytes()) + "\"")
+		panic("Unable to format entry from JSONFormatter: " + err.Error() + " \"" + string(b) + "\"")
+	}
+	var entry map[string]interface{}
+	err = json.Unmarshal(b, &entry)
+	if err != nil {
+		panic("Unable to unmarshal entry from JSONFormatter: " + err.Error() + " \"" + string(b) + "\"")
 	}
 	return entry
 }

@@ -8,8 +8,12 @@ var NullLog = &NullLogger{}
 // NullLogger is the default logger for this package.
 type NullLogger struct{}
 
-// Trace logs a debug entry.
+// Trace logs a trace entry with current pc in callstack.
 func (l *NullLogger) Trace(msg string, args ...interface{}) {
+}
+
+// TraceFromFrame logs a trace entry starting from a callstack frame index.
+func (l *NullLogger) TraceFromFrame(startFrame int, msg string, args ...interface{}) {
 }
 
 // Debug logs a debug entry.
@@ -20,8 +24,13 @@ func (l *NullLogger) Debug(msg string, args ...interface{}) {
 func (l *NullLogger) Info(msg string, args ...interface{}) {
 }
 
-// Warn logs a warn entry.
+// Warn logs a warn entry with callstack if error.
 func (l *NullLogger) Warn(msg string, args ...interface{}) error {
+	return l.WarnFromFrame(0, msg, args...)
+}
+
+// WarnFromFrame logs a warn entry with callstack starting at startFrame.
+func (l *NullLogger) WarnFromFrame(startFrameIndex int, msg string, args ...interface{}) error {
 	for _, arg := range args {
 		if err, ok := arg.(error); ok {
 			return err
@@ -30,14 +39,19 @@ func (l *NullLogger) Warn(msg string, args ...interface{}) error {
 	return nil
 }
 
-// Error logs an error entry.
-func (l *NullLogger) Error(msg string, args ...interface{}) error {
+// ErrorFromFrame logs an error entry starting with callstack starting at startFrame.
+func (l *NullLogger) ErrorFromFrame(startFrame int, msg string, args ...interface{}) error {
 	for _, arg := range args {
 		if err, ok := arg.(error); ok {
 			return err
 		}
 	}
 	return errors.New(msg)
+}
+
+// Error logs an error entry.
+func (l *NullLogger) Error(msg string, args ...interface{}) error {
+	return l.ErrorFromFrame(0, msg, args...)
 }
 
 // Fatal logs a fatal entry then panics.

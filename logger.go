@@ -136,13 +136,16 @@ var LevelAtoi = map[string]int{
 
 // Logger is the interface for logging.
 type Logger interface {
-	Trace(msg string, args ...interface{})
 	Debug(msg string, args ...interface{})
-	Info(msg string, args ...interface{})
-	Warn(msg string, args ...interface{}) error
 	Error(msg string, args ...interface{}) error
+	ErrorFromFrame(start int, msg string, args ...interface{}) error
 	Fatal(msg string, args ...interface{})
+	Info(msg string, args ...interface{})
 	Log(level int, msg string, args []interface{})
+	Trace(msg string, args ...interface{})
+	TraceFromFrame(start int, msg string, args ...interface{})
+	Warn(msg string, args ...interface{}) error
+	WarnFromFrame(start int, msg string, args ...interface{}) error
 
 	SetLevel(int)
 	IsTrace() bool

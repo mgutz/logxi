@@ -2,13 +2,12 @@ package logxi
 
 import (
 	"fmt"
-	"io"
 	"time"
 )
 
 // Formatter records log entries.
 type Formatter interface {
-	Format(writer io.Writer, level int, msg string, args []interface{})
+	Format(level int, msg string, args []interface{}, startFrame int) ([]byte, error)
 }
 
 // TextFormatter is the default recorder used if one is unspecified when
@@ -65,14 +64,14 @@ func (tf *TextFormatter) set(buf bufferWriter, key string, val interface{}) {
 	if err, ok := val.(error); ok {
 		buf.WriteString(err.Error())
 		buf.WriteRune('\n')
-		buf.WriteString(fmt.Sprintf("%#v", callstack(5)))
+		buf.WriteString(fmt.Sprintf("%#v", callstack(5, -1, false)))
 		return
 	}
 	buf.WriteString(fmt.Sprintf("%v", val))
 }
 
 // Format records a log entry.
-func (tf *TextFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
+func (tf *TextFormatter) Format(level int, msg string, args []interface{}, startFrame int) ([]byte, error) {
 	buf := pool.Get()
 	defer pool.Put(buf)
 	buf.WriteString(tf.timeLabel)
@@ -102,5 +101,5 @@ func (tf *TextFormatter) Format(writer io.Writer, level int, msg string, args []
 		}
 	}
 	buf.WriteRune('\n')
-	buf.WriteTo(writer)
+	return buf.Bytes(), nil
 }

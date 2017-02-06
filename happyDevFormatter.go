@@ -3,7 +3,6 @@ package logxi
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/mgutz/ansi"
@@ -166,7 +165,7 @@ func (hd *HappyDevFormatter) writeColoredString(buf bufferWriter, s string, colo
 	return col + len(s)
 }
 
-func (hd *HappyDevFormatter) sourceContext(color string, skip int) string {
+func (hd *HappyDevFormatter) sourceContext(color string, frames []Frame) string {
 	if disableCallstack {
 		return ""
 	}
@@ -174,7 +173,6 @@ func (hd *HappyDevFormatter) sourceContext(color string, skip int) string {
 	buf := pool.Get()
 	defer pool.Put(buf)
 
-	frames := callstack(skip)
 	// ignored runtime
 	//frames := parseDebugStack(string(debug.Stack()), 5, true)
 	if len(frames) == 0 {
@@ -190,7 +188,22 @@ func (hd *HappyDevFormatter) sourceContext(color string, skip int) string {
 	return buf.String()
 }
 
-func (hd *HappyDevFormatter) levelSourceContext(level int, entry map[string]interface{}) (message string, context string, color string) {
+func (hd *HappyDevFormatter) levelSourceContext(level int, entry map[string]interface{}, startFrame int) (message string, context string, color string) {
+
+	const skipLogxiFrames = 0
+
+	getStack := func(offset int, size int) []Frame {
+		// the offset skips logxi frames and is empirically determined
+
+		if startFrame == -1 {
+			// get everything
+			return callstack(offset, -1, true)
+		}
+
+		result := callstack(offset+startFrame, size, true)
+		return result
+	}
+
 	switch level {
 	default:
 		panic("should never get here")
@@ -203,7 +216,7 @@ func (hd *HappyDevFormatter) levelSourceContext(level int, entry map[string]inte
 			color = theme.Warn
 			kv := entry[KeyMap.CallStack]
 			if kv == nil {
-				context = hd.sourceContext(color, 5)
+				context = hd.sourceContext(color, getStack(skipLogxiFrames, 1))
 				context += "\n"
 				break
 			}
@@ -211,19 +224,20 @@ func (hd *HappyDevFormatter) levelSourceContext(level int, entry map[string]inte
 			color = theme.Error
 		}
 
-		context = hd.sourceContext(color, 5)
+		context = hd.sourceContext(color, getStack(skipLogxiFrames, -1))
 	case LevelTrace:
 		color = theme.Trace
-		context = hd.sourceContext(color, 5)
+		context = hd.sourceContext(color, getStack(skipLogxiFrames, 1))
 		context += "\n"
 	case LevelDebug:
 		color = theme.Debug
 	}
+
 	return message, context, color
 }
 
 // Format a log entry.
-func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, args []interface{}) {
+func (hd *HappyDevFormatter) Format(level int, msg string, args []interface{}, startFrame int) ([]byte, error) {
 	buf := pool.Get()
 	defer pool.Put(buf)
 
@@ -266,7 +280,7 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	col = hd.writeColoredString(buf, entry[KeyMap.Time].(string), theme.Misc, col)
 
 	// emphasize warnings and errors
-	message, context, color := hd.levelSourceContext(level, entry)
+	message, context, color := hd.levelSourceContext(level, entry, startFrame)
 	if message == "" {
 		message = entry[KeyMap.Message].(string)
 	}
@@ -312,10 +326,8 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	if context != "" {
 		// warnings and traces are single line, space can be optimized
 		if level == LevelTrace || (level == LevelWarn && !hasCallStack) {
-			// gets rid of "in "
-			idx := strings.IndexRune(context, 'n')
-			col = hd.set(buf, "in", context[idx+2:], color, col)
-		} else {
+			// col = hd.set(buf, "in", context, color, col)
+			// } else {
 			buf.WriteRune('\n')
 			addLF = context[len(context)-1:len(context)] != "\n"
 			writeColor(buf, color)
@@ -328,7 +340,8 @@ func (hd *HappyDevFormatter) Format(writer io.Writer, level int, msg string, arg
 	if addLF {
 		buf.WriteRune('\n')
 	}
-	buf.WriteTo(writer)
+
+	return buf.Bytes(), nil
 }
 
 func writeColor(buf bufferWriter, code string) {

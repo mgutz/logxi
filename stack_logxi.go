@@ -18,7 +18,13 @@ func (f Frame) method() string {
 	if fn == nil {
 		return ""
 	}
-	return fn.Name()
+	name := fn.Name()
+
+	if idx := strings.LastIndex(name, "/"); idx > 0 {
+		return name[idx+1:]
+	}
+
+	return name
 }
 
 // MarshalJSON implements JSON marshaller
@@ -48,10 +54,6 @@ func (f Frame) String(color string, sourceColor string) string {
 		return buf.String()
 	}
 
-	if isIgnored(file) {
-		return ""
-	}
-
 	// make path relative to current working directory or home
 	tildeFilename, err := filepath.Rel(wd, file)
 	if err != nil {
@@ -66,7 +68,7 @@ func (f Frame) String(color string, sourceColor string) string {
 	buf.WriteString(color)
 	buf.WriteString(Separator)
 	buf.WriteString(indent)
-	//buf.WriteString("in ")
+	buf.WriteString("in ")
 	buf.WriteString(method)
 	buf.WriteString("() ")
 	buf.WriteString(tildeFilename)
@@ -129,8 +131,30 @@ func (f Frame) String(color string, sourceColor string) string {
 	return buf.String()
 }
 
-func callstack(skip int) StackTrace {
-	return callers().StackTrace()[skip:]
+// Gets a slice of the callstack. Set size to -1 to retrieve all.
+func callstack(skip int, size int, useIgnore bool) StackTrace {
+	var frames []Frame
+	if useIgnore {
+		for _, f := range callers().StackTrace() {
+			if !isIgnored(f.file()) {
+				frames = append(frames, f)
+			}
+		}
+	} else {
+		frames = callers().StackTrace()
+	}
+
+	L := len(frames)
+
+	if skip > L-1 {
+		return []Frame{}
+	}
+
+	if size < 0 || skip+size > L {
+		return frames[skip:]
+	}
+
+	return frames[skip : skip+size]
 }
 
 type sourceLine struct {

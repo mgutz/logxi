@@ -57,6 +57,11 @@ func New(name string) Logger {
 
 // Trace logs a debug entry.
 func (l *DefaultLogger) Trace(msg string, args ...interface{}) {
+	l.TraceFromFrame(0, msg, args...)
+}
+
+// TraceFromFrame logs a trace entry.
+func (l *DefaultLogger) TraceFromFrame(start int, msg string, args ...interface{}) {
 	l.Log(LevelTrace, msg, args)
 }
 
@@ -73,8 +78,14 @@ func (l *DefaultLogger) Info(msg string, args ...interface{}) {
 // Warn logs a warn entry. If any argument is an error, then Warn returns that error
 // otherwise it returns nil.
 func (l *DefaultLogger) Warn(msg string, args ...interface{}) error {
+	return l.WarnFromFrame(0, msg, args...)
+}
+
+// WarnFromFrame logs a warn entry. If any argument is an error, then Warn returns that error
+// otherwise it returns nil.
+func (l *DefaultLogger) WarnFromFrame(start int, msg string, args ...interface{}) error {
 	if l.IsWarn() {
-		defer l.Log(LevelWarn, msg, args)
+		defer l.log(LevelWarn, msg, args, start)
 	}
 	// return original error if passed in
 	for _, arg := range args {
@@ -85,8 +96,8 @@ func (l *DefaultLogger) Warn(msg string, args ...interface{}) error {
 	return nil
 }
 
-func (l *DefaultLogger) extractLogError(level int, msg string, args []interface{}) error {
-	defer l.Log(level, msg, args)
+func (l *DefaultLogger) extractLogError(level int, msg string, args []interface{}, startFrame int) error {
+	defer l.log(level, msg, args, startFrame)
 	// return original error if passed in
 	for _, arg := range args {
 		if err, ok := arg.(error); ok {
@@ -99,22 +110,37 @@ func (l *DefaultLogger) extractLogError(level int, msg string, args []interface{
 
 // Error logs an error entry.
 func (l *DefaultLogger) Error(msg string, args ...interface{}) error {
-	return l.extractLogError(LevelError, msg, args)
+	return l.ErrorFromFrame(0, msg, args...)
+}
+
+// ErrorFromFrame logs an error entry.
+func (l *DefaultLogger) ErrorFromFrame(start int, msg string, args ...interface{}) error {
+	return l.extractLogError(LevelError, msg, args, start)
 }
 
 // Fatal logs a fatal entry then panics.
 func (l *DefaultLogger) Fatal(msg string, args ...interface{}) {
-	l.extractLogError(LevelFatal, msg, args)
+	l.extractLogError(LevelFatal, msg, args, 0)
 	defer panic("Exit due to fatal error: ")
 }
 
 // Log logs a leveled entry.
 func (l *DefaultLogger) Log(level int, msg string, args []interface{}) {
+	l.log(level, msg, args, 0)
+}
+
+// Log logs a leveled entry.
+func (l *DefaultLogger) log(level int, msg string, args []interface{}, startFrame int) {
 	// log if the log level (warn=4) >= level of message (err=3)
 	if l.level < level || silent {
 		return
 	}
-	l.formatter.Format(l.writer, level, msg, args)
+	b, err := l.formatter.Format(level, msg, args, startFrame)
+	if err != nil {
+		InternalLog.Error("Unable to log", "level", level, "msg", msg, "args", args, "startFrame", startFrame)
+		return
+	}
+	l.writer.Write(b)
 }
 
 // IsTrace determines if this logger logs a debug statement.
