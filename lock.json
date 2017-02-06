@@ -1,0 +1,173 @@
+{
+    "memo": "0249254982ddfb851c1eca4c55d8691cb2ae9b4f6169e26edc99f66e0ff6512c",
+    "projects": [
+        {
+            "name": "github.com/MichaelTJones/walk",
+            "branch": "master",
+            "revision": "4748e29d5718c2df4028a6543edf86fd8cc0f881",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/Sirupsen/logrus",
+            "version": "v0.11.0",
+            "revision": "d26492970760ca5d33129d2d799e34be5c4782eb",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/davecgh/go-spew",
+            "version": "v1.1.0",
+            "revision": "346938d642f2ec3594ed81d874461961cd0faa76",
+            "packages": [
+                "spew"
+            ]
+        },
+        {
+            "name": "github.com/howeyc/gopass",
+            "branch": "master",
+            "revision": "bf9dde6d0d2c004a008c27aaee91170c786f6db8",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/mattn/go-colorable",
+            "branch": "master",
+            "revision": "d228849504861217f796da67fae4f6e347643f15",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/mattn/go-isatty",
+            "version": "v0.0.1",
+            "revision": "3a115632dcd687f9c8cd01679c83a06a0e21c1f3",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/mgutz/ansi",
+            "branch": "master",
+            "revision": "c286dcecd19ff979eeb73ea444e479b903f2cfcb",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/mgutz/minimist",
+            "branch": "master",
+            "revision": "39eb8cf573ca29344bd7d7e6ba4d7febdebd37a9",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/mgutz/str",
+            "version": "v1.2.0",
+            "revision": "968bf66e3da857419e4f6e71b2d5c9ae95682dc4",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/mgutz/to",
+            "version": "v1.0.0",
+            "revision": "00c06406c2dd2e011f153a6502a21473676db33f",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/mitchellh/go-homedir",
+            "branch": "master",
+            "revision": "b8bc1bf767474819792c23f32d8286a45736f1c6",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/nozzle/throttler",
+            "version": "v1.0",
+            "revision": "d9b45f19996c645d38c9266d1f5cf1990e930119",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/pkg/errors",
+            "version": "v0.8.0",
+            "revision": "645ef00459ed84a119197bfb8d8205042c6df63d",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/pmezard/go-difflib",
+            "version": "v1.0.0",
+            "revision": "792786c7400a136282c1664665ae0a8db921c6c2",
+            "packages": [
+                "difflib"
+            ]
+        },
+        {
+            "name": "github.com/stretchr/testify",
+            "version": "v1.1.4",
+            "revision": "69483b4bd14f5845b5a1e55bca19e954e827f1d0",
+            "packages": [
+                "assert"
+            ]
+        },
+        {
+            "name": "github.com/uber-go/atomic",
+            "version": "v1.0.0",
+            "revision": "0c9e689d64f004564b79d9a663634756df322902",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/uber-go/zap",
+            "branch": "master",
+            "revision": "a5783ee4b216a927da8f839c45cfbf9d694e1467",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "golang.org/x/crypto",
+            "branch": "master",
+            "revision": "bed12803fa9663d7aa2c2346b0c634ad2dcd43b7",
+            "packages": [
+                "ssh/terminal"
+            ]
+        },
+        {
+            "name": "golang.org/x/sys",
+            "branch": "master",
+            "revision": "7a6e5648d140666db5d920909e082ca00a87ba2c",
+            "packages": [
+                "unix"
+            ]
+        },
+        {
+            "name": "gopkg.in/godo.v2",
+            "version": "v2.0.9",
+            "revision": "b5fd2f0bef1ebe832e628cfad18ab1cc707f65a1",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "gopkg.in/inconshreveable/log15.v2",
+            "version": "v2.11",
+            "revision": "b105bd37f74e5d9dc7b6ad7806715c7a2b83fd3f",
+            "packages": [
+                "."
+            ]
+        }
+    ]
+}

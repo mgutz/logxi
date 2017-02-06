@@ -282,7 +282,7 @@ func TestAllowSingleParam(t *testing.T) {
 	l.SetLevel(LevelDebug)
 	l.Info("info", 1)
 
-	assert.True(t, strings.HasSuffix(buf.String(), "_: 1"+ansi.Reset+"\n"))
+	assert.True(t, strings.HasSuffix(buf.String(), "_: "+ansi.Reset+"1"+ansi.Reset+"\n"))
 
 	var obj map[string]interface{}
 	buf.Reset()
@@ -302,14 +302,13 @@ func TestErrorOnWarn(t *testing.T) {
 	l := NewLogger3(&buf, "wrnerr", NewHappyDevFormatter("wrnerr"))
 	l.SetLevel(LevelWarn)
 
-	ErrorDummy := errors.New("dummy error")
+	ErrWarn := errors.New("dummy error")
+	err := l.Warn("warn with error", "err", ErrWarn)
+	assert.Exactly(t, ErrWarn, err)
 
-	err := l.Warn("warn with error", "err", ErrorDummy)
-	assert.Error(t, err)
-	assert.Equal(t, "warn with error: dummy error", err.Error())
 	err = l.Warn("warn with no error", "one", 1)
 	assert.NoError(t, err)
-	//l.Error("error with err", "err", ErrorDummy)
+	//l.Error("error with err", "err", ErrWarn)
 }
 
 func TestErrorResult(t *testing.T) {
@@ -317,16 +316,14 @@ func TestErrorResult(t *testing.T) {
 	var buf bytes.Buffer
 	l := NewLogger3(&buf, "wrnerr", NewHappyDevFormatter("wrnerr"))
 
-	ErrorDummy := errors.New("dummy error")
+	ErrError := errors.New("dummy error")
 
 	// error wraps the error with pkg/errors if err type is provide
-	err := l.Error("warn with error", "err", ErrorDummy)
-	assert.Error(t, err)
-	assert.Equal(t, "warn with error: dummy error", err.Error())
+	err := l.Error("warn with error", "err", ErrError)
+	assert.Exactly(t, ErrError, err)
 
 	// error returns new error based on msg otherwise
 	err = l.Error("warn with no error", "one", 1)
-	assert.Error(t, err)
 	assert.Equal(t, "warn with no error", err.Error())
 }
 

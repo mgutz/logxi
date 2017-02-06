@@ -3,8 +3,6 @@ package logxi
 import (
 	"fmt"
 	"io"
-
-	"github.com/pkg/errors"
 )
 
 // DefaultLogger is the default logger for this package.
@@ -78,10 +76,10 @@ func (l *DefaultLogger) Warn(msg string, args ...interface{}) error {
 	if l.IsWarn() {
 		defer l.Log(LevelWarn, msg, args)
 	}
-
+	// return original error if passed in
 	for _, arg := range args {
 		if err, ok := arg.(error); ok {
-			return errors.Wrap(err, msg)
+			return err
 		}
 	}
 	return nil
@@ -89,12 +87,13 @@ func (l *DefaultLogger) Warn(msg string, args ...interface{}) error {
 
 func (l *DefaultLogger) extractLogError(level int, msg string, args []interface{}) error {
 	defer l.Log(level, msg, args)
-
+	// return original error if passed in
 	for _, arg := range args {
 		if err, ok := arg.(error); ok {
-			return errors.Wrap(err, msg)
+			return err
 		}
 	}
+	// create an error from message
 	return fmt.Errorf(msg)
 }
 

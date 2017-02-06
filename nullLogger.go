@@ -1,6 +1,6 @@
 package logxi
 
-import "github.com/pkg/errors"
+import "errors"
 
 // NullLog is a noop logger. Think of it as /dev/null.
 var NullLog = &NullLogger{}
@@ -24,7 +24,7 @@ func (l *NullLogger) Info(msg string, args ...interface{}) {
 func (l *NullLogger) Warn(msg string, args ...interface{}) error {
 	for _, arg := range args {
 		if err, ok := arg.(error); ok {
-			return errors.Wrap(err, msg)
+			return err
 		}
 	}
 	return nil
@@ -34,7 +34,7 @@ func (l *NullLogger) Warn(msg string, args ...interface{}) error {
 func (l *NullLogger) Error(msg string, args ...interface{}) error {
 	for _, arg := range args {
 		if err, ok := arg.(error); ok {
-			return errors.Wrap(err, msg)
+			return err
 		}
 	}
 	return errors.New(msg)

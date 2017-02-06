@@ -1,0 +1,13 @@
+{
+    "dependencies": {
+        "github.com/mattn/go-colorable": {
+            "branch": "master"
+        },
+        "github.com/mgutz/ansi": {
+            "branch": "master"
+        },
+        "gopkg.in/godo.v2": {
+            "version": "^2.0.9"
+        }
+    }
+}

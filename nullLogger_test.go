@@ -16,12 +16,12 @@ func TestNullLoggerErrorOnWarn(t *testing.T) {
 	var buf bytes.Buffer
 	l := NewLogger3(&buf, "wrnerr", NewHappyDevFormatter("wrnerr"))
 
-	ErrorDummy := errors.New("dummy error")
+	ErrWarn := errors.New("dummy error")
 
 	// Warn returns error if any arg is an error type
-	err := l.Warn("warn with error", "err", ErrorDummy)
+	err := l.Warn("warn with error", "err", ErrWarn)
 	assert.Error(t, err)
-	assert.Equal(t, "warn with error: dummy error", err.Error())
+	assert.Exactly(t, ErrWarn, err)
 
 	// Warn returns nil error otherwise
 	err = l.Warn("warn with no error", "one", 1)
@@ -35,15 +35,13 @@ func TestNullLoggerErrorResult(t *testing.T) {
 	var buf bytes.Buffer
 	l := NewLogger3(&buf, "wrnerr", NewHappyDevFormatter("wrnerr"))
 
-	ErrorDummy := errors.New("dummy error")
+	ErrError := errors.New("dummy error")
 
 	// error wraps the error with pkg/errors if err type is provide
-	err := l.Error("warn with error", "err", ErrorDummy)
-	assert.Error(t, err)
-	assert.Equal(t, "warn with error: dummy error", err.Error())
+	err := l.Error("warn with error", "err", ErrError)
+	assert.Exactly(t, ErrError, err)
 
 	// error returns new error based on msg otherwise
 	err = l.Error("warn with no error", "one", 1)
-	assert.Error(t, err)
 	assert.Equal(t, "warn with no error", err.Error())
 }
