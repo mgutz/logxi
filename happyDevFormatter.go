@@ -188,8 +188,7 @@ func (hd *HappyDevFormatter) sourceContext(color string, frames []Frame) string 
 	return buf.String()
 }
 
-func (hd *HappyDevFormatter) levelSourceContext(level int, entry map[string]interface{}, startFrame int) (message string, context string, color string) {
-
+func (hd *HappyDevFormatter) levelSourceContext(level int, entry map[string]interface{}, args []interface{}, startFrame int) (context string, color string) {
 	const skipLogxiFrames = 0
 
 	getStack := func(offset int, size int) []Frame {
@@ -206,25 +205,23 @@ func (hd *HappyDevFormatter) levelSourceContext(level int, entry map[string]inte
 
 	switch level {
 	default:
-		panic("should never get here")
+		color = ""
+		context = ""
 	case LevelInfo:
 		color = theme.Info
-	case LevelWarn, LevelError, LevelFatal:
-		// warnings return an error but if it does not have an error
-		// then print line info only
-		if level == LevelWarn {
-			color = theme.Warn
-			kv := entry[KeyMap.CallStack]
-			if kv == nil {
-				context = hd.sourceContext(color, getStack(skipLogxiFrames, 1))
-				context += "\n"
-				break
-			}
-		} else {
-			color = theme.Error
+	case LevelWarn:
+		color = theme.Warn
+		kv := entry[KeyMap.CallStack]
+		// no callstack means an error was not included in warning, grab 1 frame
+		if kv == nil {
+			context = hd.sourceContext(color, getStack(skipLogxiFrames, 1))
+			break
 		}
-
 		context = hd.sourceContext(color, getStack(skipLogxiFrames, -1))
+	case LevelError, LevelFatal:
+		color = theme.Error
+		context = hd.sourceContext(color, getStack(skipLogxiFrames, -1))
+
 	case LevelTrace:
 		color = theme.Trace
 		context = hd.sourceContext(color, getStack(skipLogxiFrames, 1))
@@ -233,7 +230,7 @@ func (hd *HappyDevFormatter) levelSourceContext(level int, entry map[string]inte
 		color = theme.Debug
 	}
 
-	return message, context, color
+	return context, color
 }
 
 // Format a log entry.
@@ -279,11 +276,9 @@ func (hd *HappyDevFormatter) Format(level int, msg string, args []interface{}, s
 	// timestamp
 	col = hd.writeColoredString(buf, entry[KeyMap.Time].(string), theme.Misc, col)
 
-	// emphasize warnings and errors
-	message, context, color := hd.levelSourceContext(level, entry, startFrame)
-	if message == "" {
-		message = entry[KeyMap.Message].(string)
-	}
+	// emphasize warnings, errors and add callstack
+	context, color := hd.levelSourceContext(level, entry, args, startFrame)
+	message := entry[KeyMap.Message].(string)
 
 	// DBG, INF ...
 	col = hd.set(buf, "", entry[KeyMap.Level].(string), color, col)
@@ -320,23 +315,15 @@ func (hd *HappyDevFormatter) Format(level int, msg string, args []interface{}, s
 	}
 
 	addLF := true
-	hasCallStack := entry[KeyMap.CallStack] != nil
-	// WRN,ERR file, line number context
-
+	// TRC, WRN,ERR file, line number callstack
 	if context != "" {
-		// warnings and traces are single line, space can be optimized
-		if level == LevelTrace || (level == LevelWarn && !hasCallStack) {
-			// col = hd.set(buf, "in", context, color, col)
-			// } else {
-			buf.WriteRune('\n')
-			addLF = context[len(context)-1:len(context)] != "\n"
-			writeColor(buf, color)
-			buf.WriteString(context)
-			writeColor(buf, ansi.Reset)
-		}
-	} else if hasCallStack {
-		col = hd.set(buf, "", entry[KeyMap.CallStack], color, col)
+		buf.WriteRune('\n')
+		addLF = context[len(context)-1:len(context)] != "\n"
+		writeColor(buf, color)
+		buf.WriteString(context)
+		writeColor(buf, ansi.Reset)
 	}
+
 	if addLF {
 		buf.WriteRune('\n')
 	}

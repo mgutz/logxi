@@ -1,7 +1,7 @@
 package logxi
 
 import (
-	"fmt"
+	"errors"
 	"io"
 )
 
@@ -57,12 +57,12 @@ func New(name string) Logger {
 
 // Trace logs a debug entry.
 func (l *DefaultLogger) Trace(msg string, args ...interface{}) {
-	l.TraceFromFrame(0, msg, args...)
+	l.traceFromFrame(0, msg, args...)
 }
 
 // TraceFromFrame logs a trace entry.
-func (l *DefaultLogger) TraceFromFrame(start int, msg string, args ...interface{}) {
-	l.Log(LevelTrace, msg, args)
+func (l *DefaultLogger) traceFromFrame(start int, msg string, args ...interface{}) {
+	l.log(LevelTrace, msg, args, start)
 }
 
 // Debug logs a debug entry.
@@ -78,12 +78,12 @@ func (l *DefaultLogger) Info(msg string, args ...interface{}) {
 // Warn logs a warn entry. If any argument is an error, then Warn returns that error
 // otherwise it returns nil.
 func (l *DefaultLogger) Warn(msg string, args ...interface{}) error {
-	return l.WarnFromFrame(0, msg, args...)
+	return l.warnFromFrame(0, msg, args...)
 }
 
 // WarnFromFrame logs a warn entry. If any argument is an error, then Warn returns that error
 // otherwise it returns nil.
-func (l *DefaultLogger) WarnFromFrame(start int, msg string, args ...interface{}) error {
+func (l *DefaultLogger) warnFromFrame(start int, msg string, args ...interface{}) error {
 	if l.IsWarn() {
 		defer l.log(LevelWarn, msg, args, start)
 	}
@@ -96,32 +96,41 @@ func (l *DefaultLogger) WarnFromFrame(start int, msg string, args ...interface{}
 	return nil
 }
 
-func (l *DefaultLogger) extractLogError(level int, msg string, args []interface{}, startFrame int) error {
-	defer l.log(level, msg, args, startFrame)
+func (l *DefaultLogger) extractError(msg string, args []interface{}) error {
+	var err error
+
 	// return original error if passed in
+forLoop:
 	for _, arg := range args {
-		if err, ok := arg.(error); ok {
-			return err
+		switch t := arg.(type) {
+		case error:
+			err = t
+			break forLoop
 		}
 	}
-	// create an error from message
-	return fmt.Errorf(msg)
+	if err == nil {
+		err = errors.New(msg)
+	}
+	return err
 }
 
 // Error logs an error entry.
 func (l *DefaultLogger) Error(msg string, args ...interface{}) error {
-	return l.ErrorFromFrame(0, msg, args...)
+	return l.errorFromFrame(0, msg, args...)
 }
 
 // ErrorFromFrame logs an error entry.
-func (l *DefaultLogger) ErrorFromFrame(start int, msg string, args ...interface{}) error {
-	return l.extractLogError(LevelError, msg, args, start)
+func (l *DefaultLogger) errorFromFrame(start int, msg string, args ...interface{}) error {
+	err := l.extractError(msg, args)
+	l.log(LevelError, msg, args, start)
+	return err
 }
 
 // Fatal logs a fatal entry then panics.
 func (l *DefaultLogger) Fatal(msg string, args ...interface{}) {
-	l.extractLogError(LevelFatal, msg, args, 0)
-	defer panic("Exit due to fatal error: ")
+	err := l.extractError(msg, args)
+	l.log(LevelFatal, msg, args, 0)
+	panic(err)
 }
 
 // Log logs a leveled entry.

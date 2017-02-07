@@ -49,11 +49,9 @@ func (jf *JSONFormatter) writeError(buf bufferWriter, err error) {
 	b, err := json.Marshal(stack)
 	if err != nil {
 		InternalLog.Error("Could not json.Marshal callstack.", "callstack", stack)
-		buf.WriteString(`"Could not marshal this key's string"`)
-		return
+	} else {
+		jf.set(buf, KeyMap.CallStack, b)
 	}
-	jf.set(buf, KeyMap.CallStack, b)
-	return
 }
 
 func (jf *JSONFormatter) appendValue(buf bufferWriter, val interface{}) {
@@ -62,15 +60,14 @@ func (jf *JSONFormatter) appendValue(buf bufferWriter, val interface{}) {
 		return
 	}
 
-	if b, ok := val.([]byte); ok {
-		buf.Write(b)
+	switch T := val.(type) {
+	case []byte:
+		buf.Write(T)
 		return
-	}
-
-	// always show error stack even at cost of some performance. there's
-	// nothing worse than looking at production logs without a clue
-	if err, ok := val.(error); ok {
-		jf.writeError(buf, err)
+	case error:
+		// always show error stack even at cost of some performance. there's
+		// nothing worse than looking at production logs without a clue
+		jf.writeError(buf, T)
 		return
 	}
 
@@ -194,8 +191,8 @@ func (jf *JSONFormatter) Format(level int, msg string, args []interface{}, start
 			jf.set(buf, warnImbalancedKey, args)
 		}
 	}
-	buf.WriteString("}\n")
 
+	buf.WriteString("}\n")
 	return buf.Bytes(), nil
 }
 

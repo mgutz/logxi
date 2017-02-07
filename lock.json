@@ -1,5 +1,5 @@
 {
-    "memo": "0249254982ddfb851c1eca4c55d8691cb2ae9b4f6169e26edc99f66e0ff6512c",
+    "memo": "767c346a6aa6388d4920c4d8d28a167bf0911b893ba2ea3aa03e26b6ba1f6f89",
     "projects": [
         {
             "name": "github.com/MichaelTJones/walk",
@@ -93,14 +93,6 @@
             "name": "github.com/nozzle/throttler",
             "version": "v1.0",
             "revision": "d9b45f19996c645d38c9266d1f5cf1990e930119",
-            "packages": [
-                "."
-            ]
-        },
-        {
-            "name": "github.com/pkg/errors",
-            "version": "v0.8.0",
-            "revision": "645ef00459ed84a119197bfb8d8205042c6df63d",
             "packages": [
                 "."
             ]

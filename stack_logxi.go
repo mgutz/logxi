@@ -13,7 +13,17 @@ import (
 	"github.com/mgutz/ansi"
 )
 
-func (f Frame) method() string {
+// Name is the full package and function name.
+func (f Frame) Name() string {
+	fn := runtime.FuncForPC(f.pc())
+	if fn == nil {
+		return ""
+	}
+	return fn.Name()
+}
+
+// Method is the method name derived from Name.
+func (f Frame) Method() string {
 	fn := runtime.FuncForPC(f.pc())
 	if fn == nil {
 		return ""
@@ -42,7 +52,7 @@ func (f Frame) String(color string, sourceColor string) string {
 	buf := pool.Get()
 	defer pool.Put(buf)
 
-	file, line, method := f.file(), f.line(), f.method()
+	file, line, method := f.File(), f.Line(), f.Method()
 
 	if disableCallstack {
 		buf.WriteString(color)
@@ -136,7 +146,7 @@ func callstack(skip int, size int, useIgnore bool) StackTrace {
 	var frames []Frame
 	if useIgnore {
 		for _, f := range callers().StackTrace() {
-			if !isIgnored(f.file()) {
+			if !isIgnored(f) {
 				frames = append(frames, f)
 			}
 		}

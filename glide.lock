@@ -1,12 +1,8 @@
-hash: 70a4f2920ec7d31fbdf9560d5d8f3ec565a74a9c338361859b6556687325969e
-updated: 2017-02-05T11:51:10.112990152-08:00
+hash: bce2cb4d29c2d6a11637315160e396fbc44d43a13f6dd11a2414acb0a3075508
+updated: 2017-02-06T14:24:03.486740549-08:00
 imports:
-- name: github.com/go-stack/stack
-  version: 100eb0c0a9c5b306ca2fb4f165df21d80ada4b82
 - name: github.com/howeyc/gopass
   version: 66487b23f2880ba32e185121d2cd51a338ea069a
-- name: github.com/immortal/logrotate
-  version: 3691ab555939319a80a8833983faedb8b76d9cc6
 - name: github.com/mattn/go-colorable
   version: ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8
 - name: github.com/mattn/go-isatty
@@ -25,10 +21,8 @@ imports:
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/nozzle/throttler
   version: d9b45f19996c645d38c9266d1f5cf1990e930119
-- name: github.com/uber-go/zap
-  version: a5783ee4b216a927da8f839c45cfbf9d694e1467
-  subpackages:
-  - '...'
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: golang.org/x/crypto
   version: 5bcd134fee4dd1475da17714aac19c0aa0142e2f
   subpackages:
@@ -49,6 +43,8 @@ testImports:
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
+- name: github.com/immortal/logrotate
+  version: 3691ab555939319a80a8833983faedb8b76d9cc6
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -61,6 +57,8 @@ testImports:
   - assert
 - name: github.com/uber-go/atomic
   version: 3b8db5e93c4c02efbc313e17b2e796b0914a01fb
+- name: github.com/uber-go/zap
+  version: a5783ee4b216a927da8f839c45cfbf9d694e1467
 - name: gopkg.in/inconshreveable/log15.v2
   version: b105bd37f74e5d9dc7b6ad7806715c7a2b83fd3f
   subpackages:

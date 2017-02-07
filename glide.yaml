@@ -6,6 +6,10 @@ import:
   version: v0.0.1
 - package: github.com/mgutz/ansi
 - package: github.com/mitchellh/go-homedir
+- package: github.com/pkg/errors
+  version: v0.8.0
+- package: gopkg.in/godo.v2
+  version: v2.0.9
 testImport:
 - package: github.com/Sirupsen/logrus
   version: v0.10.0
@@ -18,5 +22,3 @@ testImport:
 - package: github.com/uber-go/zap
 - package: github.com/immortal/logrotate
   version: ~0.2.0
-- package: gopkg.in/godo.v2
-  version: v2.0.9

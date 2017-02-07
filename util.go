@@ -1,9 +1,6 @@
 package logxi
 
-import (
-	"path/filepath"
-	"strings"
-)
+import "strings"
 
 func expandTabs(s string, tabLen int) string {
 	if s == "" {
@@ -42,15 +39,4 @@ func indexOfNonSpace(s string) int {
 		}
 	}
 	return -1
-}
-
-var inLogxiPath = filepath.Join("github.com", "mgutz", "logxi")
-var inRuntimePath = filepath.Join("go", "src", "runtime")
-
-func isIgnored(filename string) bool {
-	dirname := filepath.Dir(filename)
-	// need to see errors in tests
-	ignored := (strings.HasSuffix(dirname, inLogxiPath) && !strings.HasSuffix(filename, "_test.go")) ||
-		strings.HasSuffix(dirname, inRuntimePath)
-	return ignored
 }
