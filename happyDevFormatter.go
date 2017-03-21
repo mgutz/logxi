@@ -1,6 +1,7 @@
 package logxi
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -328,7 +329,7 @@ func (hd *HappyDevFormatter) Format(level int, msg string, args []interface{}, s
 		buf.WriteRune('\n')
 	}
 
-	return buf.Bytes(), nil
+	return copyBytes(buf), nil
 }
 
 func writeColor(buf bufferWriter, code string) {
@@ -336,4 +337,13 @@ func writeColor(buf bufferWriter, code string) {
 		return
 	}
 	buf.WriteString(code)
+}
+
+// copyBytes makes a copy of the internal buffer slice
+//
+// This needs to be optimized. Misunderstood how buf.Bytes() worked.
+func copyBytes(buf *bytes.Buffer) []byte {
+	b := make([]byte, buf.Len())
+	copy(b, buf.Bytes())
+	return b
 }

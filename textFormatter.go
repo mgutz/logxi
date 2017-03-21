@@ -101,5 +101,5 @@ func (tf *TextFormatter) Format(level int, msg string, args []interface{}, start
 		}
 	}
 	buf.WriteRune('\n')
-	return buf.Bytes(), nil
+	return copyBytes(buf), nil
 }

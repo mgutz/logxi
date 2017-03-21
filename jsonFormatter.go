@@ -193,7 +193,7 @@ func (jf *JSONFormatter) Format(level int, msg string, args []interface{}, start
 	}
 
 	buf.WriteString("}\n")
-	return buf.Bytes(), nil
+	return copyBytes(buf), nil
 }
 
 // LogEntry returns the JSON log entry object built by Format(). Used by
