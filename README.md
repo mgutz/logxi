@@ -128,19 +128,19 @@ This logger package
 *   Standardizes on key-value pair argument sequence
 
     ```go
-log.Debug("inside Fn()", "key1", value1, "key2", value2)
-
-// instead of this
-log.WithFields(logrus.Fields{"m": "pkg", "key1": value1, "key2": value2}).Debug("inside fn()")
-```
+    log.Debug("inside Fn()", "key1", value1, "key2", value2)
+    
+    // instead of this
+    log.WithFields(logrus.Fields{"m": "pkg", "key1": value1, "key2": value2}).Debug("inside fn()")
+    ```
     logxi logs `FIX_IMBALANCED_PAIRS =>` if key-value pairs are imbalanced
 
     `log.Warn and log.Error` are special cases and return error:
 
     ```go
-return log.Error(msg)               //=> fmt.Errorf(msg)
-return log.Error(msg, "err", err)   //=> err
-```
+    return log.Error(msg)               //=> fmt.Errorf(msg)
+    return log.Error(msg, "err", err)   //=> err
+    ```
 
 *   Supports Color Schemes (256 colors)
 
@@ -159,12 +159,12 @@ return log.Error(msg, "err", err)   //=> err
 *   Is suppressable in unit tests
 
     ```go
-func TestErrNotFound() {
-    log.Suppress(true)
-    defer log.Suppress(false)
-    ...
-}
-```
+    func TestErrNotFound() {
+        log.Suppress(true)
+        defer log.Suppress(false)
+        ...
+    }
+    ```
 
 
 
