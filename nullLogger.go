@@ -22,11 +22,6 @@ func (l *NullLogger) Info(msg string, args ...interface{}) {
 
 // Warn logs a warn entry with callstack if error.
 func (l *NullLogger) Warn(msg string, args ...interface{}) error {
-	return l.warnFromFrame(0, msg, args...)
-}
-
-// WarnFromFrame logs a warn entry with callstack starting at startFrame.
-func (l *NullLogger) warnFromFrame(startFrameIndex int, msg string, args ...interface{}) error {
 	for _, arg := range args {
 		if err, ok := arg.(error); ok {
 			return err
@@ -35,19 +30,14 @@ func (l *NullLogger) warnFromFrame(startFrameIndex int, msg string, args ...inte
 	return nil
 }
 
-// ErrorFromFrame logs an error entry starting with callstack starting at startFrame.
-func (l *NullLogger) errorFromFrame(startFrame int, msg string, args ...interface{}) error {
+// Error logs an error entry.
+func (l *NullLogger) Error(msg string, args ...interface{}) error {
 	for _, arg := range args {
 		if err, ok := arg.(error); ok {
 			return err
 		}
 	}
 	return errors.New(msg)
-}
-
-// Error logs an error entry.
-func (l *NullLogger) Error(msg string, args ...interface{}) error {
-	return l.errorFromFrame(0, msg, args...)
 }
 
 // Fatal logs a fatal entry then panics.

@@ -64,17 +64,14 @@ func pumpStdin(ws *websocket.Conn, r io.Reader, done chan struct{}) {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		ws.SetWriteDeadline(time.Now().Add(writeWait))
-
 		line := scanner.Bytes()
 
 		var m jsonObject
-
 		err := json.Unmarshal(line, &m)
 		if err != nil {
 			b, _ := json.Marshal(jsonObject{"stdin": string(line)})
 			line = b
 		}
-
 		if err = ws.WriteMessage(websocket.TextMessage, line); err != nil {
 			ws.Close()
 			break

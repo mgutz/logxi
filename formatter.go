@@ -1,5 +1,10 @@
 package logxi
 
+// Formatter records log entries.
+type Formatter interface {
+	Format(level int, msg string, args []interface{}) (*PooledBuffer, error)
+}
+
 var formatterCreators = map[string]CreateFormatterFunc{}
 
 // CreateFormatterFunc is a function which creates a new instance

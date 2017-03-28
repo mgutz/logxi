@@ -1,7 +1,6 @@
 package logxi
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -189,18 +188,12 @@ func (hd *HappyDevFormatter) sourceContext(color string, frames []Frame) string 
 	return buf.String()
 }
 
-func (hd *HappyDevFormatter) levelSourceContext(level int, entry map[string]interface{}, args []interface{}, startFrame int) (context string, color string) {
+func (hd *HappyDevFormatter) levelSourceContext(level int, entry map[string]interface{}, args []interface{}) (context string, color string) {
 	const skipLogxiFrames = 0
 
 	getStack := func(offset int, size int) []Frame {
 		// the offset skips logxi frames and is empirically determined
-
-		if startFrame == -1 {
-			// get everything
-			return callstack(offset, -1, true)
-		}
-
-		result := callstack(offset+startFrame, size, true)
+		result := callstack(offset, size, true)
 		return result
 	}
 
@@ -235,9 +228,8 @@ func (hd *HappyDevFormatter) levelSourceContext(level int, entry map[string]inte
 }
 
 // Format a log entry.
-func (hd *HappyDevFormatter) Format(level int, msg string, args []interface{}, startFrame int) ([]byte, error) {
+func (hd *HappyDevFormatter) Format(level int, msg string, args []interface{}) (*PooledBuffer, error) {
 	buf := pool.Get()
-	defer pool.Put(buf)
 
 	if len(args) == 1 {
 		args = append(args, 0)
@@ -278,7 +270,7 @@ func (hd *HappyDevFormatter) Format(level int, msg string, args []interface{}, s
 	col = hd.writeColoredString(buf, entry[KeyMap.Time].(string), theme.Misc, col)
 
 	// emphasize warnings, errors and add callstack
-	context, color := hd.levelSourceContext(level, entry, args, startFrame)
+	context, color := hd.levelSourceContext(level, entry, args)
 	message := entry[KeyMap.Message].(string)
 
 	// DBG, INF ...
@@ -329,7 +321,7 @@ func (hd *HappyDevFormatter) Format(level int, msg string, args []interface{}, s
 		buf.WriteRune('\n')
 	}
 
-	return copyBytes(buf), nil
+	return buf, nil
 }
 
 func writeColor(buf bufferWriter, code string) {
@@ -337,13 +329,4 @@ func writeColor(buf bufferWriter, code string) {
 		return
 	}
 	buf.WriteString(code)
-}
-
-// copyBytes makes a copy of the internal buffer slice
-//
-// This needs to be optimized. Misunderstood how buf.Bytes() worked.
-func copyBytes(buf *bytes.Buffer) []byte {
-	b := make([]byte, buf.Len())
-	copy(b, buf.Bytes())
-	return b
 }

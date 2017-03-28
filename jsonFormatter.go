@@ -137,9 +137,8 @@ func (jf *JSONFormatter) set(buf bufferWriter, key string, val interface{}) {
 }
 
 // Format formats log entry as JSON.
-func (jf *JSONFormatter) Format(level int, msg string, args []interface{}, startFrame int) ([]byte, error) {
+func (jf *JSONFormatter) Format(level int, msg string, args []interface{}) (*PooledBuffer, error) {
 	buf := pool.Get()
-	defer pool.Put(buf)
 
 	const lead = `", "`
 	const colon = `":"`
@@ -193,22 +192,25 @@ func (jf *JSONFormatter) Format(level int, msg string, args []interface{}, start
 	}
 
 	buf.WriteString("}\n")
-	return copyBytes(buf), nil
+	return buf, nil
 }
 
 // LogEntry returns the JSON log entry object built by Format(). Used by
 // HappyDevFormatter to ensure any data logged while developing properly
 // logs in production.
 func (jf *JSONFormatter) LogEntry(level int, msg string, args []interface{}) map[string]interface{} {
-	b, err := jf.Format(level, msg, args, 0)
+	b, err := jf.Format(level, msg, args)
 	if err != nil {
-		panic("Unable to format entry from JSONFormatter: " + err.Error() + " \"" + string(b) + "\"")
+		panic("Unable to format entry from JSONFormatter:\n  err: " + err.Error() + "\n  buffer: " + b.String())
 	}
+
 	var entry map[string]interface{}
-	err = json.Unmarshal(b, &entry)
+	err = json.Unmarshal(b.Bytes(), &entry)
 	if err != nil {
-		panic("Unable to unmarshal entry from JSONFormatter: " + err.Error() + " \"" + string(b) + "\"")
+		panic("Unable to unmarshal entry from JSONFormatter:\n err: " + err.Error() + "\n buffer: " + b.String())
 	}
+
+	b.Release()
 	return entry
 }
 

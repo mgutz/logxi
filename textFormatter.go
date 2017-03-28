@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-// Formatter records log entries.
-type Formatter interface {
-	Format(level int, msg string, args []interface{}, startFrame int) ([]byte, error)
-}
-
 // TextFormatter is the default recorder used if one is unspecified when
 // creating a new Logger.
 type TextFormatter struct {
@@ -71,9 +66,9 @@ func (tf *TextFormatter) set(buf bufferWriter, key string, val interface{}) {
 }
 
 // Format records a log entry.
-func (tf *TextFormatter) Format(level int, msg string, args []interface{}, startFrame int) ([]byte, error) {
+func (tf *TextFormatter) Format(level int, msg string, args []interface{}) (*PooledBuffer, error) {
 	buf := pool.Get()
-	defer pool.Put(buf)
+
 	buf.WriteString(tf.timeLabel)
 	buf.WriteString(time.Now().Format(timeFormat))
 	buf.WriteString(tf.itoaLevelMap[level])
@@ -101,5 +96,5 @@ func (tf *TextFormatter) Format(level int, msg string, args []interface{}, start
 		}
 	}
 	buf.WriteRune('\n')
-	return copyBytes(buf), nil
+	return buf, nil
 }

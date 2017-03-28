@@ -12,22 +12,35 @@ type BufferPool struct {
 
 // NewBufferPool creates a BufferPool.
 func NewBufferPool() *BufferPool {
-	return &BufferPool{
-		Pool: sync.Pool{New: func() interface{} {
-			b := bytes.NewBuffer(make([]byte, 256))
-			b.Reset()
-			return b
-		}},
-	}
+	bp := &BufferPool{}
+	bp.Pool = sync.Pool{New: func() interface{} {
+		b := bytes.NewBuffer(make([]byte, 256))
+		b.Reset()
+		return &PooledBuffer{b, bp}
+	}}
+	return bp
 }
 
 // Get acquires a buffer from pool.
-func (bp *BufferPool) Get() *bytes.Buffer {
-	return bp.Pool.Get().(*bytes.Buffer)
+func (bp *BufferPool) Get() *PooledBuffer {
+	return bp.Pool.Get().(*PooledBuffer)
 }
 
 // Put returns buffer back.
-func (bp *BufferPool) Put(b *bytes.Buffer) {
-	b.Reset()
-	bp.Pool.Put(b)
+func (bp *BufferPool) Put(pb *PooledBuffer) {
+	pb.Reset()
+	bp.Pool.Put(pb)
+}
+
+// PooledBuffer is a *bytes.Buffer which belongs to a pool, it must Released
+// after use.
+type PooledBuffer struct {
+	*bytes.Buffer
+	pool *BufferPool
+}
+
+// Release puts pooled buffer back in the pool
+func (pb *PooledBuffer) Release() {
+	pb.Reset()
+	pb.pool.Put(pb)
 }
