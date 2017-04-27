@@ -129,6 +129,7 @@ func getLogLevel(name string) int {
 	for k, v := range logxiNameLevelMap {
 		if k == name {
 			result = v
+			break
 		} else if k == "*" {
 			wildcardLevel = v
 		} else if strings.HasPrefix(k, "*") && strings.HasSuffix(name, k[1:]) {
