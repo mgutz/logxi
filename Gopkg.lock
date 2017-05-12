@@ -1,0 +1,133 @@
+memo = "89831d473be043439f36c6ff84ddc431082890b908a6ae1bdb430d4ca7913808"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/MichaelTJones/walk"
+  packages = ["."]
+  revision = "3af09438b0ab0e8f296410bfa646a7e635ea1fc0"
+
+[[projects]]
+  name = "github.com/Sirupsen/logrus"
+  packages = ["."]
+  revision = "ba1b36c82c5e05c4f912a88eab0dcd91a171688f"
+  version = "v0.11.5"
+
+[[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  revision = "3ab3a8b8831546bd18fd182c20687ca853b2bb13"
+  version = "v1.1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/howeyc/gopass"
+  packages = ["."]
+  revision = "66487b23f2880ba32e185121d2cd51a338ea069a"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  revision = "e8a10ddc7d2a7fe255f6fd7f501070a4cb62c183"
+
+[[projects]]
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  revision = "fc9e8d8ef48496124e79ae0df75490096eccf6fe"
+  version = "v0.0.2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mgutz/ansi"
+  packages = ["."]
+  revision = "9520e82c474b0a04dd04f8a40959027271bab992"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mgutz/minimist"
+  packages = ["."]
+  revision = "39eb8cf573ca29344bd7d7e6ba4d7febdebd37a9"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mgutz/str"
+  packages = ["."]
+  revision = "968bf66e3da857419e4f6e71b2d5c9ae95682dc4"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mgutz/to"
+  packages = ["."]
+  revision = "00c06406c2dd2e011f153a6502a21473676db33f"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mitchellh/go-homedir"
+  packages = ["."]
+  revision = "b8bc1bf767474819792c23f32d8286a45736f1c6"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/nozzle/throttler"
+  packages = ["."]
+  revision = "d9b45f19996c645d38c9266d1f5cf1990e930119"
+
+[[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
+  version = "v1.1.4"
+
+[[projects]]
+  name = "github.com/uber-go/zap"
+  packages = ["."]
+  revision = "6a4e056f2cc954cfec3581729e758909604b3f76"
+  version = "v1.3.0"
+
+[[projects]]
+  name = "go.uber.org/atomic"
+  packages = ["."]
+  revision = "4e336646b2ef9fc6e47be8e21594178f98e5ebcf"
+  version = "v1.2.0"
+
+[[projects]]
+  name = "go.uber.org/zap"
+  packages = ["buffer","internal/bufferpool","internal/color","internal/exit","internal/multierror","zapcore"]
+  revision = "1550bc05539134bbf8612a35f34a79ab8bf34ee3"
+  version = "v1.2.0"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+  packages = ["ssh/terminal"]
+  revision = "5bcd134fee4dd1475da17714aac19c0aa0142e2f"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "156c5a2da4a2085250f45d65e24fabe6ed437394"
+
+[[projects]]
+  name = "gopkg.in/godo.v2"
+  packages = [".","glob","util","watcher","watcher/fswatch"]
+  revision = "b5fd2f0bef1ebe832e628cfad18ab1cc707f65a1"
+  version = "v2.0.9"
+
+[[projects]]
+  name = "gopkg.in/inconshreveable/log15.v2"
+  packages = [".","stack","term"]
+  revision = "b105bd37f74e5d9dc7b6ad7806715c7a2b83fd3f"
+  version = "v2.11"
