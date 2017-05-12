@@ -4,7 +4,7 @@ memo = "89831d473be043439f36c6ff84ddc431082890b908a6ae1bdb430d4ca7913808"
   branch = "master"
   name = "github.com/MichaelTJones/walk"
   packages = ["."]
-  revision = "3af09438b0ab0e8f296410bfa646a7e635ea1fc0"
+  revision = "4748e29d5718c2df4028a6543edf86fd8cc0f881"
 
 [[projects]]
   name = "github.com/Sirupsen/logrus"
@@ -28,13 +28,13 @@ memo = "89831d473be043439f36c6ff84ddc431082890b908a6ae1bdb430d4ca7913808"
   branch = "master"
   name = "github.com/howeyc/gopass"
   packages = ["."]
-  revision = "66487b23f2880ba32e185121d2cd51a338ea069a"
+  revision = "bf9dde6d0d2c004a008c27aaee91170c786f6db8"
 
 [[projects]]
   branch = "master"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
-  revision = "e8a10ddc7d2a7fe255f6fd7f501070a4cb62c183"
+  revision = "ded68f7a9561c023e790de24279db7ebf473ea80"
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
@@ -55,16 +55,16 @@ memo = "89831d473be043439f36c6ff84ddc431082890b908a6ae1bdb430d4ca7913808"
   revision = "39eb8cf573ca29344bd7d7e6ba4d7febdebd37a9"
 
 [[projects]]
-  branch = "master"
   name = "github.com/mgutz/str"
   packages = ["."]
   revision = "968bf66e3da857419e4f6e71b2d5c9ae95682dc4"
+  version = "v1.2.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/mgutz/to"
   packages = ["."]
   revision = "00c06406c2dd2e011f153a6502a21473676db33f"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -73,10 +73,10 @@ memo = "89831d473be043439f36c6ff84ddc431082890b908a6ae1bdb430d4ca7913808"
   revision = "b8bc1bf767474819792c23f32d8286a45736f1c6"
 
 [[projects]]
-  branch = "master"
   name = "github.com/nozzle/throttler"
   packages = ["."]
   revision = "d9b45f19996c645d38c9266d1f5cf1990e930119"
+  version = "v1.0"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -112,7 +112,7 @@ memo = "89831d473be043439f36c6ff84ddc431082890b908a6ae1bdb430d4ca7913808"
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "5bcd134fee4dd1475da17714aac19c0aa0142e2f"
+  revision = "ab89591268e0c8b748cbe4047b00197516011af5"
 
 [[projects]]
   branch = "master"
