@@ -9,9 +9,9 @@ logger built for speed and happy development.
 *   Simpler. Sane no-configuration defaults out of the box.
 *   Faster. See benchmarks vs logrus and log15.
 *   Structured. Key-value pairs are enforced. Logs JSON in production.
-*   Configurable. Enable/disalbe Loggers and levels via env vars.
+*   Configurable. Enable/disable Loggers and levels via env vars.
 *   Friendlier. Happy, colorful and developer friendly logger in terminal.
-*   Helpul. Traces, warnings and errors are emphasized with file, line
+*   Helpful. Traces, warnings and errors are emphasized with file, line
     number and callstack.
 *   Efficient. Has level guards to avoid cost of building complex arguments.
 
@@ -128,19 +128,19 @@ This logger package
 *   Standardizes on key-value pair argument sequence
 
     ```go
-log.Debug("inside Fn()", "key1", value1, "key2", value2)
+    log.Debug("inside Fn()", "key1", value1, "key2", value2)
+    // instead of this
+    log.WithFields(logrus.Fields{"m": "pkg", "key1": value1, "key2": value2}).Debug("inside fn()")
+    ```
 
-// instead of this
-log.WithFields(logrus.Fields{"m": "pkg", "key1": value1, "key2": value2}).Debug("inside fn()")
-```
-    logxi logs `FIX_IMBALANCED_PAIRS =>` if key-value pairs are imbalanced
+*   logxi logs `FIX_IMBALANCED_PAIRS =>` if key-value pairs are imbalanced
 
     `log.Warn and log.Error` are special cases and return error:
 
     ```go
-return log.Error(msg)               //=> fmt.Errorf(msg)
-return log.Error(msg, "err", err)   //=> err
-```
+    return log.Error(msg)               //=> fmt.Errorf(msg)
+    return log.Error(msg, "err", err)   //=> err
+    ```
 
 *   Supports Color Schemes (256 colors)
 
@@ -159,14 +159,12 @@ return log.Error(msg, "err", err)   //=> err
 *   Is suppressable in unit tests
 
     ```go
-func TestErrNotFound() {
-    log.Suppress(true)
-    defer log.Suppress(false)
-    ...
-}
-```
-
-
+    func TestErrNotFound() {
+        log.Suppress(true)
+        defer log.Suppress(false)
+        ...
+    }
+    ```
 
 ## Configuration
 
