@@ -11,7 +11,7 @@ logger built for speed and happy development.
 *   Structured. Key-value pairs are enforced. Logs JSON in production.
 *   Configurable. Enable/disalbe Loggers and levels via env vars.
 *   Friendlier. Happy, colorful and developer friendly logger in terminal.
-*   Helpul. Traces, warnings and errors are emphasized with file, line
+*   Helpful. Traces, warnings and errors are emphasized with file, line
     number and callstack.
 *   Efficient. Has level guards to avoid cost of building complex arguments.
 
@@ -158,7 +158,7 @@ return log.Error(msg, "err", err)   //=> err
 
 *   Is suppressable in unit tests
 
-    ```go
+```go
 func TestErrNotFound() {
     log.Suppress(true)
     defer log.Suppress(false)
