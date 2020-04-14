@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"io"
+	"os"
 )
 
 // DefaultLogger is the default logger for this package.
@@ -105,7 +106,7 @@ func (l *DefaultLogger) Error(msg string, args ...interface{}) error {
 // Fatal logs a fatal entry then panics.
 func (l *DefaultLogger) Fatal(msg string, args ...interface{}) {
 	l.extractLogError(LevelFatal, msg, args)
-	defer panic("Exit due to fatal error: ")
+	os.Exit(1)
 }
 
 // Log logs a leveled entry.
